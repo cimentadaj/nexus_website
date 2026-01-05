@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus — Governance Capability Partner</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ============================================
+           CSS CUSTOM PROPERTIES
+           ============================================ */
+        :root {
+            /* Colors - Locked */
+            --bg-light: #f5f5f2;
+            --text-primary: #0f1c2e;
+            --text-anchor: #0b1626;
+            --bg-structural: #233554;
+            --accent: #d6cfb8;
+            
+            /* Typography */
+            --font-serif: 'Crimson Pro', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+            
+            /* Spacing */
+            --container-max: 1200px;
+            --container-wide: 1400px;
+            --container-narrow: 720px;
+        }
+
+        /* ============================================
+           RESET & BASE
+           ============================================ */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            font-size: 18px;
+            line-height: 1.65;
+            color: var(--text-primary);
+            background-color: var(--bg-light);
+        }
+
+        /* ============================================
+           TYPOGRAPHY
+           ============================================ */
+        h1, h2, h3 {
+            font-family: var(--font-serif);
+            font-weight: 500;
+            color: var(--text-anchor);
+            line-height: 1.2;
+        }
+
+        h1 {
+            font-size: 72px;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 48px;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 22px;
+            font-weight: 500;
+        }
+
+        p {
+            max-width: var(--container-narrow);
+        }
+
+        .large-text {
+            font-size: 24px;
+            line-height: 1.5;
+        }
+
+        .support-text {
+            font-size: 17px;
+            color: var(--text-primary);
+            opacity: 0.85;
+        }
+
+        /* Section Labels */
+        .section-label {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            display: block;
+        }
+
+        /* Dark section label adjustment */
+        .section--dark .section-label {
+            color: var(--accent);
+        }
+
+        /* Light section label - needs darker color for contrast */
+        .section--light .section-label {
+            color: var(--text-primary);
+            opacity: 0.5;
+        }
+
+        /* ============================================
+           LAYOUT
+           ============================================ */
+        .container {
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: 0 48px;
+        }
+
+        .container--wide {
+            max-width: var(--container-wide);
+        }
+
+        .container--narrow {
+            max-width: var(--container-narrow);
+        }
+
+        section {
+            padding: 80px 0;
+        }
+
+        .section--light {
+            background-color: var(--bg-light);
+        }
+
+        .section--dark {
+            background-color: var(--bg-structural);
+            color: var(--bg-light);
+        }
+
+        .section--dark h2,
+        .section--dark h3 {
+            color: var(--bg-light);
+        }
+
+        /* ============================================
+           HEADER
+           ============================================ */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background-color: var(--bg-light);
+            border-bottom: 1px solid var(--accent);
+        }
+
+        .header__inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 48px;
+            max-width: var(--container-wide);
+            margin: 0 auto;
+        }
+
+        .header__logo {
+            font-family: var(--font-serif);
+            font-size: 28px;
+            font-weight: 500;
+            color: var(--text-anchor);
+            text-decoration: none;
+        }
+
+        .header__nav {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .header__link {
+            font-family: var(--font-sans);
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .header__link:hover {
+            opacity: 0.7;
+        }
+
+        .header__cta {
+            font-family: var(--font-sans);
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--bg-light);
+            background-color: var(--text-anchor);
+            padding: 12px 24px;
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .header__cta:hover {
+            opacity: 0.9;
+        }
+
+        /* ============================================
+           SECTION 1 — ANCHOR
+           ============================================ */
+        .section-anchor {
+            padding-top: 160px;
+            padding-bottom: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .section-anchor h1 {
+            margin-bottom: 32px;
+        }
+
+        .section-anchor .large-text {
+            margin-bottom: 40px;
+            max-width: 680px;
+        }
+
+        .section-anchor .support-text {
+            margin-bottom: 48px;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            font-family: var(--font-sans);
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--bg-light);
+            background-color: var(--text-anchor);
+            padding: 16px 32px;
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        /* ============================================
+           SECTION 2 — RECOGNITION
+           ============================================ */
+        .section-recognition {
+            padding: 80px 0;
+        }
+
+        .section-recognition h2 {
+            margin-bottom: 48px;
+        }
+
+        .recognition-list {
+            margin-bottom: 48px;
+        }
+
+        .recognition-item {
+            display: grid;
+            grid-template-columns: 64px 1fr;
+            gap: 24px;
+            padding: 32px 0;
+            border-bottom: 1px solid var(--accent);
+            align-items: baseline;
+        }
+
+        .recognition-item:first-child {
+            border-top: 1px solid var(--accent);
+        }
+
+        .recognition-number {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        .recognition-text {
+            font-size: 20px;
+            color: var(--text-primary);
+        }
+
+        .bridge-line {
+            font-family: var(--font-serif);
+            font-size: 26px;
+            font-weight: 500;
+            color: var(--text-anchor);
+            max-width: 600px;
+            line-height: 1.4;
+        }
+
+        .closing-statement {
+            padding-top: 48px;
+            max-width: 640px;
+        }
+
+        .closing-statement p {
+            font-size: 18px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            opacity: 0.85;
+        }
+
+        /* ============================================
+           SECTION 3 — WHAT NEXUS UNLOCKS
+           ============================================ */
+        .section-unlocks {
+            padding: 80px 0;
+        }
+
+        .section-unlocks h2 {
+            margin-bottom: 48px;
+        }
+
+        .unlocks-intro {
+            margin-bottom: 64px;
+            max-width: 720px;
+        }
+
+        .capabilities-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px 64px;
+            margin-bottom: 64px;
+        }
+
+        .capability {
+            padding-bottom: 48px;
+            border-bottom: 1px solid var(--accent);
+        }
+
+        .capability-label {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            opacity: 0.5;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .capability h3 {
+            margin-bottom: 16px;
+            color: var(--text-anchor);
+        }
+
+        .capability p {
+            font-size: 17px;
+            color: var(--text-primary);
+            opacity: 0.85;
+        }
+
+        /* ============================================
+           SECTION 4 — HOW NEXUS WORKS
+           ============================================ */
+        .section-approach {
+            padding: 80px 0;
+            background-color: var(--bg-light);
+        }
+
+        .section-approach h2 {
+            margin-bottom: 48px;
+        }
+
+        .approach-intro {
+            margin-bottom: 64px;
+            max-width: 720px;
+        }
+
+        .principles-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 64px;
+        }
+
+        .principles-table thead th {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            opacity: 0.5;
+            text-align: left;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--accent);
+        }
+
+        .principles-table thead th:first-child {
+            width: 280px;
+        }
+
+        .principles-table tbody td {
+            padding: 32px 0;
+            padding-right: 48px;
+            border-bottom: 1px solid var(--accent);
+            vertical-align: top;
+        }
+
+        .principles-table tbody td:first-child {
+            font-family: var(--font-serif);
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--text-anchor);
+        }
+
+        .principles-table tbody td:last-child {
+            font-size: 17px;
+            color: var(--text-primary);
+            opacity: 0.85;
+        }
+
+        /* ============================================
+           SECTION 5 — START A CONVERSATION
+           ============================================ */
+        .section-conversation {
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .section-conversation .container {
+            max-width: 640px;
+        }
+
+        .section-conversation h2 {
+            margin-bottom: 32px;
+            font-size: 42px;
+        }
+
+        .section-conversation > .container > p {
+            margin: 0 auto 48px;
+            font-size: 18px;
+        }
+
+        .no-pitch {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--text-primary);
+            opacity: 0.6;
+            margin-bottom: 48px;
+            line-height: 1.8;
+        }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .footer {
+            border-top: 1px solid var(--accent);
+            padding: 32px 0;
+        }
+
+        .footer__inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: var(--container-wide);
+            margin: 0 auto;
+            padding: 0 48px;
+        }
+
+        .footer__copyright {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--accent);
+        }
+
+        .footer__links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .footer__link {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            color: var(--text-primary);
+            opacity: 0.6;
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .footer__link:hover {
+            opacity: 1;
+        }
+
+        /* ============================================
+           SCROLL REVEAL
+           ============================================ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ============================================
+           RESPONSIVE — TABLET
+           ============================================ */
+        @media (max-width: 968px) {
+            h1 {
+                font-size: 56px;
+            }
+
+            h2 {
+                font-size: 40px;
+            }
+
+            section {
+                padding: 80px 0;
+            }
+
+            .container {
+                padding: 0 32px;
+            }
+
+            .header__inner {
+                padding: 16px 32px;
+            }
+
+            .header__nav {
+                gap: 24px;
+            }
+
+            .section-anchor {
+                padding-top: 160px;
+                padding-bottom: 120px;
+            }
+
+            .capabilities-grid {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+
+            .core-text {
+                font-size: 26px;
+            }
+
+            .core-number {
+                font-size: 40px;
+            }
+
+            .principles-table thead th:first-child {
+                width: 200px;
+            }
+        }
+
+        /* ============================================
+           RESPONSIVE — MOBILE
+           ============================================ */
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 42px;
+            }
+
+            h2 {
+                font-size: 32px;
+            }
+
+            .large-text {
+                font-size: 20px;
+            }
+
+            body {
+                font-size: 16px;
+            }
+
+            .container {
+                padding: 0 24px;
+            }
+
+            .header__inner {
+                padding: 16px 24px;
+            }
+
+            .header__nav {
+                display: none;
+            }
+
+            .header__logo {
+                font-size: 24px;
+            }
+
+            .section-anchor {
+                padding-top: 140px;
+                padding-bottom: 80px;
+                min-height: auto;
+            }
+
+            .recognition-item {
+                grid-template-columns: 48px 1fr;
+                gap: 16px;
+                padding: 24px 0;
+            }
+
+            .recognition-text {
+                font-size: 18px;
+            }
+
+            .bridge-line {
+                font-size: 22px;
+            }
+
+            .core-question {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 32px 0;
+            }
+
+            .core-number {
+                font-size: 32px;
+            }
+
+            .core-text {
+                font-size: 22px;
+            }
+
+            .section-core h2 {
+                margin-bottom: 64px;
+            }
+
+            .capability h3 {
+                font-size: 20px;
+            }
+
+            .principles-table {
+                display: block;
+            }
+
+            .principles-table thead {
+                display: none;
+            }
+
+            .principles-table tbody {
+                display: block;
+            }
+
+            .principles-table tr {
+                display: block;
+                padding: 24px 0;
+                border-bottom: 1px solid var(--accent);
+            }
+
+            .principles-table td {
+                display: block;
+                padding: 0 !important;
+                border: none !important;
+            }
+
+            .principles-table td:first-child {
+                margin-bottom: 12px;
+            }
+
+            .footer__inner {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+                padding: 0 24px;
+            }
+
+            .section-conversation h2 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================
+         HEADER
+         ============================================ -->
+    <header class="header">
+        <div class="header__inner">
+            <a href="#" class="header__logo">Nexus</a>
+            <nav class="header__nav">
+                <a href="#unlocks" class="header__link">What Nexus Unlocks</a>
+                <a href="#how-works" class="header__link">How Nexus Works</a>
+                <a href="#conversation" class="header__cta">Start a conversation</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ============================================
+         SECTION 1 — ANCHOR
+         ============================================ -->
+    <section class="section-anchor section--light">
+        <div class="container">
+            <span class="section-label">Governance Capability</span>
+            <h1 class="reveal">Moving faster with confidence — under continuous change</h1>
+            <p class="large-text reveal">We help cities and governments turn data, projects, and international commitments into a governance foundation that supports clear, defensible decisions — as technologies, risks, and expectations continuously evolve.</p>
+            <p class="support-text reveal">A governance capability partner — not a traditional consultancy.</p>
+            <a href="#conversation" class="btn-primary reveal">Start a conversation</a>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 2 — RECOGNITION
+         ============================================ -->
+    <section class="section-recognition section--light">
+        <div class="container">
+            <span class="section-label">Governance problems</span>
+            <h2 class="reveal">Most governments today face:</h2>
+            
+            <div class="recognition-list">
+                <div class="recognition-item reveal">
+                    <span class="recognition-number">01</span>
+                    <span class="recognition-text">Too many agendas, too little clarity</span>
+                </div>
+                <div class="recognition-item reveal">
+                    <span class="recognition-number">02</span>
+                    <span class="recognition-text">Projects multiplying without a clear overview</span>
+                </div>
+                <div class="recognition-item reveal">
+                    <span class="recognition-number">03</span>
+                    <span class="recognition-text">Data spread across departments, formats, and systems</span>
+                </div>
+                <div class="recognition-item reveal">
+                    <span class="recognition-number">04</span>
+                    <span class="recognition-text">Reporting that consumes time but doesn't help decisions</span>
+                </div>
+            </div>
+            
+            <p class="bridge-line reveal">These are not delivery problems. They are governance problems.</p>
+            <p class="bridge-line reveal" style="margin-top: 24px; font-size: 22px; opacity: 0.85;">Increasingly, they are also technological governance problems — where institutions adopt tools faster than they can integrate, govern, or exit them.</p>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 3 — WHAT NEXUS UNLOCKS
+         ============================================ -->
+    <section id="unlocks" class="section-unlocks section--light">
+        <div class="container">
+            <span class="section-label">Capabilities</span>
+            <h2 class="reveal">What Nexus Unlocks</h2>
+            <p class="unlocks-intro reveal">Nexus strengthens how governments operate by making what is already there — strategies, projects, data, commitments — visible, connected, and usable at scale.</p>
+            
+            <div class="capabilities-grid">
+                <div class="capability reveal">
+                    <span class="capability-label">Coherence</span>
+                    <h3>Strategic Coherence across Commitments</h3>
+                    <p>Revealing how strategies, mandates, and international commitments actually relate — and where they pull in different directions.</p>
+                </div>
+                
+                <div class="capability reveal">
+                    <span class="capability-label">Visibility</span>
+                    <h3>System-Level Visibility of Action</h3>
+                    <p>Turning fragmented projects into a readable system of action across departments, timelines, and places.</p>
+                </div>
+                
+                <div class="capability reveal">
+                    <span class="capability-label">Intelligence</span>
+                    <h3>Performance Intelligence with Strategic Leverage</h3>
+                    <p>Using data to surface trends, risks, and opportunities — to inform decisions, not just report performance or justify tools.</p>
+                </div>
+                
+                <div class="capability reveal">
+                    <span class="capability-label">Legitimacy</span>
+                    <h3>Legitimacy that Travels Beyond the Institution</h3>
+                    <p>Anchoring decisions in evidence that resonates internally, politically, and internationally.</p>
+                </div>
+            </div>
+            
+            <div class="closing-statement reveal">
+                <p>Nexus does not replace political judgment or institutional leadership.<br>
+                It ensures that technological change strengthens — rather than undermines — both.<br><br>
+                It equips governments with the visibility, structure, and confidence to act — and to be recognised for it.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 5 — HOW NEXUS WORKS
+         ============================================ -->
+    <section id="how-works" class="section-approach section--light">
+        <div class="container">
+            <span class="section-label">Approach</span>
+            <h2 class="reveal">How Nexus Works</h2>
+            <p class="approach-intro reveal">Nexus works through structured, modular processes designed to integrate into existing institutions — not disrupt them.</p>
+            
+            <table class="principles-table reveal">
+                <thead>
+                    <tr>
+                        <th>Principle</th>
+                        <th>Application</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Built on what already exists</td>
+                        <td>We work with the strategies, projects, data, and commitments you already have — making them more legible, connected, and actionable.</td>
+                    </tr>
+                    <tr>
+                        <td>Modular and flexible</td>
+                        <td>Our approach adapts to your timeline, political context, and institutional capacity — no rigid frameworks imposed.</td>
+                    </tr>
+                    <tr>
+                        <td>Process over outputs</td>
+                        <td>We transfer capability, not just deliver reports — so your team can maintain momentum and ownership.</td>
+                    </tr>
+                    <tr>
+                        <td>Speed with legitimacy</td>
+                        <td>Fast enough to matter, rigorous enough to stand behind — internally, politically, and internationally.</td>
+                    </tr>
+                    <tr>
+                        <td>No lock-in</td>
+                        <td>Our work is designed to become yours — no proprietary systems, no long-term dependencies.</td>
+                    </tr>
+                    <tr>
+                        <td>Technological neutrality, institutional control</td>
+                        <td>We do not promote tools or vendors. We design governance conditions under which technologies can be evaluated, adopted, challenged, or replaced without loss of coherence or autonomy.</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="closing-statement reveal">
+                <p>The goal is not to add another layer of work —<br>
+                but to make existing work governable under continuous change, and travel further, faster, and with confidence.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 6 — START A CONVERSATION
+         ============================================ -->
+    <section id="conversation" class="section-conversation section--light">
+        <div class="container">
+            <span class="section-label">Next Step</span>
+            <h2 class="reveal">If this resonates, the next step is a conversation.</h2>
+            <p class="reveal">We use initial conversations to understand context, constraints, and whether Nexus is the right partner.</p>
+            <p class="no-pitch reveal">No pitch decks.<br>No predefined packages.</p>
+            <a href="mailto:hello@nexusgovernance.com" class="btn-primary reveal">Start a conversation</a>
+        </div>
+    </section>
+
+    <!-- ============================================
+         FOOTER
+         ============================================ -->
+    <footer class="footer">
+        <div class="footer__inner">
+            <span class="footer__copyright">Nexus © 2025</span>
+            <div class="footer__links">
+                <a href="#" class="footer__link">Privacy</a>
+                <a href="#" class="footer__link">Terms</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ============================================
+         SCROLL REVEAL SCRIPT
+         ============================================ -->
+    <script>
+        // Subtle scroll reveal - imperceptible, orientation-focused
+        document.addEventListener('DOMContentLoaded', function() {
+            const reveals = document.querySelectorAll('.reveal');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+            
+            reveals.forEach(el => observer.observe(el));
+        });
+    </script>
+
+</body>
+</html>
