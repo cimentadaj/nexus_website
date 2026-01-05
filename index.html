@@ -259,6 +259,77 @@
         }
 
         /* ============================================
+           LOGO CAROUSEL
+           ============================================ */
+        .section-logos {
+            padding: 48px 0;
+            border-bottom: 1px solid var(--accent);
+            overflow: hidden;
+        }
+
+        .logos-label {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            opacity: 0.4;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logos-track {
+            display: flex;
+            animation: scroll 30s linear infinite;
+            width: max-content;
+        }
+
+        .logos-track:hover {
+            animation-play-state: paused;
+        }
+
+        .logos-slide {
+            display: flex;
+            align-items: center;
+            gap: 64px;
+            padding: 0 32px;
+        }
+
+        .logo-item {
+            height: 40px;
+            width: auto;
+            opacity: 0.5;
+            filter: grayscale(100%);
+            transition: opacity 0.3s ease, filter 0.3s ease;
+        }
+
+        .logo-item:hover {
+            opacity: 0.8;
+            filter: grayscale(0%);
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .logos-slide {
+                gap: 40px;
+                padding: 0 20px;
+            }
+
+            .logo-item {
+                height: 32px;
+            }
+        }
+
+        /* ============================================
            SECTION 2 — RECOGNITION
            ============================================ */
         .section-recognition {
@@ -713,6 +784,33 @@
             <p class="support-text reveal" style="margin-bottom: 24px;"><strong>UN-aligned by design</strong><br>Nexus integrates UN system logic into governance design — ensuring that decisions made at speed remain aligned with the international standards by which institutions are assessed.</p>
             <p class="support-text reveal">A governance capability partner — not a traditional consultancy.</p>
             <a href="#conversation" class="btn-primary reveal">Start a conversation</a>
+        </div>
+    </section>
+
+    <!-- ============================================
+         LOGO CAROUSEL
+         ============================================ -->
+    <section class="section-logos section--light">
+        <p class="logos-label">Trusted by</p>
+        <div class="logos-track">
+            <!-- First set of logos -->
+            <div class="logos-slide">
+                <img src="images/logos/un_logo.png" alt="United Nations" class="logo-item">
+                <img src="images/logos/eu-logo.webp" alt="European Union" class="logo-item">
+                <img src="images/logos/bcg.jpg" alt="BCG" class="logo-item">
+            </div>
+            <!-- Duplicate for seamless loop -->
+            <div class="logos-slide">
+                <img src="images/logos/un_logo.png" alt="United Nations" class="logo-item">
+                <img src="images/logos/eu-logo.webp" alt="European Union" class="logo-item">
+                <img src="images/logos/bcg.jpg" alt="BCG" class="logo-item">
+            </div>
+            <!-- Third set for smoother loop with fewer logos -->
+            <div class="logos-slide">
+                <img src="images/logos/un_logo.png" alt="United Nations" class="logo-item">
+                <img src="images/logos/eu-logo.webp" alt="European Union" class="logo-item">
+                <img src="images/logos/bcg.jpg" alt="BCG" class="logo-item">
+            </div>
         </div>
     </section>
 
