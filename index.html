@@ -267,15 +267,7 @@
             overflow: hidden;
         }
 
-        .logos-label {
-            font-family: var(--font-mono);
-            font-size: 12px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: var(--text-primary);
-            opacity: 0.4;
-            text-align: center;
+        .section-logos .section-label {
             margin-bottom: 32px;
         }
 
@@ -292,20 +284,22 @@
         .logos-slide {
             display: flex;
             align-items: center;
-            gap: 64px;
-            padding: 0 32px;
+            gap: 200px;
+            padding: 0 100px;
         }
 
         .logo-item {
-            height: 40px;
+            height: 130px;
             width: auto;
-            opacity: 0.5;
+            max-width: 320px;
+            object-fit: contain;
+            opacity: 0.6;
             filter: grayscale(100%);
             transition: opacity 0.3s ease, filter 0.3s ease;
         }
 
         .logo-item:hover {
-            opacity: 0.8;
+            opacity: 0.9;
             filter: grayscale(0%);
         }
 
@@ -320,12 +314,13 @@
 
         @media (max-width: 640px) {
             .logos-slide {
-                gap: 40px;
-                padding: 0 20px;
+                gap: 100px;
+                padding: 0 50px;
             }
 
             .logo-item {
-                height: 32px;
+                height: 90px;
+                max-width: 200px;
             }
         }
 
@@ -791,25 +786,27 @@
          LOGO CAROUSEL
          ============================================ -->
     <section class="section-logos section--light">
-        <p class="logos-label">Trusted by</p>
+        <div class="container">
+            <span class="section-label">Trusted by</span>
+        </div>
         <div class="logos-track">
             <!-- First set of logos -->
             <div class="logos-slide">
                 <img src="images/logos/un_logo.png" alt="United Nations" class="logo-item">
                 <img src="images/logos/eu-logo.webp" alt="European Union" class="logo-item">
-                <img src="images/logos/bcg.jpg" alt="BCG" class="logo-item">
+                <img src="images/logos/BGG-Logo.png" alt="BCG" class="logo-item">
             </div>
             <!-- Duplicate for seamless loop -->
             <div class="logos-slide">
                 <img src="images/logos/un_logo.png" alt="United Nations" class="logo-item">
                 <img src="images/logos/eu-logo.webp" alt="European Union" class="logo-item">
-                <img src="images/logos/bcg.jpg" alt="BCG" class="logo-item">
+                <img src="images/logos/BGG-Logo.png" alt="BCG" class="logo-item">
             </div>
             <!-- Third set for smoother loop with fewer logos -->
             <div class="logos-slide">
                 <img src="images/logos/un_logo.png" alt="United Nations" class="logo-item">
                 <img src="images/logos/eu-logo.webp" alt="European Union" class="logo-item">
-                <img src="images/logos/bcg.jpg" alt="BCG" class="logo-item">
+                <img src="images/logos/BGG-Logo.png" alt="BCG" class="logo-item">
             </div>
         </div>
     </section>
