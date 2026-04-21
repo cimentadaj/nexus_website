@@ -1,984 +1,1042 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus — Governance Capability Partner</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    
-    <style>
-        /* ============================================
-           CSS CUSTOM PROPERTIES
-           ============================================ */
-        :root {
-            /* Colors - Locked */
-            --bg-light: #f5f5f2;
-            --text-primary: #0f1c2e;
-            --text-anchor: #0b1626;
-            --bg-structural: #233554;
-            --accent: #d6cfb8;
-            
-            /* Typography */
-            --font-serif: 'Crimson Pro', Georgia, serif;
-            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-mono: 'IBM Plex Mono', monospace;
-            
-            /* Spacing */
-            --container-max: 1200px;
-            --container-wide: 1400px;
-            --container-narrow: 720px;
-        }
-
-        /* ============================================
-           RESET & BASE
-           ============================================ */
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        html {
-            scroll-behavior: smooth;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        body {
-            font-family: var(--font-sans);
-            font-size: 18px;
-            line-height: 1.65;
-            color: var(--text-primary);
-            background-color: var(--bg-light);
-        }
-
-        /* ============================================
-           TYPOGRAPHY
-           ============================================ */
-        h1, h2, h3 {
-            font-family: var(--font-serif);
-            font-weight: 500;
-            color: var(--text-anchor);
-            line-height: 1.2;
-        }
-
-        h1 {
-            font-size: 72px;
-            letter-spacing: -0.02em;
-        }
-
-        h2 {
-            font-size: 48px;
-            letter-spacing: -0.01em;
-        }
-
-        h3 {
-            font-size: 22px;
-            font-weight: 500;
-        }
-
-        p {
-            max-width: var(--container-narrow);
-        }
-
-        .large-text {
-            font-size: 24px;
-            line-height: 1.5;
-        }
-
-        .support-text {
-            font-size: 17px;
-            color: var(--text-primary);
-            opacity: 0.85;
-        }
-
-        /* Section Labels */
-        .section-label {
-            font-family: var(--font-mono);
-            font-size: 13px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            color: var(--accent);
-            text-transform: uppercase;
-            margin-bottom: 24px;
-            display: block;
-        }
-
-        /* Dark section label adjustment */
-        .section--dark .section-label {
-            color: var(--accent);
-        }
-
-        /* Light section label - needs darker color for contrast */
-        .section--light .section-label {
-            color: var(--text-primary);
-            opacity: 0.5;
-        }
-
-        /* ============================================
-           LAYOUT
-           ============================================ */
-        .container {
-            max-width: var(--container-max);
-            margin: 0 auto;
-            padding: 0 48px;
-        }
-
-        .container--wide {
-            max-width: var(--container-wide);
-        }
-
-        .container--narrow {
-            max-width: var(--container-narrow);
-        }
-
-        section {
-            padding: 80px 0;
-        }
-
-        .section--light {
-            background-color: var(--bg-light);
-        }
-
-        .section--dark {
-            background-color: var(--bg-structural);
-            color: var(--bg-light);
-        }
-
-        .section--dark h2,
-        .section--dark h3 {
-            color: var(--bg-light);
-        }
-
-        /* ============================================
-           HEADER
-           ============================================ */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background-color: var(--bg-light);
-            border-bottom: 1px solid var(--accent);
-        }
-
-        .header__inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 48px;
-            max-width: var(--container-wide);
-            margin: 0 auto;
-        }
-
-        .header__logo {
-            font-family: var(--font-serif);
-            font-size: 28px;
-            font-weight: 500;
-            color: var(--text-anchor);
-            text-decoration: none;
-        }
-
-        .header__nav {
-            display: flex;
-            align-items: center;
-            gap: 40px;
-        }
-
-        .header__link {
-            font-family: var(--font-sans);
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--text-primary);
-            text-decoration: none;
-            transition: opacity 0.2s ease;
-        }
-
-        .header__link:hover {
-            opacity: 0.7;
-        }
-
-        .header__cta {
-            font-family: var(--font-sans);
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--bg-light);
-            background-color: var(--text-anchor);
-            padding: 12px 24px;
-            text-decoration: none;
-            transition: opacity 0.2s ease;
-        }
-
-        .header__cta:hover {
-            opacity: 0.9;
-        }
-
-        /* ============================================
-           SECTION 1 — ANCHOR
-           ============================================ */
-        .section-anchor {
-            padding-top: 160px;
-            padding-bottom: 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .section-anchor h1 {
-            margin-bottom: 32px;
-        }
-
-        .section-anchor .large-text {
-            margin-bottom: 40px;
-            max-width: 680px;
-        }
-
-        .section-anchor .support-text {
-            margin-bottom: 48px;
-        }
-
-        .btn-primary {
-            display: inline-block;
-            font-family: var(--font-sans);
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--bg-light);
-            background-color: var(--text-anchor);
-            padding: 16px 32px;
-            text-decoration: none;
-            transition: opacity 0.2s ease;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-
-        /* ============================================
-           LOGO CAROUSEL
-           ============================================ */
-        .section-logos {
-            padding: 48px 0;
-            border-bottom: 1px solid var(--accent);
-            overflow: hidden;
-        }
-
-        .section-logos .section-label {
-            margin-bottom: 32px;
-        }
-
-        .logos-track {
-            display: flex;
-            animation: scroll 30s linear infinite;
-            width: max-content;
-        }
-
-        .logos-track:hover {
-            animation-play-state: paused;
-        }
-
-        .logos-slide {
-            display: flex;
-            align-items: center;
-            gap: 200px;
-            padding: 0 100px;
-        }
-
-        .logo-item {
-            height: 130px;
-            width: auto;
-            max-width: 320px;
-            object-fit: contain;
-            opacity: 0.6;
-            filter: grayscale(100%);
-            transition: opacity 0.3s ease, filter 0.3s ease;
-        }
-
-        .logo-item:hover {
-            opacity: 0.9;
-            filter: grayscale(0%);
-        }
-
-        @keyframes scroll {
-            0% {
-                transform: translateX(0);
-            }
-            100% {
-                transform: translateX(-50%);
-            }
-        }
-
-        @media (max-width: 640px) {
-            .logos-slide {
-                gap: 100px;
-                padding: 0 50px;
-            }
-
-            .logo-item {
-                height: 90px;
-                max-width: 200px;
-            }
-        }
-
-        /* ============================================
-           SECTION 2 — RECOGNITION
-           ============================================ */
-        .section-recognition {
-            padding: 80px 0;
-        }
-
-        .section-recognition h2 {
-            margin-bottom: 48px;
-        }
-
-        .recognition-list {
-            margin-bottom: 48px;
-        }
-
-        .recognition-item {
-            display: grid;
-            grid-template-columns: 64px 1fr;
-            gap: 24px;
-            padding: 32px 0;
-            border-bottom: 1px solid var(--accent);
-            align-items: baseline;
-        }
-
-        .recognition-item:first-child {
-            border-top: 1px solid var(--accent);
-        }
-
-        .recognition-number {
-            font-family: var(--font-mono);
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--accent);
-        }
-
-        .recognition-text {
-            font-size: 20px;
-            color: var(--text-primary);
-        }
-
-        .bridge-line {
-            font-family: var(--font-serif);
-            font-size: 26px;
-            font-weight: 500;
-            color: var(--text-anchor);
-            max-width: 600px;
-            line-height: 1.4;
-        }
-
-        .closing-statement {
-            padding-top: 48px;
-            max-width: 640px;
-        }
-
-        .closing-statement p {
-            font-size: 18px;
-            line-height: 1.7;
-            color: var(--text-primary);
-            opacity: 0.85;
-        }
-
-        /* ============================================
-           SECTION 3 — WHAT NEXUS UNLOCKS
-           ============================================ */
-        .section-unlocks {
-            padding: 80px 0;
-        }
-
-        .section-unlocks h2 {
-            margin-bottom: 48px;
-        }
-
-        .unlocks-intro {
-            margin-bottom: 64px;
-            max-width: 720px;
-        }
-
-        .capabilities-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 48px 64px;
-            margin-bottom: 64px;
-        }
-
-        .capability {
-            padding-bottom: 48px;
-            border-bottom: 1px solid var(--accent);
-        }
-
-        .capability-label {
-            font-family: var(--font-mono);
-            font-size: 12px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            color: var(--text-primary);
-            text-transform: uppercase;
-            opacity: 0.5;
-            margin-bottom: 16px;
-            display: block;
-        }
-
-        .capability h3 {
-            margin-bottom: 16px;
-            color: var(--text-anchor);
-        }
-
-        .capability p {
-            font-size: 17px;
-            color: var(--text-primary);
-            opacity: 0.85;
-        }
-
-        /* ============================================
-           SECTION 4 — HOW NEXUS WORKS
-           ============================================ */
-        .section-approach {
-            padding: 80px 0;
-            background-color: var(--bg-light);
-        }
-
-        .section-approach h2 {
-            margin-bottom: 48px;
-        }
-
-        .approach-intro {
-            margin-bottom: 64px;
-            max-width: 720px;
-        }
-
-        .principles-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 64px;
-        }
-
-        .principles-table thead th {
-            font-family: var(--font-mono);
-            font-size: 12px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: var(--text-primary);
-            opacity: 0.5;
-            text-align: left;
-            padding: 16px 0;
-            border-bottom: 1px solid var(--accent);
-        }
-
-        .principles-table thead th:first-child {
-            width: 280px;
-        }
-
-        .principles-table tbody td {
-            padding: 32px 0;
-            padding-right: 48px;
-            border-bottom: 1px solid var(--accent);
-            vertical-align: top;
-        }
-
-        .principles-table tbody td:first-child {
-            font-family: var(--font-serif);
-            font-size: 20px;
-            font-weight: 500;
-            color: var(--text-anchor);
-        }
-
-        .principles-table tbody td:last-child {
-            font-size: 17px;
-            color: var(--text-primary);
-            opacity: 0.85;
-        }
-
-        /* ============================================
-           SECTION 5 — START A CONVERSATION
-           ============================================ */
-        .section-conversation {
-            padding: 80px 0;
-            text-align: center;
-        }
-
-        .section-conversation .container {
-            max-width: 640px;
-        }
-
-        .section-conversation h2 {
-            margin-bottom: 32px;
-            font-size: 42px;
-        }
-
-        .section-conversation > .container > p {
-            margin: 0 auto 48px;
-            font-size: 18px;
-        }
-
-        .no-pitch {
-            font-family: var(--font-mono);
-            font-size: 14px;
-            color: var(--text-primary);
-            opacity: 0.6;
-            margin-bottom: 48px;
-            line-height: 1.8;
-        }
-
-        /* ============================================
-           FOOTER
-           ============================================ */
-        .footer {
-            border-top: 1px solid var(--accent);
-            padding: 32px 0;
-        }
-
-        .footer__inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: var(--container-wide);
-            margin: 0 auto;
-            padding: 0 48px;
-        }
-
-        .footer__copyright {
-            font-family: var(--font-mono);
-            font-size: 13px;
-            color: var(--accent);
-        }
-
-        .footer__links {
-            display: flex;
-            gap: 32px;
-        }
-
-        .footer__link {
-            font-family: var(--font-sans);
-            font-size: 14px;
-            color: var(--text-primary);
-            opacity: 0.6;
-            text-decoration: none;
-            transition: opacity 0.2s ease;
-        }
-
-        .footer__link:hover {
-            opacity: 1;
-        }
-
-        /* ============================================
-           SCROLL REVEAL
-           ============================================ */
-        .reveal {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.25s ease, transform 0.25s ease;
-        }
-
-        .reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* ============================================
-           RESPONSIVE — TABLET
-           ============================================ */
-        @media (max-width: 968px) {
-            h1 {
-                font-size: 56px;
-            }
-
-            h2 {
-                font-size: 40px;
-            }
-
-            section {
-                padding: 80px 0;
-            }
-
-            .container {
-                padding: 0 32px;
-            }
-
-            .header__inner {
-                padding: 16px 32px;
-            }
-
-            .header__nav {
-                gap: 24px;
-            }
-
-            .section-anchor {
-                padding-top: 160px;
-                padding-bottom: 120px;
-            }
-
-            .capabilities-grid {
-                grid-template-columns: 1fr;
-                gap: 48px;
-            }
-
-            .core-text {
-                font-size: 26px;
-            }
-
-            .core-number {
-                font-size: 40px;
-            }
-
-            .principles-table thead th:first-child {
-                width: 200px;
-            }
-        }
-
-        /* ============================================
-           RESPONSIVE — MOBILE
-           ============================================ */
-        @media (max-width: 640px) {
-            h1 {
-                font-size: 42px;
-            }
-
-            h2 {
-                font-size: 32px;
-            }
-
-            .large-text {
-                font-size: 20px;
-            }
-
-            body {
-                font-size: 16px;
-            }
-
-            .container {
-                padding: 0 24px;
-            }
-
-            .header__inner {
-                padding: 16px 24px;
-            }
-
-            .header__nav {
-                display: none;
-            }
-
-            .header__logo {
-                font-size: 24px;
-            }
-
-            .section-anchor {
-                padding-top: 140px;
-                padding-bottom: 80px;
-                min-height: auto;
-            }
-
-            .recognition-item {
-                grid-template-columns: 48px 1fr;
-                gap: 16px;
-                padding: 24px 0;
-            }
-
-            .recognition-text {
-                font-size: 18px;
-            }
-
-            .bridge-line {
-                font-size: 22px;
-            }
-
-            .core-question {
-                grid-template-columns: 1fr;
-                gap: 12px;
-                padding: 32px 0;
-            }
-
-            .core-number {
-                font-size: 32px;
-            }
-
-            .core-text {
-                font-size: 22px;
-            }
-
-            .section-core h2 {
-                margin-bottom: 64px;
-            }
-
-            .capability h3 {
-                font-size: 20px;
-            }
-
-            .principles-table {
-                display: block;
-            }
-
-            .principles-table thead {
-                display: none;
-            }
-
-            .principles-table tbody {
-                display: block;
-            }
-
-            .principles-table tr {
-                display: block;
-                padding: 24px 0;
-                border-bottom: 1px solid var(--accent);
-            }
-
-            .principles-table td {
-                display: block;
-                padding: 0 !important;
-                border: none !important;
-            }
-
-            .principles-table td:first-child {
-                margin-bottom: 12px;
-            }
-
-            .footer__inner {
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
-                padding: 0 24px;
-            }
-
-            .section-conversation h2 {
-                font-size: 32px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus. Future ready governance.</title>
+<meta name="description" content="Nexus turns governance data, documents, projects, and stakeholder input into structured, actionable evidence.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  :root {
+    --bg: #F5F5F2;
+    --text: #0F1C2E;
+    --anchor: #233554;
+    --accent: #D6CFB8;
+    --muted: #5A6578;
+    --white: #FFFFFF;
+    --border: rgba(35, 53, 84, 0.12);
+    --border-strong: rgba(35, 53, 84, 0.25);
+    --border-on-dark: rgba(214, 207, 184, 0.18);
+    --serif: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.6;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ---------- NAV ---------- */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 28px 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(245, 245, 242, 0);
+    transition: background 0.3s, padding 0.3s, border-color 0.3s;
+    z-index: 100;
+    border-bottom: 1px solid transparent;
+  }
+  nav.scrolled {
+    background: rgba(245, 245, 242, 0.95);
+    border-bottom-color: var(--border);
+    padding: 16px 56px;
+  }
+  nav.on-dark:not(.scrolled) { background: transparent; }
+  nav.on-dark:not(.scrolled) .wordmark { color: var(--bg); }
+  nav.on-dark:not(.scrolled) .nav-links a { color: var(--bg); }
+  nav.on-dark:not(.scrolled) .nav-links a::after { background: var(--accent); }
+  nav.on-dark:not(.scrolled) .nav-cta { background: var(--accent); color: var(--text); }
+
+  .wordmark {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--anchor);
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    align-items: center;
+    list-style: none;
+  }
+  .nav-links a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: -4px;
+    width: 0;
+    height: 1px;
+    background: var(--anchor);
+    transition: width 0.25s ease, background 0.3s;
+  }
+  .nav-links a:hover::after { width: 100%; }
+
+  .nav-cta {
+    padding: 10px 22px;
+    background: var(--anchor);
+    color: #FFFFFF !important;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: background 0.2s, transform 0.2s, color 0.3s;
+  }
+  .nav-cta:hover { background: var(--text); transform: translateY(-1px); }
+  .nav-links a.nav-cta::after { display: none; }
+
+  /* ---------- SECTION ---------- */
+  section {
+    padding: 160px 56px;
+    max-width: 1280px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .section-label {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .section-label::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .lead {
+    font-family: var(--sans);
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--text);
+    opacity: 0.8;
+    max-width: 680px;
+    margin-bottom: 72px;
+    font-weight: 400;
+  }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: 54px;
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    color: var(--text);
+    margin-bottom: 36px;
+  }
+  h2 em {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    padding: 240px 56px 180px;
+    max-width: 1280px;
+    margin: 0 auto;
+    position: relative;
+    min-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--anchor);
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 36px;
+    height: 1px;
+    background: var(--anchor);
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(64px, 11vw, 148px);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    color: var(--text);
+    margin-bottom: 44px;
+    max-width: 14ch;
+  }
+  .hero h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--anchor);
+  }
+
+  .hero .sub {
+    font-family: var(--sans);
+    font-size: 20px;
+    line-height: 1.55;
+    color: var(--text);
+    opacity: 0.78;
+    max-width: 640px;
+    margin-bottom: 56px;
+    font-weight: 400;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .cta-primary {
+    padding: 18px 32px;
+    background: var(--anchor);
+    color: #FFFFFF;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .cta-primary:hover { background: var(--text); transform: translateY(-1px); }
+  .cta-secondary {
+    padding: 18px 8px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--accent);
+    transition: gap 0.25s, border-color 0.25s;
+  }
+  .cta-secondary:hover { gap: 16px; border-color: var(--anchor); }
+
+  /* ---------- WHAT WE DO — EDITORIAL LINES ---------- */
+  .editorial-lines {
+    border-top: 1px solid var(--accent);
+    margin-top: 8px;
+  }
+  .editorial-line {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: 48px;
+    align-items: baseline;
+    padding: 56px 0;
+    border-bottom: 1px solid var(--accent);
+    transition: background 0.4s;
+  }
+  .editorial-line:hover {
+    background: rgba(214, 207, 184, 0.2);
+  }
+  .editorial-line-num {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 56px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .editorial-line-text {
+    font-family: var(--serif);
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1.22;
+    letter-spacing: -0.012em;
+    color: var(--text);
+  }
+  .editorial-line-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ---------- WHO WE ARE ---------- */
+  .who-prose {
+    max-width: 820px;
+  }
+  .who-prose p {
+    font-family: var(--sans);
+    font-size: 19px;
+    line-height: 1.65;
+    margin-bottom: 32px;
+    color: var(--text);
+    opacity: 0.82;
+  }
+  .who-prose p:last-child { margin-bottom: 0; }
+  .who-prose .pullout {
+    font-family: var(--serif);
+    font-size: 34px;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    font-style: italic;
+    color: var(--anchor);
+    margin: 56px 0 0 -40px;
+    padding: 0 0 0 40px;
+    border-left: 2px solid var(--accent);
+    max-width: 860px;
+  }
+
+  /* ---------- HOW WE WORK — DARK SECTION ---------- */
+  .how-section-outer {
+    background: var(--anchor);
+    margin-top: 80px;
+    padding: 0;
+    max-width: none;
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+  .how-section-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 160px 56px;
+    color: var(--bg);
+  }
+  .how-section-inner .section-label { color: var(--accent); }
+  .how-section-inner .section-label::before { background: var(--accent); }
+  .how-section-inner h2 { color: var(--bg); }
+  .how-section-inner .lead { color: var(--bg); opacity: 0.75; }
+
+  .how-subsection-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-top: 96px;
+    margin-bottom: 20px;
+  }
+  .how-subsection-label:first-of-type { margin-top: 0; }
+  .how-subsection-title {
+    font-family: var(--serif);
+    font-size: 38px;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.012em;
+    color: var(--bg);
+    margin-bottom: 20px;
+  }
+  .how-subsection-title em { font-style: italic; }
+  .how-subsection-lead {
+    font-family: var(--sans);
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--bg);
+    opacity: 0.72;
+    max-width: 720px;
+    margin-bottom: 64px;
+  }
+
+  /* ---------- ENGINE INGESTION VIZ ---------- */
+  .engine-compose {
+    display: grid;
+    grid-template-columns: 1fr 60px 260px;
+    gap: 0;
+    margin: 32px 0 56px;
+    align-items: stretch;
+  }
+
+  /* Specimens column */
+  .specimens {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+  }
+
+  .specimen {
+    background: var(--bg);
+    border: 1px solid var(--border-on-dark);
+    padding: 20px 24px;
+    color: var(--text);
+    position: relative;
+    min-height: 104px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .specimen-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .specimen-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  /* Quantitative specimen */
+  .specimen-quant-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .specimen-quant-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 18px;
+    align-items: center;
+    font-size: 13px;
+  }
+  .specimen-quant-row .q-name {
+    font-family: var(--sans);
+    color: var(--text);
+  }
+  .specimen-quant-row .q-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--anchor);
+  }
+  .specimen-quant-row .q-spark {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--anchor);
+    opacity: 0.55;
+    letter-spacing: -0.05em;
+    line-height: 1;
+  }
+
+  /* Documentary specimen */
+  .specimen-doc-title {
+    font-family: var(--serif);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .specimen-doc-body {
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text);
+    opacity: 0.88;
+  }
+  .specimen-doc-body mark {
+    background: rgba(214, 207, 184, 0.55);
+    padding: 1px 3px;
+    color: var(--text);
+    border-bottom: 1.5px solid var(--anchor);
+  }
+
+  /* Project specimen */
+  .specimen-project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .specimen-project-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 14px;
+    align-items: center;
+    font-size: 12.5px;
+    font-family: var(--sans);
+  }
+  .specimen-project-row .p-name { color: var(--text); }
+  .specimen-project-row .p-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .specimen-project-row .p-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--anchor);
+  }
+  .specimen-project-row .p-dot.complete { background: var(--accent); }
+
+  /* Stakeholder specimen */
+  .specimen-quote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--text);
+    padding-left: 14px;
+    border-left: 2px solid var(--accent);
+  }
+  .specimen-quote-source {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-top: 8px;
+    padding-left: 14px;
+  }
+
+  /* Connector column */
+  .connectors {
+    position: relative;
+  }
+  .connectors svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .connector-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1;
+    opacity: 0.5;
+  }
+  .connector-dot {
+    fill: var(--accent);
+  }
+  .connector-particle {
+    fill: var(--accent);
+  }
+
+  /* Engine column */
+  .engine-col-engine {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 24px 12px;
+    border: 1px solid var(--border-on-dark);
+    background: rgba(214, 207, 184, 0.03);
+  }
+  .engine-spine-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-align: center;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .engine-spine-label strong {
+    display: block;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: var(--bg);
+    text-transform: none;
+    margin-top: 4px;
+  }
+  .engine-modules {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 200px;
+  }
+  .engine-module {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--bg);
+    opacity: 0.55;
+    padding: 11px 14px;
+    border: 1px solid var(--border-on-dark);
+    text-align: center;
+    background: rgba(214, 207, 184, 0.03);
+    animation: moduleGlow 6s ease-in-out infinite;
+  }
+  .engine-module:nth-child(1) { animation-delay: 0s; }
+  .engine-module:nth-child(2) { animation-delay: 1.2s; }
+  .engine-module:nth-child(3) { animation-delay: 2.4s; }
+  .engine-module:nth-child(4) { animation-delay: 3.6s; }
+  @keyframes moduleGlow {
+    0%, 100% { opacity: 0.45; border-color: var(--border-on-dark); }
+    50% { opacity: 1; border-color: var(--accent); color: var(--bg); }
+  }
+
+  .engine-caption {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--bg);
+    opacity: 0.6;
+    text-align: center;
+    margin-top: 32px;
+    letter-spacing: 0.02em;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+    font-style: italic;
+  }
+
+  /* Layers (inputs / modules / outputs explainer) */
+  .layers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 48px;
+    margin-top: 72px;
+    padding-top: 56px;
+    border-top: 1px solid var(--border-on-dark);
+  }
+  .layer-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .layer-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--bg);
+    margin-bottom: 14px;
+  }
+  .layer-desc {
+    font-family: var(--sans);
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--bg);
+    opacity: 0.72;
+  }
+
+  /* Legacy closing prose */
+  .legacy-close {
+    margin-top: 112px;
+    padding-top: 56px;
+    border-top: 1px solid var(--border-on-dark);
+    max-width: 760px;
+  }
+  .legacy-close p {
+    font-family: var(--serif);
+    font-size: 26px;
+    line-height: 1.4;
+    letter-spacing: -0.008em;
+    color: var(--bg);
+    margin-bottom: 20px;
+  }
+  .legacy-close p:last-child { margin-bottom: 0; }
+  .legacy-close em { font-style: italic; color: var(--accent); font-weight: 400; }
+
+  /* ---------- CONTACT ---------- */
+  .contact {
+    text-align: left;
+    padding-bottom: 180px;
+  }
+  .contact-email {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+    border-bottom: 1.5px solid var(--anchor);
+    padding: 6px 0;
+    cursor: pointer;
+    text-decoration: none;
+    transition: gap 0.25s;
+  }
+  .contact-email:hover { gap: 20px; }
+  .contact-email::after {
+    content: '→';
+    color: var(--anchor);
+    font-weight: 400;
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    border-top: 1px solid var(--accent);
+    padding: 36px 56px;
+    text-align: center;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  footer .wordmark-small {
+    font-family: var(--serif);
+    font-weight: 700;
+    color: var(--anchor);
+  }
+
+  /* ---------- REVEAL ---------- */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+  }
+  .fade-in.is-in {
+    opacity: 1;
+    transform: none;
+  }
+  .fade-in-stagger > * {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .fade-in-stagger.is-in > *:nth-child(1) { transition-delay: 0.05s; }
+  .fade-in-stagger.is-in > *:nth-child(2) { transition-delay: 0.15s; }
+  .fade-in-stagger.is-in > *:nth-child(3) { transition-delay: 0.25s; }
+  .fade-in-stagger.is-in > *:nth-child(4) { transition-delay: 0.35s; }
+  .fade-in-stagger.is-in > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 960px) {
+    nav { padding: 20px 28px; }
+    nav.scrolled { padding: 14px 28px; }
+    .nav-links { gap: 22px; }
+    .nav-links li:nth-child(2),
+    .nav-links li:nth-child(3),
+    .nav-links li:nth-child(4) { display: none; }
+    section, .hero { padding: 120px 28px; max-width: 100%; }
+    .hero { padding: 180px 28px 120px; min-height: 70vh; }
+    h2 { font-size: 38px; }
+    .editorial-line {
+      grid-template-columns: 60px 1fr;
+      gap: 20px;
+      padding: 40px 0;
+    }
+    .editorial-line-num { font-size: 38px; }
+    .editorial-line-text { font-size: 22px; }
+    .editorial-line-tag { grid-column: 1 / -1; margin-top: 10px; }
+    .who-prose .pullout { font-size: 24px; margin: 40px 0 0 0; padding-left: 20px; }
+    .how-section-inner { padding: 120px 28px; }
+    .how-subsection-title { font-size: 28px; }
+    .engine-compose { grid-template-columns: 1fr; gap: 20px; }
+    .connectors { display: none; }
+    .engine-col-engine { padding: 24px; }
+    .engine-modules { flex-direction: row; max-width: 100%; flex-wrap: wrap; }
+    .engine-module { flex: 1 1 40%; font-size: 9px; padding: 9px 4px; }
+    .specimen { min-height: 0; }
+    .layers { grid-template-columns: 1fr; gap: 36px; padding-top: 40px; margin-top: 48px; }
+    .legacy-close p { font-size: 20px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in, .fade-in-stagger > * { opacity: 1; transform: none; }
+    .engine-module { animation: none; opacity: 0.7; }
+    html { scroll-behavior: auto; }
+  }
+</style>
 </head>
 <body>
 
-    <!-- ============================================
-         HEADER
-         ============================================ -->
-    <header class="header">
-        <div class="header__inner">
-            <a href="#" class="header__logo">Nexus</a>
-            <nav class="header__nav">
-                <a href="#unlocks" class="header__link">What Nexus Unlocks</a>
-                <a href="#how-works" class="header__link">How Nexus Works</a>
-                <a href="/vlr-observatory/" class="header__link">VLR Observatory</a>
-                <a href="#conversation" class="header__cta">Start a conversation</a>
-            </nav>
-        </div>
-    </header>
+<nav id="nav">
+  <a href="#top" class="wordmark">Nexus</a>
+  <ul class="nav-links">
+    <li><a href="#what-we-do">What we do</a></li>
+    <li><a href="#who-we-are">Who we are</a></li>
+    <li><a href="#how-we-work">How we work</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="/governance-scan/" class="nav-cta">Governance Scan</a></li>
+  </ul>
+</nav>
 
-    <!-- ============================================
-         SECTION 1 — ANCHOR
-         ============================================ -->
-    <section class="section-anchor section--light">
-        <div class="container">
-            <span class="section-label">Governance Capability</span>
-            <h1 class="reveal">Moving faster with confidence — under continuous change</h1>
-            <p class="large-text reveal">We help cities and governments turn data, projects, and international commitments into a decision-ready governance that supports clear, defensible decisions — as technologies, risks, and expectations continuously evolve.</p>
-            <p class="support-text reveal" style="margin-bottom: 24px;"><strong>Internationally aligned by design</strong><br>Nexus integrates international standards into governance design — ensuring that decisions made at speed remain aligned with the frameworks by which institutions are assessed.</p>
-            <p class="support-text reveal">A governance capability partner — not a traditional consultancy.</p>
-            <a href="#conversation" class="btn-primary reveal">Start a conversation</a>
-        </div>
-    </section>
+<section class="hero" id="top">
+  <div class="eyebrow">Governance Intelligence</div>
+  <h1>Future <em>ready</em><br>governance.</h1>
+  <p class="sub">We work with cities, governments, research institutions, and international organisations to turn the data, documents, projects, and stakeholder input they already produce into evidence that strengthens governance, unlocks funding, and supports the delivery of global commitments.</p>
+  <div class="hero-ctas">
+    <a href="#what-we-do" class="cta-primary">See what we do</a>
+    <a href="#contact" class="cta-secondary">Start a conversation →</a>
+  </div>
+</section>
 
-    <!-- ============================================
-         LOGO CAROUSEL
-         ============================================ -->
-    <section class="section-logos section--light">
-        <div class="container">
-            <span class="section-label">Trusted by</span>
-        </div>
-        <div class="logos-track">
-            <!-- First set of logos -->
-            <div class="logos-slide">
-                <img src="images/logos/eu-logo.webp" alt="European Commission JRC" class="logo-item">
-                <img src="images/logos/BGG-Logo.png" alt="BCG" class="logo-item">
+<section id="what-we-do">
+  <div class="section-label fade-in">What we do</div>
+  <div class="editorial-lines fade-in-stagger">
+    <div class="editorial-line">
+      <span class="editorial-line-num">01</span>
+      <div class="editorial-line-text">Evidence delivery against international targets and global commitments.</div>
+      <span class="editorial-line-tag">Reporting</span>
+    </div>
+    <div class="editorial-line">
+      <span class="editorial-line-num">02</span>
+      <div class="editorial-line-text">Structured analysis of governance documents, reports, and instruments at scale.</div>
+      <span class="editorial-line-tag">Portfolio intelligence</span>
+    </div>
+    <div class="editorial-line">
+      <span class="editorial-line-num">03</span>
+      <div class="editorial-line-text">Technological infrastructure that governance institutions can own, evolve, and trust.</div>
+      <span class="editorial-line-tag">Future-ready systems</span>
+    </div>
+  </div>
+</section>
+
+<section id="who-we-are">
+  <div class="section-label fade-in">Who we are</div>
+  <h2 class="fade-in">Policy and <em>technology</em>,<br>on the same team.</h2>
+
+  <div class="who-prose fade-in">
+    <p>Nexus exists at an unusual intersection. We are policy analysts and engineers, working together from the first day of every engagement.</p>
+
+    <div class="pullout">Technology is not an add-on to our consulting work. It is built from the inside, by the same team that asks the governance questions it is meant to answer.</div>
+  </div>
+</section>
+
+<div class="how-section-outer" id="how-we-work">
+  <div class="how-section-inner">
+    <div class="section-label fade-in">How we work</div>
+    <h2 class="fade-in">Infrastructure and <em>legacy</em>.</h2>
+    <p class="lead fade-in">Every engagement is designed to leave something behind. Not just a report, but the data, the method, and the capacity to keep using both.</p>
+
+    <div class="how-subsection-label fade-in">01 / The infrastructure</div>
+    <div class="how-subsection-title fade-in">Four kinds of evidence, <em>read as one</em>.</div>
+    <p class="how-subsection-lead fade-in">Governance is produced across four worlds: numbers, documents, projects, and the people they affect. Each is read in isolation today. The Nexus Intelligence Engine ingests all four together, and analyses them as one connected body of evidence.</p>
+
+    <div class="engine-compose fade-in" role="img" aria-label="Four kinds of governance data, quantitative indicators, documentary evidence, project portfolios, and stakeholder input, flow into the Nexus Intelligence Engine.">
+
+      <div class="specimens">
+        <article class="specimen specimen-quantitative">
+          <div class="specimen-label">Quantitative</div>
+          <div class="specimen-quant-rows">
+            <div class="specimen-quant-row">
+              <span class="q-name">Modal share, transit</span>
+              <span class="q-val">38.4%</span>
+              <span class="q-spark">▁▂▃▃▄▅</span>
             </div>
-            <!-- Duplicate for seamless loop -->
-            <div class="logos-slide">
-                <img src="images/logos/eu-logo.webp" alt="European Commission JRC" class="logo-item">
-                <img src="images/logos/BGG-Logo.png" alt="BCG" class="logo-item">
+            <div class="specimen-quant-row">
+              <span class="q-name">NO₂ concentration</span>
+              <span class="q-val">42 µg/m³</span>
+              <span class="q-spark">▇▆▅▄▃▂</span>
             </div>
-        </div>
-    </section>
-
-    <!-- ============================================
-         SECTION 2 — RECOGNITION
-         ============================================ -->
-    <section class="section-recognition section--light">
-        <div class="container">
-            <span class="section-label">Governance problems</span>
-            <h2 class="reveal">Most governments today face:</h2>
-            
-            <div class="recognition-list">
-                <div class="recognition-item reveal">
-                    <span class="recognition-number">01</span>
-                    <span class="recognition-text">Too many agendas, too little clarity</span>
-                </div>
-                <div class="recognition-item reveal">
-                    <span class="recognition-number">02</span>
-                    <span class="recognition-text">Projects multiplying without a clear overview</span>
-                </div>
-                <div class="recognition-item reveal">
-                    <span class="recognition-number">03</span>
-                    <span class="recognition-text">Data spread across departments, formats, and systems</span>
-                </div>
-                <div class="recognition-item reveal">
-                    <span class="recognition-number">04</span>
-                    <span class="recognition-text">Reporting that consumes time but doesn't help decisions</span>
-                </div>
+            <div class="specimen-quant-row">
+              <span class="q-name">Emissions vs 2019</span>
+              <span class="q-val">−18.2%</span>
+              <span class="q-spark">█▇▆▅▄▂</span>
             </div>
-            
-            <p class="bridge-line reveal">These are not delivery problems. They are governance problems.</p>
-            <p class="bridge-line reveal" style="margin-top: 24px; font-size: 22px; opacity: 0.85;">Increasingly, they are also technological governance problems — where institutions adopt tools faster than they can integrate, govern, or exit them.</p>
-        </div>
-    </section>
+          </div>
+        </article>
 
-    <!-- ============================================
-         SECTION 3 — WHAT NEXUS UNLOCKS
-         ============================================ -->
-    <section id="unlocks" class="section-unlocks section--light">
-        <div class="container">
-            <span class="section-label">Capabilities</span>
-            <h2 class="reveal">What Nexus Unlocks</h2>
-            <p class="unlocks-intro reveal">Nexus strengthens how governments operate by making what is already there — strategies, projects, data, commitments — visible, connected, and usable at scale.</p>
-            
-            <div class="capabilities-grid">
-                <div class="capability reveal">
-                    <span class="capability-label">Coherence</span>
-                    <h3>Strategic Coherence across Commitments</h3>
-                    <p>Revealing how strategies, mandates, and international commitments actually relate — and where they pull in different directions.</p>
-                </div>
-                
-                <div class="capability reveal">
-                    <span class="capability-label">Visibility</span>
-                    <h3>System-Level Visibility of Action</h3>
-                    <p>Turning fragmented projects into a readable system of action across departments, timelines, and places.</p>
-                </div>
-                
-                <div class="capability reveal">
-                    <span class="capability-label">Intelligence</span>
-                    <h3>Performance Intelligence with Strategic Leverage</h3>
-                    <p>Using data to surface trends, risks, and opportunities — to inform decisions, not just report performance or justify tools.</p>
-                </div>
-                
-                <div class="capability reveal">
-                    <span class="capability-label">Legitimacy</span>
-                    <h3>Legitimacy that Travels Beyond the Institution</h3>
-                    <p>Anchoring decisions in evidence that resonates internally, politically, and internationally.</p>
-                </div>
+        <article class="specimen specimen-documentary">
+          <div class="specimen-label">Documentary</div>
+          <div class="specimen-doc-title">§3.2 Sustainable mobility</div>
+          <div class="specimen-doc-body">The Plan sets a target of <mark>45% modal share for public transport by 2030</mark>, supported by the extension of three metro lines and bus rapid transit corridors.</div>
+        </article>
+
+        <article class="specimen specimen-project">
+          <div class="specimen-label">Projects</div>
+          <div class="specimen-project-list">
+            <div class="specimen-project-row">
+              <span class="p-name">Northern Metro Extension</span>
+              <span class="p-date">2024–28</span>
+              <span class="p-dot" title="Active"></span>
             </div>
-            
-            <div class="closing-statement reveal">
-                <p>Nexus does not replace political judgment or institutional leadership.<br>
-                It ensures that technological change strengthens — rather than undermines — both.<br><br>
-                It equips governments with the visibility, structure, and confidence to act — and to be recognised for it.</p>
+            <div class="specimen-project-row">
+              <span class="p-name">BRT Corridor B</span>
+              <span class="p-date">2023–26</span>
+              <span class="p-dot" title="Active"></span>
             </div>
-        </div>
-    </section>
-
-    <!-- ============================================
-         SECTION 5 — HOW NEXUS WORKS
-         ============================================ -->
-    <section id="how-works" class="section-approach section--light">
-        <div class="container">
-            <span class="section-label">Approach</span>
-            <h2 class="reveal">How Nexus Works</h2>
-            <p class="approach-intro reveal">Nexus works through structured, modular processes designed to integrate into existing institutions — not disrupt them.</p>
-            
-            <table class="principles-table reveal">
-                <thead>
-                    <tr>
-                        <th>Principle</th>
-                        <th>Application</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Built on what already exists</td>
-                        <td>We work with the strategies, projects, data, and commitments you already have — making them more legible, connected, and actionable.</td>
-                    </tr>
-                    <tr>
-                        <td>Modular and flexible</td>
-                        <td>Our approach adapts to your timeline, political context, and institutional capacity — no rigid frameworks imposed.</td>
-                    </tr>
-                    <tr>
-                        <td>Process over outputs</td>
-                        <td>We transfer capability, not just deliver reports — so your team can maintain momentum and ownership.</td>
-                    </tr>
-                    <tr>
-                        <td>Speed with legitimacy</td>
-                        <td>Fast enough to matter, rigorous enough to stand behind — internally, politically, and internationally.</td>
-                    </tr>
-                    <tr>
-                        <td>No lock-in</td>
-                        <td>Our work is designed to become yours — no proprietary systems, no long-term dependencies.</td>
-                    </tr>
-                    <tr>
-                        <td>Technological neutrality, institutional control</td>
-                        <td>We do not promote tools or vendors. We design governance conditions under which technologies can be evaluated, adopted, challenged, or replaced without loss of coherence or autonomy.</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="closing-statement reveal">
-                <p>The goal is not to add another layer of work —<br>
-                but to make existing work governable under continuous change, and travel further, faster, and with confidence.</p>
+            <div class="specimen-project-row">
+              <span class="p-name">Fleet Electrification Phase 1</span>
+              <span class="p-date">2022–25</span>
+              <span class="p-dot complete" title="Complete"></span>
             </div>
-        </div>
-    </section>
+          </div>
+        </article>
 
-    <!-- ============================================
-         SECTION 6 — START A CONVERSATION
-         ============================================ -->
-    <section id="conversation" class="section-conversation section--light">
-        <div class="container">
-            <span class="section-label">Next Step</span>
-            <h2 class="reveal">If this resonates, the next step is a conversation.</h2>
-            <p class="reveal">We use initial conversations to understand context, constraints, and whether Nexus is the right partner.</p>
-            <p class="no-pitch reveal">No pitch decks.<br>No predefined packages.</p>
-            <a href="mailto:hello@nexusgovernance.eu" class="btn-primary reveal">Start a conversation</a>
-        </div>
-    </section>
+        <article class="specimen specimen-stakeholder">
+          <div class="specimen-label">Stakeholder</div>
+          <div class="specimen-quote">"Transit reliability in the northern districts remains the most-cited concern in community consultations."</div>
+          <div class="specimen-quote-source">District Forum · 2024</div>
+        </article>
+      </div>
 
-    <!-- ============================================
-         FOOTER
-         ============================================ -->
-    <footer class="footer">
-        <div class="footer__inner">
-            <span class="footer__copyright">Nexus © 2025</span>
-            <div class="footer__links">
-                <a href="#" class="footer__link">Privacy</a>
-                <a href="#" class="footer__link">Terms</a>
-            </div>
-        </div>
-    </footer>
+      <div class="connectors" aria-hidden="true">
+        <svg viewBox="0 0 60 500" preserveAspectRatio="none" width="100%" height="100%">
+          <!-- Four horizontal stems from each specimen, converging into a single line into the engine -->
+          <path class="connector-line" d="M 0 62 L 30 62 L 30 250" />
+          <path class="connector-line" d="M 0 188 L 30 188 L 30 250" />
+          <path class="connector-line" d="M 0 312 L 30 312 L 30 250" />
+          <path class="connector-line" d="M 0 438 L 30 438 L 30 250" />
+          <path class="connector-line" d="M 30 250 L 60 250" stroke-width="1.25" />
+          <circle class="connector-dot" cx="0" cy="62" r="2.5" />
+          <circle class="connector-dot" cx="0" cy="188" r="2.5" />
+          <circle class="connector-dot" cx="0" cy="312" r="2.5" />
+          <circle class="connector-dot" cx="0" cy="438" r="2.5" />
+          <circle class="connector-dot" cx="60" cy="250" r="3" />
+        </svg>
+      </div>
 
-    <!-- ============================================
-         SCROLL REVEAL SCRIPT
-         ============================================ -->
-    <script>
-        // Subtle scroll reveal - imperceptible, orientation-focused
-        document.addEventListener('DOMContentLoaded', function() {
-            const reveals = document.querySelectorAll('.reveal');
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            });
-            
-            reveals.forEach(el => observer.observe(el));
-        });
-    </script>
+      <div class="engine-col-engine" aria-hidden="true">
+        <div class="engine-spine-label">
+          Nexus
+          <strong>Intelligence Engine</strong>
+        </div>
+        <div class="engine-modules">
+          <div class="engine-module">Extraction</div>
+          <div class="engine-module">Normalisation</div>
+          <div class="engine-module">Mapping</div>
+          <div class="engine-module">Synthesis</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="engine-caption fade-in">Four kinds of evidence, read together. The boundaries between them are where the most important governance questions fall through.</p>
+
+    <div class="layers fade-in-stagger">
+      <div class="layer">
+        <div class="layer-num">Inputs</div>
+        <div class="layer-title">Four kinds of governance data.</div>
+        <p class="layer-desc">Triangulation of quantitative indicators, documentary evidence, project portfolios, and stakeholder input.</p>
+      </div>
+      <div class="layer">
+        <div class="layer-num">Modules</div>
+        <div class="layer-title">One analytical layer.</div>
+        <p class="layer-desc">Extraction, normalisation, mapping, and synthesis, applied together. What documents claim, what numbers show, what projects deliver, and what people experience become one picture.</p>
+      </div>
+      <div class="layer">
+        <div class="layer-num">Outputs</div>
+        <div class="layer-title">Reports and analysis.</div>
+        <p class="layer-desc">Structured reports the international community recognises, and analysis that reveals patterns across entire bodies of evidence.</p>
+      </div>
+    </div>
+
+    <div class="legacy-close fade-in">
+      <p>Every engagement leaves the institution stronger than it found it.</p>
+    </div>
+  </div>
+</div>
+
+<section class="contact" id="contact">
+  <div class="section-label fade-in">Start a conversation</div>
+  <h2 class="fade-in">If this resonates,<br>the next step is <em>a conversation</em>.</h2>
+  <p class="lead fade-in">We use initial conversations to understand context and whether Nexus is the right partner. No pitch decks. No predefined packages.</p>
+  <a href="#" class="contact-email fade-in" id="contact-addr">hello&#8203;&#64;&#8203;nexusgovernance.eu</a>
+</section>
+
+<footer>
+  <span class="wordmark-small">Nexus</span> &middot; &copy; 2026 &middot; Barcelona
+</footer>
+
+<!--
+  =============================================================================
+  ARCHIVED — DOCUMENT → EVIDENCE COMPOSITION (from v6)
+  Save for the future SDG Observatory page. This composition shows a cropped
+  policy document on the left being transformed by the Engine into structured
+  extracted evidence (indicator rows with SDG chips and target chips) on the
+  right. It visualises the transformation the Observatory performs on the
+  global VLR/governance corpus, and is the right visual for that product page
+  — not for the firm-level homepage, where ingestion of all four data types
+  is the message.
+
+  Referenced markup pattern:
+    <div class="engine-compose">  [doc-card] | [engine-spine] | [evidence-card]  </div>
+  Doc card: §3.2 Sustainable mobility paragraph with <mark> highlights.
+  Evidence card: rows of extracted indicators with SDG/NUA chips and page refs.
+  =============================================================================
+-->
+
+<script>
+(function(){
+  // Nav scroll behaviour + dark section awareness
+  var n = document.getElementById('nav');
+  var dark = document.getElementById('how-we-work');
+
+  function updateNav(){
+    if (!n) return;
+    if (window.scrollY > 40) n.classList.add('scrolled'); else n.classList.remove('scrolled');
+    if (dark) {
+      var r = dark.getBoundingClientRect();
+      var navH = n.offsetHeight;
+      if (r.top <= navH && r.bottom > navH) n.classList.add('on-dark');
+      else n.classList.remove('on-dark');
+    }
+  }
+  window.addEventListener('scroll', updateNav, { passive: true });
+  window.addEventListener('resize', updateNav);
+  updateNav();
+
+  // Reveal on scroll
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          e.target.classList.add('is-in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.fade-in, .fade-in-stagger').forEach(function(el){ io.observe(el); });
+  } else {
+    document.querySelectorAll('.fade-in, .fade-in-stagger').forEach(function(el){ el.classList.add('is-in'); });
+  }
+
+  // Email obfuscation
+  var a = document.getElementById('contact-addr');
+  if (a) {
+    var u = 'hello'; var d = 'nexusgovernance.eu';
+    a.textContent = u + String.fromCharCode(64) + d;
+    a.addEventListener('click', function(ev){
+      ev.preventDefault();
+      window.location.href = 'mai' + 'lto:' + u + String.fromCharCode(64) + d;
+    });
+  }
+})();
+</script>
 
 </body>
 </html>

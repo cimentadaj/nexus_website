@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus Governance Scan. A meta-analysis of the world's Voluntary Local Reviews.</title>
+<meta name="description" content="The Nexus Governance Scan is a structured meta-analysis of every published Voluntary Local Review. It turns the global VLR corpus into comparable evidence on policy actions, challenges, and commitments.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  :root {
+    --bg: #F5F5F2;
+    --text: #0F1C2E;
+    --anchor: #233554;
+    --accent: #D6CFB8;
+    --muted: #5A6578;
+    --white: #FFFFFF;
+    --border: rgba(35, 53, 84, 0.12);
+    --border-strong: rgba(35, 53, 84, 0.25);
+    --border-on-dark: rgba(214, 207, 184, 0.18);
+    --serif: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.6;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ---------- NAV ---------- */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 28px 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(245, 245, 242, 0);
+    transition: background 0.3s, padding 0.3s, border-color 0.3s;
+    z-index: 100;
+    border-bottom: 1px solid transparent;
+  }
+  nav.scrolled {
+    background: rgba(245, 245, 242, 0.95);
+    border-bottom-color: var(--border);
+    padding: 16px 56px;
+  }
+  nav.on-dark:not(.scrolled) { background: transparent; }
+  nav.on-dark:not(.scrolled) .wordmark-group,
+  nav.on-dark:not(.scrolled) .wordmark,
+  nav.on-dark:not(.scrolled) .wordmark-sub { color: var(--bg); }
+  nav.on-dark:not(.scrolled) .wordmark-divider { background: var(--accent); }
+  nav.on-dark:not(.scrolled) .nav-back { color: var(--bg); }
+  nav.on-dark:not(.scrolled) .nav-cta { background: var(--accent); color: var(--text); }
+
+  .wordmark-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+    color: var(--anchor);
+    transition: color 0.3s;
+  }
+  .wordmark {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--anchor);
+    letter-spacing: -0.01em;
+    transition: color 0.3s;
+  }
+  .wordmark-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-strong);
+    transition: background 0.3s;
+  }
+  .wordmark-sub {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--text);
+    opacity: 0.75;
+    transition: color 0.3s;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .nav-back {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.3s, gap 0.2s;
+  }
+  .nav-back:hover { gap: 12px; }
+  .nav-cta {
+    padding: 10px 22px;
+    background: var(--anchor);
+    color: #FFFFFF;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: background 0.2s, transform 0.2s, color 0.3s;
+  }
+  .nav-cta:hover { background: var(--text); transform: translateY(-1px); }
+
+  /* ---------- SECTION ---------- */
+  section {
+    padding: 140px 56px;
+    max-width: 1280px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .section-label {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .section-label::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .lead {
+    font-family: var(--sans);
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--text);
+    opacity: 0.8;
+    max-width: 720px;
+    margin-bottom: 64px;
+    font-weight: 400;
+  }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: 52px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    color: var(--text);
+    margin-bottom: 36px;
+  }
+  h2 em { font-style: italic; font-weight: 400; }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    padding: 220px 56px 120px;
+    max-width: 1280px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--anchor);
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 36px;
+    height: 1px;
+    background: var(--anchor);
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(52px, 8.5vw, 112px);
+    font-weight: 400;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 40px;
+    max-width: 18ch;
+  }
+  .hero h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--anchor);
+  }
+
+  .hero .sub {
+    font-family: var(--sans);
+    font-size: 20px;
+    line-height: 1.55;
+    color: var(--text);
+    opacity: 0.78;
+    max-width: 680px;
+    margin-bottom: 56px;
+    font-weight: 400;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 96px;
+  }
+  .cta-primary {
+    padding: 18px 32px;
+    background: var(--anchor);
+    color: #FFFFFF;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: background 0.2s, transform 0.2s;
+    cursor: pointer;
+    border: none;
+    font-family: var(--sans);
+  }
+  .cta-primary:hover { background: var(--text); transform: translateY(-1px); }
+  .cta-secondary {
+    padding: 18px 8px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--accent);
+    transition: gap 0.25s, border-color 0.25s;
+  }
+  .cta-secondary:hover { gap: 16px; border-color: var(--anchor); }
+
+  /* Hero stats strip */
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--accent);
+    border-bottom: 1px solid var(--accent);
+    padding: 32px 0;
+  }
+  .hero-stat {
+    padding: 0 24px;
+    border-right: 1px solid var(--accent);
+  }
+  .hero-stat:last-child { border-right: none; }
+  .hero-stat-value {
+    font-family: var(--serif);
+    font-size: 42px;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--anchor);
+    margin-bottom: 8px;
+  }
+  .hero-stat-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ---------- HOW IT WORKS (DARK) ---------- */
+  .how-section-outer {
+    background: var(--anchor);
+    padding: 0;
+    max-width: none;
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+  .how-section-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 140px 56px;
+    color: var(--bg);
+  }
+  .how-section-inner .section-label { color: var(--accent); }
+  .how-section-inner .section-label::before { background: var(--accent); }
+  .how-section-inner h2 { color: var(--bg); }
+  .how-section-inner .lead { color: var(--bg); opacity: 0.75; }
+
+  .how-subsection-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-top: 88px;
+    margin-bottom: 20px;
+  }
+  .how-subsection-label:first-of-type { margin-top: 0; }
+  .how-subsection-title {
+    font-family: var(--serif);
+    font-size: 38px;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.012em;
+    color: var(--bg);
+    margin-bottom: 20px;
+  }
+  .how-subsection-title em { font-style: italic; }
+  .how-subsection-lead {
+    font-family: var(--sans);
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--bg);
+    opacity: 0.72;
+    max-width: 760px;
+    margin-bottom: 56px;
+  }
+
+  /* ---------- EXTRACTION VIZ ---------- */
+  .extract-compose {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 180px minmax(0, 1fr);
+    gap: 0;
+    margin: 16px 0 48px;
+    align-items: stretch;
+  }
+
+  /* Source document panel */
+  .source-card {
+    background: var(--bg);
+    border: 1px solid var(--border-on-dark);
+    padding: 36px 36px 48px;
+    position: relative;
+    color: var(--text);
+    min-height: 500px;
+  }
+  .source-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding-bottom: 16px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--accent);
+  }
+  .source-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.28;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  .source-body p {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    opacity: 0.9;
+    margin-bottom: 16px;
+  }
+  .source-body mark {
+    background: rgba(214, 207, 184, 0.55);
+    padding: 1px 3px;
+    color: var(--text);
+    border-bottom: 1.5px solid var(--anchor);
+    position: relative;
+  }
+  .source-body sup.marker {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--anchor);
+    background: var(--bg);
+    padding: 1px 4px;
+    border: 1px solid var(--anchor);
+    margin-left: 3px;
+    letter-spacing: 0.05em;
+    vertical-align: super;
+    line-height: 1;
+  }
+  .source-page {
+    position: absolute;
+    bottom: 16px;
+    right: 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* Engine column */
+  .extract-engine {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 0 8px;
+  }
+  .extract-engine-rail {
+    position: absolute;
+    top: 50%;
+    left: -16px;
+    right: -16px;
+    height: 1px;
+    background: linear-gradient(to right, transparent 0%, rgba(214, 207, 184, 0.5) 15%, rgba(214, 207, 184, 0.5) 85%, transparent 100%);
+    transform: translateY(-50%);
+    z-index: 0;
+  }
+  .extract-engine-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .engine-spine-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-align: center;
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
+  .engine-spine-label strong {
+    display: block;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 19px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: var(--bg);
+    text-transform: none;
+    margin-top: 4px;
+  }
+  .engine-modules {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 160px;
+  }
+  .engine-module {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 400;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--bg);
+    opacity: 0.5;
+    padding: 10px 10px;
+    border: 1px solid var(--border-on-dark);
+    text-align: center;
+    background: rgba(35, 53, 84, 0.5);
+    animation: moduleGlow 6s ease-in-out infinite;
+  }
+  .engine-module:nth-child(1) { animation-delay: 0s; }
+  .engine-module:nth-child(2) { animation-delay: 1.2s; }
+  .engine-module:nth-child(3) { animation-delay: 2.4s; }
+  .engine-module:nth-child(4) { animation-delay: 3.6s; }
+  @keyframes moduleGlow {
+    0%, 100% { opacity: 0.45; border-color: var(--border-on-dark); }
+    50% { opacity: 1; border-color: var(--accent); color: var(--bg); }
+  }
+
+  /* Extraction cards column */
+  .extractions {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .extraction {
+    background: var(--bg);
+    border: 1px solid var(--border-on-dark);
+    padding: 20px 24px 22px;
+    color: var(--text);
+  }
+  .extraction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--anchor);
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--accent);
+  }
+  .extraction-header .e-page {
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0.08em;
+  }
+  .extraction-statement {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.32;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .extraction-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .chip {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    background: var(--anchor);
+    color: var(--bg);
+  }
+  .chip-alt {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border: 1px solid var(--anchor);
+    color: var(--anchor);
+  }
+
+  .extract-caption {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--bg);
+    opacity: 0.6;
+    text-align: center;
+    margin-top: 20px;
+    letter-spacing: 0.02em;
+    max-width: 780px;
+    margin-left: auto;
+    margin-right: auto;
+    font-style: italic;
+  }
+
+  /* Layers explainer */
+  .layers {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 64px;
+    margin-top: 64px;
+    padding-top: 48px;
+    border-top: 1px solid var(--border-on-dark);
+  }
+  .layer-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .layer-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--bg);
+    margin-bottom: 14px;
+  }
+  .layer-desc {
+    font-family: var(--sans);
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--bg);
+    opacity: 0.72;
+  }
+
+  /* ---------- WHAT YOU'LL FIND — EDITORIAL LINES ---------- */
+  .editorial-lines {
+    border-top: 1px solid var(--accent);
+    margin-top: 8px;
+  }
+  .editorial-line {
+    display: grid;
+    grid-template-columns: 100px 1fr auto;
+    gap: 40px;
+    align-items: baseline;
+    padding: 44px 0;
+    border-bottom: 1px solid var(--accent);
+    transition: background 0.4s;
+  }
+  .editorial-line:hover { background: rgba(214, 207, 184, 0.2); }
+  .editorial-line-num {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 44px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .editorial-line-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .editorial-line-title {
+    font-family: var(--serif);
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.012em;
+    color: var(--text);
+  }
+  .editorial-line-note {
+    font-family: var(--sans);
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--text);
+    opacity: 0.7;
+    max-width: 680px;
+  }
+  .editorial-line-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    align-self: start;
+    padding-top: 10px;
+  }
+
+  /* ---------- METHODOLOGY ---------- */
+  .method-prose {
+    max-width: 780px;
+  }
+  .method-prose p {
+    font-family: var(--sans);
+    font-size: 17.5px;
+    line-height: 1.7;
+    color: var(--text);
+    opacity: 0.84;
+    margin-bottom: 24px;
+  }
+  .method-prose p:last-child { margin-bottom: 0; }
+  .method-callout {
+    font-family: var(--serif);
+    font-size: 22px;
+    line-height: 1.4;
+    letter-spacing: -0.005em;
+    color: var(--anchor);
+    font-style: italic;
+    margin: 40px 0;
+    padding: 0 0 0 32px;
+    border-left: 2px solid var(--accent);
+    max-width: 760px;
+  }
+
+  /* ---------- ACCESS CLOSING ---------- */
+  .access-section {
+    background: var(--bg);
+    padding-bottom: 200px;
+  }
+  .access-cta-wrap {
+    margin-top: 12px;
+  }
+  .cta-large {
+    font-size: 16px;
+    padding: 22px 40px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ---------- ACCESS FORM (retained for future reuse) ---------- */
+  .access-lead {
+    max-width: 680px;
+    margin-bottom: 64px;
+  }
+  .access-form {
+    max-width: 680px;
+    display: grid;
+    gap: 28px;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 40px;
+    align-items: start;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--accent);
+  }
+  .form-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 8px;
+  }
+  .form-label .required {
+    color: var(--anchor);
+    margin-left: 2px;
+  }
+  .form-input,
+  .form-textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-family: var(--sans);
+    font-size: 17px;
+    color: var(--text);
+    padding: 6px 0;
+    outline: none;
+    resize: none;
+  }
+  .form-input::placeholder,
+  .form-textarea::placeholder {
+    color: var(--text);
+    opacity: 0.35;
+    font-family: var(--sans);
+  }
+  .form-input:focus,
+  .form-textarea:focus {
+    outline: none;
+  }
+  .form-textarea {
+    min-height: 90px;
+    line-height: 1.55;
+  }
+  .form-actions {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .form-note {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 360px;
+    line-height: 1.5;
+  }
+  .form-success {
+    margin-top: 32px;
+    padding: 28px 32px;
+    background: var(--anchor);
+    color: var(--bg);
+    display: none;
+  }
+  .form-success.visible { display: block; }
+  .form-success h3 {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    font-style: italic;
+    margin-bottom: 10px;
+    color: var(--bg);
+  }
+  .form-success p {
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--bg);
+    opacity: 0.85;
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    border-top: 1px solid var(--accent);
+    padding: 36px 56px;
+    text-align: center;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  footer .wordmark-small {
+    font-family: var(--serif);
+    font-weight: 700;
+    color: var(--anchor);
+  }
+  footer a {
+    color: var(--anchor);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+  footer a:hover { border-bottom-color: var(--anchor); }
+
+  /* ---------- REVEAL ---------- */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+  }
+  .fade-in.is-in { opacity: 1; transform: none; }
+  .fade-in-stagger > * {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .fade-in-stagger.is-in > *:nth-child(1) { transition-delay: 0.05s; }
+  .fade-in-stagger.is-in > *:nth-child(2) { transition-delay: 0.12s; }
+  .fade-in-stagger.is-in > *:nth-child(3) { transition-delay: 0.19s; }
+  .fade-in-stagger.is-in > *:nth-child(4) { transition-delay: 0.26s; }
+  .fade-in-stagger.is-in > *:nth-child(5) { transition-delay: 0.33s; }
+  .fade-in-stagger.is-in > * { opacity: 1; transform: none; }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 960px) {
+    nav { padding: 20px 28px; }
+    nav.scrolled { padding: 14px 28px; }
+    .wordmark-divider, .wordmark-sub { display: none; }
+    .nav-back { display: none; }
+    section, .hero { padding: 100px 28px; max-width: 100%; }
+    .hero { padding: 160px 28px 80px; }
+    h2 { font-size: 36px; }
+    .hero-stats { grid-template-columns: repeat(2, 1fr); gap: 0; }
+    .hero-stat { padding: 20px 16px; border-right: 1px solid var(--accent); border-bottom: 1px solid var(--accent); }
+    .hero-stat:nth-child(2n) { border-right: none; }
+    .hero-stat:nth-last-child(-n+2) { border-bottom: none; }
+    .hero-stat-value { font-size: 32px; }
+    .how-section-inner { padding: 100px 28px; }
+    .how-subsection-title { font-size: 26px; }
+    .extract-compose { grid-template-columns: 1fr; gap: 20px; }
+    .extract-engine { padding: 24px 0; flex-direction: row; justify-content: center; }
+    .extract-engine-rail { display: none; }
+    .engine-modules { flex-direction: row; max-width: 100%; flex-wrap: wrap; gap: 4px; }
+    .engine-module { flex: 1 1 40%; font-size: 9px; padding: 8px 4px; }
+    .source-card { min-height: 0; }
+    .layers { grid-template-columns: 1fr; gap: 32px; padding-top: 36px; margin-top: 40px; }
+    .editorial-line { grid-template-columns: 50px 1fr; gap: 16px; padding: 32px 0; }
+    .editorial-line-num { font-size: 30px; }
+    .editorial-line-title { font-size: 18px; }
+    .editorial-line-tag { grid-column: 1 / -1; margin-top: 8px; padding-top: 0; }
+    .form-row { grid-template-columns: 1fr; gap: 10px; }
+    .form-label { padding-top: 0; }
+    .method-callout { font-size: 18px; padding-left: 20px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in, .fade-in-stagger > * { opacity: 1; transform: none; }
+    .engine-module { animation: none; opacity: 0.65; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#top" class="wordmark-group">
+    <span class="wordmark">Nexus</span>
+    <span class="wordmark-divider"></span>
+    <span class="wordmark-sub">Governance Scan</span>
+  </a>
+  <div class="nav-right">
+    <a href="/" class="nav-back">← Nexus</a>
+    <a href="#access" class="nav-cta">Access Scan</a>
+  </div>
+</nav>
+
+<section class="hero" id="top">
+  <div class="eyebrow">Nexus Governance Scan</div>
+  <h1>The world's Voluntary Local Reviews, <em>read as one</em>.</h1>
+  <p class="sub">A structured meta-analysis of every published VLR, translated into comparable evidence about how cities set priorities, implement policy, and close the gap between what they promise and what they deliver.</p>
+  <div class="hero-ctas">
+    <a href="#access" class="cta-primary">Access the Scan</a>
+    <a href="#how-it-works" class="cta-secondary">See how it works →</a>
+  </div>
+
+  <div class="hero-stats fade-in">
+    <div class="hero-stat">
+      <div class="hero-stat-value">450+</div>
+      <div class="hero-stat-label">VLRs</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value">60+</div>
+      <div class="hero-stat-label">Countries</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value">6</div>
+      <div class="hero-stat-label">Regions</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value">170,000+</div>
+      <div class="hero-stat-label">Extracted items</div>
+    </div>
+  </div>
+</section>
+
+<div class="how-section-outer" id="how-it-works">
+  <div class="how-section-inner">
+    <div class="section-label fade-in">How it works</div>
+    <h2 class="fade-in">From governance text to <em>structured evidence</em>.</h2>
+    <p class="lead fade-in">A single VLR tells one city's story. Read together, across the full corpus, the same text becomes a comparable body of evidence about policy, challenges, and commitment at scale.</p>
+
+    <div class="how-subsection-lead fade-in" style="margin-top: 8px;">The Intelligence Engine reads each VLR and extracts three categories of signal from the same text: the challenges cities name, the commitments they make, and the policy actions they propose. Every extraction is tagged, classified, and traceable to its source.</div>
+
+    <div class="extract-compose fade-in" role="img" aria-label="A paragraph from a Voluntary Local Review is processed by the Nexus Intelligence Engine and resolves into three classified extractions: a challenge, a commitment, and a policy action.">
+
+      <article class="source-card">
+        <div class="source-meta">Voluntary Local Review · City Example · 2026</div>
+        <div class="source-title">4.3 Urban mobility and accessibility</div>
+        <div class="source-body">
+          <p>Despite recent progress in integrated transport planning, the city continues to face significant <mark>constraints in the financing of public transport expansion</mark><sup class="marker">01</sup>, particularly in the northern districts where ageing infrastructure limits service coverage.</p>
+          <p>To address this, the Plan <mark>commits to a 45% modal share for public transport by 2030</mark><sup class="marker">02</sup>, supported by the <mark>extension of three metro lines and a new bus rapid transit corridor</mark><sup class="marker">03</sup> along the eastern axis.</p>
+          <p>Implementation will be coordinated across the Mobility, Urban Planning, and Finance departments, with progress reported annually against a set of defined indicators.</p>
+        </div>
+        <div class="source-page">p. 62</div>
+      </article>
+
+      <div class="extract-engine" aria-hidden="true">
+        <div class="extract-engine-rail"></div>
+        <div class="extract-engine-inner">
+          <div class="engine-spine-label">
+            Nexus
+            <strong>Intelligence Engine</strong>
+          </div>
+          <div class="engine-modules">
+            <div class="engine-module">Extraction</div>
+            <div class="engine-module">Normalisation</div>
+            <div class="engine-module">Mapping</div>
+            <div class="engine-module">Synthesis</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="extractions">
+        <article class="extraction">
+          <div class="extraction-header">
+            <span>01 · Challenge</span>
+            <span class="e-page">p. 62</span>
+          </div>
+          <div class="extraction-statement">Financing constraints in public transport</div>
+          <div class="extraction-tags">
+            <span class="chip">Fiscal &amp; Financial</span>
+            <span class="chip-alt">Infrastructure</span>
+            <span class="chip-alt">Regional · Northern districts</span>
+          </div>
+        </article>
+
+        <article class="extraction">
+          <div class="extraction-header">
+            <span>02 · Commitment</span>
+            <span class="e-page">p. 62</span>
+          </div>
+          <div class="extraction-statement">Public transport modal share target</div>
+          <div class="extraction-tags">
+            <span class="chip">Quantitative Target</span>
+            <span class="chip-alt">45% by 2030</span>
+            <span class="chip-alt">Concrete</span>
+          </div>
+        </article>
+
+        <article class="extraction">
+          <div class="extraction-header">
+            <span>03 · Policy Action</span>
+            <span class="e-page">p. 62</span>
+          </div>
+          <div class="extraction-statement">Metro extension and BRT corridor</div>
+          <div class="extraction-tags">
+            <span class="chip">Capital Investment</span>
+            <span class="chip-alt">SDG 11.2</span>
+            <span class="chip-alt">Direct spending</span>
+          </div>
+        </article>
+      </div>
+    </div>
+    <p class="extract-caption fade-in">A single paragraph becomes three classified extractions, each traceable to its source. Applied across 400+ VLRs, the same transformation becomes the body of evidence the Scan reads from.</p>
+
+    <div class="layers fade-in-stagger">
+      <div class="layer">
+        <div class="layer-num">Method</div>
+        <div class="layer-title">Three signals, one framework.</div>
+        <p class="layer-desc">Each document is processed for challenges, commitments, and policy actions. Every extraction is classified, normalised, and mapped to SDG and New Urban Agenda references.</p>
+      </div>
+      <div class="layer">
+        <div class="layer-num">Output</div>
+        <div class="layer-title">Comparable evidence at scale.</div>
+        <p class="layer-desc">Five analytical surfaces that let you read patterns across cities, regions, and time, with every pattern traceable back to its source paragraph.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="find">
+  <div class="section-label fade-in">What you'll find</div>
+  <div class="editorial-lines fade-in-stagger">
+    <div class="editorial-line">
+      <span class="editorial-line-num">01</span>
+      <div class="editorial-line-body">
+        <div class="editorial-line-title">SDG coverage across 17 goals and 6 UN-Habitat regions.</div>
+      </div>
+      <span class="editorial-line-tag">Coverage</span>
+    </div>
+    <div class="editorial-line">
+      <span class="editorial-line-num">02</span>
+      <div class="editorial-line-body">
+        <div class="editorial-line-title">How cities actually implement, from direct spending to awareness campaigns.</div>
+      </div>
+      <span class="editorial-line-tag">Policy Actions</span>
+    </div>
+    <div class="editorial-line">
+      <span class="editorial-line-num">03</span>
+      <div class="editorial-line-body">
+        <div class="editorial-line-title">The constraints cities consistently name as barriers.</div>
+      </div>
+      <span class="editorial-line-tag">Challenges</span>
+    </div>
+    <div class="editorial-line">
+      <span class="editorial-line-num">04</span>
+      <div class="editorial-line-body">
+        <div class="editorial-line-title">What cities promise, and how concrete the promise is.</div>
+      </div>
+      <span class="editorial-line-tag">Commitments</span>
+    </div>
+    <div class="editorial-line">
+      <span class="editorial-line-num">05</span>
+      <div class="editorial-line-body">
+        <div class="editorial-line-title">Regional signatures: what makes each region distinct.</div>
+      </div>
+      <span class="editorial-line-tag">Regional Patterns</span>
+    </div>
+  </div>
+</section>
+
+<section id="methodology">
+  <div class="section-label fade-in">Methodology</div>
+  <h2 class="fade-in">What this is, and <em>what it isn't</em>.</h2>
+
+  <div class="method-prose fade-in">
+    <p>The Scan is a structured reading of the full public corpus, turning what cities have already written into evidence that can be compared across geographies, frameworks, and time.</p>
+
+    <p>Every Voluntary Local Review in the collection has been processed by the Nexus Intelligence Engine, a pipeline combining natural language processing and large language models with a governance-specific classification framework. Each extracted item is categorised, mapped to the relevant Sustainable Development Goal and New Urban Agenda reference, and linked back to the paragraph it came from. Nothing in the Scan is ungrounded; every finding is traceable to source.</p>
+
+    <div class="method-callout">What the Scan shows is what cities themselves have said. Patterns, gaps, and silences are features of the corpus, not interpretations layered on top of it.</div>
+
+    <p>The Scan is updated as new VLRs are published. The classification framework is versioned and documented, and the underlying methodology is open for review by partner institutions on request.</p>
+  </div>
+</section>
+
+<section class="access-section" id="access">
+  <div class="section-label fade-in">Access</div>
+  <h2 class="fade-in">Open the Scan.</h2>
+  <div class="fade-in access-cta-wrap">
+    <a href="/vlr-observatory/" class="cta-primary cta-large">Access the Scan →</a>
+  </div>
+</section>
+
+<footer>
+  <span class="wordmark-small">Nexus</span> Governance Scan &middot; a product of <a href="/">Nexus Governance</a> &middot; &copy; 2026 &middot; Barcelona
+</footer>
+
+<script>
+(function(){
+  // Nav scroll behaviour + dark section awareness
+  var n = document.getElementById('nav');
+  var dark = document.getElementById('how-it-works');
+
+  function updateNav(){
+    if (!n) return;
+    if (window.scrollY > 40) n.classList.add('scrolled'); else n.classList.remove('scrolled');
+    if (dark) {
+      var r = dark.getBoundingClientRect();
+      var navH = n.offsetHeight;
+      if (r.top <= navH && r.bottom > navH) n.classList.add('on-dark');
+      else n.classList.remove('on-dark');
+    }
+  }
+  window.addEventListener('scroll', updateNav, { passive: true });
+  window.addEventListener('resize', updateNav);
+  updateNav();
+
+  // Reveal on scroll
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          e.target.classList.add('is-in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.fade-in, .fade-in-stagger').forEach(function(el){ io.observe(el); });
+  } else {
+    document.querySelectorAll('.fade-in, .fade-in-stagger').forEach(function(el){ el.classList.add('is-in'); });
+  }
+})();
+</script>
+
+</body>
+</html>
