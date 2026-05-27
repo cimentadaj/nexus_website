@@ -1,0 +1,2508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>SCEWC Intelligence — 15 Years of Urban Knowledge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tomorrow:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --black: #0A0A0A;
+  --black-soft: #1A1A1A;
+  --white: #FFFFFF;
+  --off-white: #F7F7F5;
+  --gray-100: #EFEFEC;
+  --gray-200: #D9D9D4;
+  --gray-400: #8C8C88;
+  --gray-600: #4A4A47;
+  --cyan: #00B5D8;
+  --cyan-bright: #00D4F5;
+  --cyan-dark: #006B82;
+  --magenta: #FF2E63;
+  --yellow: #FFD60A;
+  /* Track colors */
+  --t-tech: #00B5D8;
+  --t-energy: #10B981;
+  --t-mobility: #F59E0B;
+  --t-gov: #8B5CF6;
+  --t-living: #FF2E63;
+  --t-infra: #B45309;
+  --t-blue: #1E40AF;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--off-white);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+/* ============ TOP BAR ============ */
+.top-strip {
+  background: var(--black);
+  color: var(--white);
+  padding: 10px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.top-strip .date-label {
+  font-weight: 600;
+}
+
+.top-strip .corner-links {
+  display: flex;
+  gap: 28px;
+}
+
+.top-strip .corner-links a {
+  color: var(--white);
+  text-decoration: none;
+  font-weight: 500;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+
+.top-strip .corner-links a:hover {
+  opacity: 1;
+}
+
+/* ============ MASTHEAD ============ */
+.masthead {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-100);
+  padding: 24px 32px 0;
+}
+
+.masthead-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand .logo {
+  font-family: 'Tomorrow', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: var(--black);
+}
+
+.brand .logo .smart {
+  font-weight: 500;
+}
+
+.brand .logo .city {
+  font-weight: 800;
+}
+
+.brand .sublabel {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--gray-600);
+  margin-top: 2px;
+}
+
+.platform-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 6px 12px;
+  background: var(--black);
+  color: var(--cyan-bright);
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.platform-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--cyan-bright);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.anniversary-block {
+  text-align: right;
+}
+
+.anniversary-block .ed-num {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 0.9;
+  color: var(--black);
+  letter-spacing: -0.04em;
+}
+
+.anniversary-block .ed-num sup {
+  font-size: 24px;
+  vertical-align: top;
+  margin-left: 4px;
+  color: var(--cyan);
+}
+
+.anniversary-block .ed-label {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gray-600);
+  margin-top: 6px;
+}
+
+/* ============ TAB NAV ============ */
+.tab-nav {
+  display: flex;
+  border-bottom: 2px solid var(--gray-100);
+  margin-top: 16px;
+}
+
+.tab-btn {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  padding: 16px 24px;
+  cursor: pointer;
+  color: var(--gray-400);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-btn:hover {
+  color: var(--black);
+}
+
+.tab-btn.active {
+  color: var(--black);
+  border-bottom-color: var(--cyan);
+}
+
+.tab-btn .tab-num {
+  font-size: 10px;
+  opacity: 0.5;
+  font-weight: 500;
+}
+
+/* ============ MAIN CONTENT ============ */
+main {
+  padding: 40px 32px 80px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.tab-panel {
+  display: none;
+  animation: fadeUp 0.4s ease;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============ HERO BLOCK ============ */
+.hero {
+  margin-bottom: 36px;
+}
+
+.hero h1 {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--black);
+  margin-bottom: 16px;
+  max-width: 900px;
+}
+
+.hero h1 .accent {
+  color: var(--cyan);
+}
+
+.hero p.lead {
+  font-size: 17px;
+  color: var(--gray-600);
+  max-width: 720px;
+  line-height: 1.6;
+}
+
+.eyebrow {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cyan-dark);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 24px;
+  height: 2px;
+  background: var(--cyan);
+}
+
+/* ============ KPI STRIP ============ */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  background: var(--black);
+  margin-bottom: 40px;
+  border-radius: 0;
+}
+
+.kpi {
+  padding: 28px 24px;
+  border-right: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi:last-child { border-right: none; }
+
+.kpi:hover {
+  background: var(--black-soft);
+}
+
+.kpi .num {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 42px;
+  font-weight: 800;
+  color: var(--white);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.kpi .num .suffix {
+  font-size: 20px;
+  color: var(--cyan-bright);
+  margin-left: 2px;
+}
+
+.kpi .label {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  margin-top: 12px;
+}
+
+.kpi .delta {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: var(--cyan-bright);
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* ============ CARDS ============ */
+.card {
+  background: var(--white);
+  border: 1px solid var(--gray-100);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 24px;
+}
+
+.card-title {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--black);
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: var(--gray-600);
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+.card-meta {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  white-space: nowrap;
+}
+
+/* Two-column layout */
+.two-col {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.three-col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* ============ KNOWLEDGE PIPELINE ============ */
+.pipeline {
+  background: var(--white);
+  padding: 32px;
+  margin-bottom: 24px;
+  border: 1px solid var(--gray-100);
+}
+
+.pipeline-svg-wrap {
+  width: 100%;
+  overflow-x: auto;
+  padding: 16px 0;
+}
+
+.pipeline-svg {
+  width: 100%;
+  height: 360px;
+  min-width: 900px;
+}
+
+/* ============ TRACK LEGEND ============ */
+.track-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+  margin-bottom: 16px;
+}
+
+.track-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-600);
+  background: var(--off-white);
+  padding: 6px 12px;
+  border: 1px solid var(--gray-100);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.track-chip:hover {
+  border-color: var(--gray-400);
+}
+
+.track-chip.active {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
+}
+
+.track-chip .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* ============ HEATMAP ============ */
+.heatmap-wrap {
+  overflow-x: auto;
+  padding: 4px;
+}
+
+.heatmap {
+  display: grid;
+  grid-template-columns: 200px repeat(15, 1fr);
+  gap: 2px;
+  min-width: 900px;
+}
+
+.heatmap-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'Tomorrow', sans-serif;
+  color: var(--black);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 38px;
+}
+
+.heatmap-cell:hover {
+  outline: 2px solid var(--black);
+  z-index: 2;
+}
+
+.heatmap-row-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--black);
+  display: flex;
+  align-items: center;
+  padding-right: 14px;
+  gap: 8px;
+}
+
+.heatmap-row-label .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.heatmap-year {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  padding: 6px 0;
+  color: var(--gray-600);
+  letter-spacing: 0.04em;
+}
+
+.heatmap-year.upcoming {
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+/* ============ TRACER TOPICS ============ */
+.tracer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tracer {
+  background: var(--white);
+  padding: 20px 24px;
+  border: 1px solid var(--gray-100);
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 2fr 240px;
+  gap: 20px;
+  align-items: center;
+}
+
+.tracer:hover {
+  border-color: var(--gray-400);
+}
+
+.tracer .name {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+
+.tracer .meta {
+  font-size: 11px;
+  color: var(--gray-600);
+  margin-top: 4px;
+  font-family: 'Tomorrow', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tracer-timeline {
+  position: relative;
+  height: 60px;
+}
+
+.tracer-axis {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--gray-200);
+}
+
+.tracer-tick {
+  position: absolute;
+  top: 26px;
+  width: 1px;
+  height: 8px;
+  background: var(--gray-200);
+}
+
+.tracer-tick-label {
+  position: absolute;
+  top: 38px;
+  font-size: 9px;
+  color: var(--gray-400);
+  font-family: 'Tomorrow', sans-serif;
+  transform: translateX(-50%);
+}
+
+.tracer-marker {
+  position: absolute;
+  top: 18px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid var(--white);
+  transform: translateX(-12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'Tomorrow', sans-serif;
+  color: var(--white);
+  z-index: 2;
+}
+
+.tracer-connector {
+  position: absolute;
+  top: 29px;
+  height: 2px;
+  background: var(--gray-200);
+  z-index: 1;
+}
+
+.tracer .lag {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  text-align: right;
+  letter-spacing: -0.02em;
+}
+
+.tracer .lag .unit {
+  font-size: 11px;
+  color: var(--gray-600);
+  margin-left: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tracer .lag-label {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  letter-spacing: 0.16em;
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* ============ CITY CASE STUDIES ============ */
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.city-case {
+  background: var(--white);
+  padding: 20px;
+  border: 1px solid var(--gray-100);
+  position: relative;
+  transition: all 0.2s;
+}
+
+.city-case:hover {
+  border-color: var(--black);
+  transform: translateY(-2px);
+}
+
+.city-flag {
+  display: inline-block;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.city-name {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+
+.city-country {
+  font-size: 11px;
+  color: var(--gray-400);
+  font-family: 'Tomorrow', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.city-arrow {
+  display: flex;
+  align-items: center;
+  margin: 14px 0;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.city-step {
+  flex: 1;
+  background: var(--off-white);
+  padding: 10px 12px;
+  border-left: 3px solid var(--cyan);
+}
+
+.city-step.practice {
+  border-left-color: var(--magenta);
+}
+
+.city-step-label {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--gray-600);
+  letter-spacing: 0.14em;
+  margin-bottom: 2px;
+}
+
+.city-step-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.city-arrow-icon {
+  color: var(--gray-400);
+  font-size: 16px;
+}
+
+.city-topic {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--gray-100);
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ============ FINDINGS PANEL ============ */
+.findings {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.finding {
+  background: var(--white);
+  padding: 28px 24px;
+  border-top: 4px solid var(--cyan);
+  border-right: 1px solid var(--gray-100);
+  border-bottom: 1px solid var(--gray-100);
+  border-left: 1px solid var(--gray-100);
+}
+
+.finding:nth-child(2) { border-top-color: var(--yellow); }
+.finding:nth-child(3) { border-top-color: var(--magenta); }
+
+.finding-label {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gray-600);
+  margin-bottom: 12px;
+}
+
+.finding-headline {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+  color: var(--black);
+}
+
+.finding-detail {
+  font-size: 14px;
+  color: var(--gray-600);
+  line-height: 1.55;
+}
+
+/* ============ THREE-CORPUS SCATTER ============ */
+.scatter-wrap {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  background: linear-gradient(135deg, var(--off-white) 0%, #fafaf7 100%);
+  margin-bottom: 12px;
+}
+
+.scatter-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.scatter-legend {
+  display: flex;
+  gap: 24px;
+  padding: 16px 0;
+  font-size: 12px;
+  color: var(--gray-600);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.scatter-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+}
+
+.legend-circle {
+  border-radius: 50%;
+  background: var(--cyan);
+  opacity: 0.5;
+}
+
+/* ============ LIFECYCLE ============ */
+.lifecycle-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.lifecycle-col {
+  background: var(--white);
+  border: 1px solid var(--gray-100);
+  padding: 0;
+  overflow: hidden;
+}
+
+.lifecycle-header {
+  padding: 16px 18px;
+  background: var(--black);
+  color: var(--white);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lifecycle-header.emerging { background: var(--cyan); color: var(--black); }
+.lifecycle-header.rising { background: var(--yellow); color: var(--black); }
+.lifecycle-header.peaking { background: var(--magenta); color: var(--white); }
+.lifecycle-header.declining { background: var(--gray-600); color: var(--white); }
+
+.lifecycle-header h3 {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lifecycle-header .count {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.lifecycle-items {
+  padding: 12px 18px;
+}
+
+.lifecycle-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.lifecycle-item:last-child { border-bottom: none; }
+
+.lifecycle-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--black);
+  margin-bottom: 4px;
+}
+
+.lifecycle-item-meta {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gray-600);
+}
+
+.lifecycle-item-bar {
+  margin-top: 8px;
+  height: 3px;
+  background: var(--gray-100);
+  position: relative;
+}
+
+.lifecycle-item-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--black);
+}
+
+/* ============ EMERGENT TERMS ============ */
+.emergent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.emergent-term {
+  padding: 8px 14px;
+  background: var(--black);
+  color: var(--white);
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: default;
+  transition: all 0.2s;
+}
+
+.emergent-term.hot {
+  background: var(--cyan);
+  color: var(--black);
+  font-weight: 700;
+}
+
+.emergent-term.warm {
+  background: var(--yellow);
+  color: var(--black);
+}
+
+.emergent-term:hover {
+  transform: scale(1.04);
+}
+
+/* ============ CONVERGENCE MATRIX ============ */
+.matrix {
+  display: grid;
+  grid-template-columns: 180px repeat(7, 1fr);
+  gap: 2px;
+  margin-top: 12px;
+}
+
+.matrix-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 40px;
+  position: relative;
+}
+
+.matrix-label-row {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding-right: 12px;
+  gap: 6px;
+}
+
+.matrix-label-col {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding: 4px;
+  color: var(--gray-600);
+  text-align: left;
+}
+
+/* ============ FOOTER ============ */
+footer {
+  background: var(--black);
+  color: var(--gray-400);
+  padding: 32px;
+  margin-top: 0;
+  font-size: 12px;
+}
+
+.footer-inner {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.footer-brand .powered {
+  color: var(--cyan-bright);
+}
+
+/* ============ EVOLUTION CHART ============ */
+.chart-container {
+  position: relative;
+  height: 380px;
+  width: 100%;
+}
+
+.chart-container-small {
+  position: relative;
+  height: 280px;
+  width: 100%;
+}
+
+/* ============ TOPIC GAP LIST ============ */
+.gap-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.gap-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px 100px;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-100);
+  align-items: center;
+  font-size: 13px;
+}
+
+.gap-row:last-child { border-bottom: none; }
+
+.gap-row-header {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray-600);
+  font-weight: 600;
+  padding: 8px 0;
+  border-bottom: 2px solid var(--black);
+}
+
+.gap-topic-name {
+  font-weight: 600;
+  color: var(--black);
+}
+
+.gap-track-chip {
+  display: inline-block;
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  background: var(--off-white);
+  color: var(--gray-600);
+  margin-left: 8px;
+}
+
+.gap-bar {
+  position: relative;
+  height: 6px;
+  background: var(--gray-100);
+}
+
+.gap-bar-fill {
+  position: absolute;
+  height: 100%;
+  background: var(--cyan);
+}
+
+.gap-status {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+/* ============ GEO HEATMAP ============ */
+.geo-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.geo-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 50px;
+  gap: 12px;
+  align-items: center;
+}
+
+.geo-label {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.geo-bar-wrap {
+  position: relative;
+  height: 18px;
+  background: var(--off-white);
+}
+
+.geo-bar {
+  height: 100%;
+  background: var(--black);
+  position: relative;
+}
+
+.geo-bar.cyan { background: var(--cyan); }
+
+.geo-value {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* ============ INSIGHT PANEL ============ */
+.insight-panel {
+  background: var(--black);
+  color: var(--white);
+  padding: 32px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.insight-panel::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(0,212,245,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.insight-eyebrow {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cyan-bright);
+  margin-bottom: 12px;
+}
+
+.insight-headline {
+  font-family: 'Tomorrow', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  max-width: 800px;
+  position: relative;
+}
+
+.insight-headline .accent { color: var(--cyan-bright); }
+
+.insight-body {
+  font-size: 15px;
+  margin-top: 16px;
+  color: var(--gray-200);
+  max-width: 680px;
+  line-height: 1.6;
+  position: relative;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+  .city-grid { grid-template-columns: repeat(2, 1fr); }
+  .findings { grid-template-columns: repeat(3, 1fr); }
+  .lifecycle-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .hero h1 { font-size: 32px; }
+  .two-col, .three-col, .findings, .city-grid, .lifecycle-grid { grid-template-columns: 1fr; }
+  .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  .tab-btn { padding: 12px 14px; font-size: 11px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- TOP STRIP -->
+<div class="top-strip">
+  <div class="date-label">3 – 5 NOV 2026 | BARCELONA | 15<sup>TH</sup> EDITION</div>
+  <div class="corner-links">
+    <a href="#">EXHIBITOR AREA</a>
+    <a href="#">VISITOR AREA</a>
+    <a href="#">METHODOLOGY</a>
+  </div>
+</div>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div class="masthead-inner">
+    <div class="brand">
+      <div class="logo"><span class="smart">SMART</span><span class="city">CITY</span></div>
+      <div class="sublabel">EXPO WORLD CONGRESS</div>
+      <div class="platform-badge">INTELLIGENCE</div>
+    </div>
+    <div class="anniversary-block">
+      <div class="ed-num">15<sup>TH</sup></div>
+      <div class="ed-label">EDITION RETROSPECTIVE</div>
+    </div>
+  </div>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="impact"><span class="tab-num">01</span> IMPACT</button>
+    <button class="tab-btn" data-tab="coverage"><span class="tab-num">02</span> TRACK COVERAGE</button>
+    <button class="tab-btn" data-tab="discourse"><span class="tab-num">03</span> DISCOURSE → PRACTICE</button>
+    <button class="tab-btn" data-tab="diffusion"><span class="tab-num">04</span> KNOWLEDGE DIFFUSION</button>
+    <button class="tab-btn" data-tab="future"><span class="tab-num">05</span> FUTURE SIGNALS</button>
+  </nav>
+</div>
+
+<main>
+
+<!-- ===================================================== -->
+<!-- TAB 1: IMPACT                                          -->
+<!-- ===================================================== -->
+<div class="tab-panel active" id="impact">
+
+  <div class="hero">
+    <div class="eyebrow">15 YEARS OF URBAN KNOWLEDGE</div>
+    <h1>What did the world's leading urban innovation event<br><span class="accent">actually build</span> across 14 editions?</h1>
+    <p class="lead">SCEWC Intelligence maps the full intellectual footprint of Smart City Expo World Congress — 5,200+ panel descriptions, 2,800+ research papers, and 1,400+ city governance documents — to measure how the event has shaped urban thinking globally.</p>
+  </div>
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi">
+      <div class="num">14<span class="suffix">/15</span></div>
+      <div class="label">Editions Analysed</div>
+      <div class="delta">→ 15th edition 2026</div>
+    </div>
+    <div class="kpi">
+      <div class="num">5,247</div>
+      <div class="label">Panels Mapped</div>
+      <div class="delta">+18% per edition since 2018</div>
+    </div>
+    <div class="kpi">
+      <div class="num">2,816</div>
+      <div class="label">Research Papers</div>
+      <div class="delta">SAUC Journal + open call</div>
+    </div>
+    <div class="kpi">
+      <div class="num">848</div>
+      <div class="label">Cities Represented</div>
+      <div class="delta">142 countries</div>
+    </div>
+    <div class="kpi">
+      <div class="num">73<span class="suffix">%</span></div>
+      <div class="label">Speaker City Adoption</div>
+      <div class="delta">Topic in own strategy</div>
+    </div>
+  </div>
+
+  <!-- HEADLINE INSIGHT -->
+  <div class="insight-panel">
+    <div class="insight-eyebrow">THE 15-YEAR FINDING</div>
+    <div class="insight-headline">When a city speaks at SCEWC, the topic appears in their own governance documents <span class="accent">a median of 5.2 years later</span>.</div>
+    <div class="insight-body">Across 14 editions, 73% of speaker cities have at least one SCEWC-programmed topic in their current strategic documents. The diffusion is real, measurable, and traceable. SCEWC is not just a marketplace — it is a global agenda-setting infrastructure for urban policy.</div>
+  </div>
+
+  <!-- KEY FINDINGS -->
+  <div class="findings">
+    <div class="finding">
+      <div class="finding-label">MOST AMPLIFIED</div>
+      <div class="finding-headline">Digital Twins moved from research to city plans in 4 years</div>
+      <div class="finding-detail">First appeared in SCEWC papers in 2017. Programmed on the main stage by 2019. Now in the strategic plans of 47 cities globally, including Curitiba, Helsinki, Singapore, and Dubai.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-label">FASTEST RISE</div>
+      <div class="finding-headline">Urban AI Ethics — from zero panels to 38 in two editions</div>
+      <div class="finding-detail">Did not exist as a SCEWC topic before 2023. By 2025 it had its own stage and 38 dedicated panels. Already adopted in formal charters by Seoul, Helsinki, and Amsterdam.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-label">SIGNATURE TOPIC</div>
+      <div class="finding-headline">SCEWC made Superblocks a global urban planning category</div>
+      <div class="finding-detail">Programmed by Barcelona at SCEWC 2016. Tracked into formal plans in Vienna, Buenos Aires, Bogotá, Berlin, and Brisbane by 2024 — every adoption cites Barcelona as the reference.</div>
+    </div>
+  </div>
+
+  <!-- KNOWLEDGE PIPELINE -->
+  <div class="pipeline">
+    <div class="card-header">
+      <div>
+        <div class="card-title">The Knowledge Pipeline</div>
+        <div class="card-subtitle">How research, professional discourse, and city practice flow through SCEWC across 14 editions</div>
+      </div>
+      <div class="card-meta">2011 → 2025</div>
+    </div>
+    <div class="pipeline-svg-wrap">
+      <svg class="pipeline-svg" viewBox="0 0 1200 360" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+
+  <!-- TRACER TOPICS -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Tracer Topics — From SCEWC Stage to City Strategy</div>
+        <div class="card-subtitle">Six topics tracked through the full pipeline: research → programming → city adoption</div>
+      </div>
+      <div class="card-meta">Diffusion Lag</div>
+    </div>
+    <div class="tracer-list" id="tracer-list"></div>
+  </div>
+
+  <!-- CITY CASE STUDIES -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Cities That Took SCEWC Home</div>
+        <div class="card-subtitle">Speaker cities whose subsequent governance documents reference topics they programmed</div>
+      </div>
+      <div class="card-meta">Selected from 619 traced cases</div>
+    </div>
+    <div class="city-grid" id="city-grid"></div>
+  </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- TAB 2: TRACK COVERAGE                                 -->
+<!-- ===================================================== -->
+<div class="tab-panel" id="coverage">
+
+  <div class="hero">
+    <div class="eyebrow">EVOLUTION OF SCEWC PROGRAMMING</div>
+    <h1>How the seven tracks have <span class="accent">grown, shifted, and reshaped</span> the urban innovation agenda</h1>
+    <p class="lead">A 14-year visualisation of how SCEWC has allocated stage time across its core thematic tracks — revealing which topics have led the global conversation, which have peaked, and which are still emerging.</p>
+  </div>
+
+  <div class="findings">
+    <div class="finding">
+      <div class="finding-label">HIGHEST STAGE TIME</div>
+      <div class="finding-headline">Enabling Technologies</div>
+      <div class="finding-detail">22% of all panel programming across 14 editions. Doubled its share between 2018 and 2025 with the AI surge.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-label">FASTEST GROWING</div>
+      <div class="finding-headline">Energy & Environment</div>
+      <div class="finding-detail">From 8% in 2011 to 22% in 2025. Climate adaptation specifically tripled its share since 2020.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-label">MATURATION</div>
+      <div class="finding-headline">Mobility plateauing</div>
+      <div class="finding-detail">From 25% in 2011 to 16% in 2025. Topic depth has shifted from infrastructure to integration and active modes.</div>
+    </div>
+  </div>
+
+  <!-- HEATMAP -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Track Coverage by Edition</div>
+        <div class="card-subtitle">Percentage of panel programming dedicated to each track, 2011–2025</div>
+      </div>
+      <div class="card-meta">% of total panels per edition</div>
+    </div>
+    <div class="heatmap-wrap">
+      <div class="heatmap" id="heatmap"></div>
+    </div>
+    <div style="margin-top: 16px; display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--gray-600); font-family: 'Tomorrow', sans-serif; text-transform: uppercase; letter-spacing: 0.08em;">
+      <span>Intensity</span>
+      <div style="display: flex; gap: 2px;">
+        <div style="width:24px; height:14px; background:#F0FAFC;"></div>
+        <div style="width:24px; height:14px; background:#A8E2EE;"></div>
+        <div style="width:24px; height:14px; background:#5BC6DC;"></div>
+        <div style="width:24px; height:14px; background:#00B5D8;"></div>
+        <div style="width:24px; height:14px; background:#006B82;"></div>
+      </div>
+      <span>0%</span>
+      <span style="margin-left:auto;">30%+</span>
+    </div>
+  </div>
+
+  <!-- EVOLUTION + RANKING -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Track Evolution — 2011 to 2025</div>
+          <div class="card-subtitle">Share of programming over 14 editions</div>
+        </div>
+        <div class="card-meta">Smoothed trend</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="evolutionChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Speaker Geography by Track</div>
+          <div class="card-subtitle">Share of speakers from Global South per track</div>
+        </div>
+        <div class="card-meta">2020 – 2025 avg</div>
+      </div>
+      <div class="geo-bars" id="geoBars"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- TAB 3: DISCOURSE → PRACTICE                           -->
+<!-- ===================================================== -->
+<div class="tab-panel" id="discourse">
+
+  <div class="hero">
+    <div class="eyebrow">THE THREE-CORPUS COMPARISON</div>
+    <h1>Where SCEWC sits at the intersection of <span class="accent">research, professional discourse, and city practice</span></h1>
+    <p class="lead">Each topic is mapped across three knowledge ecosystems: what academia publishes, what SCEWC programmes, and what cities actually adopt. Gaps and convergences reveal SCEWC's leading, lagging, and emergent territories.</p>
+  </div>
+
+  <!-- THREE-CORPUS SCATTER -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Topic Position Across Three Corpora</div>
+        <div class="card-subtitle">X-axis: research weight · Y-axis: city practice adoption · Bubble size: SCEWC stage time</div>
+      </div>
+      <div class="card-meta">142 topics mapped</div>
+    </div>
+    <div class="scatter-wrap">
+      <svg class="scatter-svg" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet" id="scatter"></svg>
+    </div>
+    <div class="scatter-legend">
+      <div class="scatter-legend-item">
+        <div class="legend-circle" style="width:10px; height:10px;"></div>
+        <span>Low stage time</span>
+      </div>
+      <div class="scatter-legend-item">
+        <div class="legend-circle" style="width:18px; height:18px;"></div>
+        <span>Medium stage time</span>
+      </div>
+      <div class="scatter-legend-item">
+        <div class="legend-circle" style="width:28px; height:28px;"></div>
+        <span>High stage time</span>
+      </div>
+      <div style="margin-left: auto; font-size: 11px; color: var(--gray-600); font-style: italic;">Click any topic to view its profile</div>
+    </div>
+  </div>
+
+  <!-- GAP ANALYSIS -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Discourse-Only Gap</div>
+          <div class="card-subtitle">Topics SCEWC has heavily programmed but cities haven't adopted</div>
+        </div>
+        <div class="card-meta">Risk: performative</div>
+      </div>
+      <div class="gap-list" id="discourseOnlyList"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Practice-Only Gap</div>
+          <div class="card-subtitle">Topics cities are adopting that SCEWC has under-programmed</div>
+        </div>
+        <div class="card-meta">Risk: SCEWC missing the signal</div>
+      </div>
+      <div class="gap-list" id="practiceOnlyList"></div>
+    </div>
+  </div>
+
+  <!-- INSIGHT -->
+  <div class="insight-panel">
+    <div class="insight-eyebrow">PROGRAMMING IMPLICATION</div>
+    <div class="insight-headline">SCEWC programmes 31% more "discourse-only" topics than peer events. <span class="accent">2026 is the moment to rebalance.</span></div>
+    <div class="insight-body">Web Summit Lisbon and CES Las Vegas show similar discourse-practice gaps but cluster differently. SCEWC's distinctive position is in the intersection of governance and infrastructure — where the gap is smallest and the diffusion fastest. Anniversary edition opportunity: surface the practice-only signals (heat resilience, social cohesion, fiscal innovation) the agenda has been blind to.</div>
+  </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- TAB 4: KNOWLEDGE DIFFUSION                            -->
+<!-- ===================================================== -->
+<div class="tab-panel" id="diffusion">
+
+  <div class="hero">
+    <div class="eyebrow">FROM STAGE TO CITY HALL</div>
+    <h1>The measurable journey from <span class="accent">SCEWC programming to city governance</span></h1>
+    <p class="lead">A diffusion analysis traces how topics introduced at SCEWC have travelled into the formal strategic documents of 619 cities globally. The platform makes visible — for the first time — how long that journey takes and where it succeeds.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Topic Diffusion Lag Distribution</div>
+          <div class="card-subtitle">Years between a topic peaking at SCEWC and peaking in city governance documents</div>
+        </div>
+        <div class="card-meta">N = 619 city × topic pairs</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="lagChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Adoption by Region</div>
+          <div class="card-subtitle">% of speaker cities with a SCEWC topic in current docs</div>
+        </div>
+        <div class="card-meta">Updated 2025</div>
+      </div>
+      <div class="geo-bars" id="regionAdoption"></div>
+    </div>
+  </div>
+
+  <!-- DIFFUSION EXAMPLES -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Topic Diffusion Pathways</div>
+        <div class="card-subtitle">The geographic and temporal spread of three signature SCEWC topics</div>
+      </div>
+      <div class="card-meta">Tracer analysis</div>
+    </div>
+    <div class="chart-container">
+      <canvas id="diffusionChart"></canvas>
+    </div>
+  </div>
+
+  <!-- CITY CASE STUDIES -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Returning Speakers, Returning Topics</div>
+        <div class="card-subtitle">Cities that programmed a topic at SCEWC and later embedded it in their own strategic documents</div>
+      </div>
+      <div class="card-meta">619 traced cases</div>
+    </div>
+    <div class="city-grid" id="diffusionCities"></div>
+  </div>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- TAB 5: FUTURE SIGNALS                                 -->
+<!-- ===================================================== -->
+<div class="tab-panel" id="future">
+
+  <div class="hero">
+    <div class="eyebrow">PROGRAMMING COMPASS FOR 2026 AND BEYOND</div>
+    <h1>What the data signals about <span class="accent">the next cycle of urban innovation</span></h1>
+    <p class="lead">By comparing emerging research, speaker submissions, and city governance documents, SCEWC Intelligence surfaces topics that are rising before they peak — and topics that have passed their moment. A forward-looking lens for the 15th edition and beyond.</p>
+  </div>
+
+  <!-- LIFECYCLE GRID -->
+  <div class="lifecycle-grid">
+    <div class="lifecycle-col">
+      <div class="lifecycle-header emerging">
+        <h3>EMERGING</h3>
+        <div class="count">12 TOPICS</div>
+      </div>
+      <div class="lifecycle-items" id="lifecycle-emerging"></div>
+    </div>
+    <div class="lifecycle-col">
+      <div class="lifecycle-header rising">
+        <h3>RISING</h3>
+        <div class="count">21 TOPICS</div>
+      </div>
+      <div class="lifecycle-items" id="lifecycle-rising"></div>
+    </div>
+    <div class="lifecycle-col">
+      <div class="lifecycle-header peaking">
+        <h3>PEAKING</h3>
+        <div class="count">18 TOPICS</div>
+      </div>
+      <div class="lifecycle-items" id="lifecycle-peaking"></div>
+    </div>
+    <div class="lifecycle-col">
+      <div class="lifecycle-header declining">
+        <h3>DECLINING</h3>
+        <div class="count">14 TOPICS</div>
+      </div>
+      <div class="lifecycle-items" id="lifecycle-declining"></div>
+    </div>
+  </div>
+
+  <!-- EMERGENT TERMS -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Emerging Vocabulary — 2024–2025 Cycle</div>
+        <div class="card-subtitle">Terms appearing in research papers and recent panels but not yet in city governance documents</div>
+      </div>
+      <div class="card-meta">Leading indicators</div>
+    </div>
+    <div class="emergent-list">
+      <span class="emergent-term hot">Sponge City</span>
+      <span class="emergent-term hot">Heat Refuge</span>
+      <span class="emergent-term hot">Generative Urbanism</span>
+      <span class="emergent-term warm">Polycrisis Governance</span>
+      <span class="emergent-term warm">Civic AI</span>
+      <span class="emergent-term warm">Spatial Equity Index</span>
+      <span class="emergent-term">Climate Mobility</span>
+      <span class="emergent-term">Doughnut Cities</span>
+      <span class="emergent-term">Urban Common Goods</span>
+      <span class="emergent-term">Care Infrastructure</span>
+      <span class="emergent-term warm">15-Minute Suburb</span>
+      <span class="emergent-term">Mission-Led Procurement</span>
+      <span class="emergent-term hot">AI Sovereignty</span>
+      <span class="emergent-term">Right to Disconnect</span>
+      <span class="emergent-term warm">Citizen Assemblies</span>
+      <span class="emergent-term">Soil Sealing Reversal</span>
+      <span class="emergent-term">Cool Pavement</span>
+      <span class="emergent-term">Predictive Mobility</span>
+    </div>
+  </div>
+
+  <!-- CONVERGENCE MATRIX -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Cross-Track Convergence</div>
+        <div class="card-subtitle">How often each pair of tracks co-occurs in single panel descriptions — a signal of converging agendas</div>
+      </div>
+      <div class="card-meta">2023 – 2025 sessions</div>
+    </div>
+    <div class="matrix" id="convergence-matrix"></div>
+    <div style="margin-top: 12px; font-size: 11px; color: var(--gray-600); font-style: italic;">
+      Insight: Enabling Technologies × Energy &amp; Environment shows the strongest convergence — AI-for-climate is now a category, not a sub-theme.
+    </div>
+  </div>
+
+  <!-- FINAL INSIGHT -->
+  <div class="insight-panel">
+    <div class="insight-eyebrow">RECOMMENDATION FOR THE 15TH EDITION</div>
+    <div class="insight-headline">SCEWC 2026 has the data to programme <span class="accent">five years ahead</span> of the curve.</div>
+    <div class="insight-body">The platform identifies 12 emerging topics that are gaining research weight and starting to appear in city documents but have not yet been programmed at scale. If SCEWC 2026 puts even three of these on the main stage — alongside the established tracks — the anniversary edition becomes a forward-looking moment, not a retrospective one.</div>
+  </div>
+
+</div>
+
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span>SCEWC INTELLIGENCE PLATFORM</span>
+      <span style="opacity: 0.4;">|</span>
+      <span>15TH EDITION RETROSPECTIVE</span>
+      <span style="opacity: 0.4;">|</span>
+      <span class="powered">POWERED BY NEXUS GOVERNANCE</span>
+    </div>
+    <div style="font-family: 'Tomorrow', sans-serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">
+      MOCKUP · MAY 2026
+    </div>
+  </div>
+</footer>
+
+<script>
+
+// ============================================================
+// MOCK DATA
+// ============================================================
+const TRACKS = [
+  { key: 'tech', name: 'Enabling Technologies', color: '#00B5D8' },
+  { key: 'energy', name: 'Energy & Environment', color: '#10B981' },
+  { key: 'mobility', name: 'Mobility', color: '#F59E0B' },
+  { key: 'gov', name: 'Governance', color: '#8B5CF6' },
+  { key: 'living', name: 'Living & Inclusion', color: '#FF2E63' },
+  { key: 'infra', name: 'Infrastructure & Building', color: '#B45309' },
+  { key: 'blue', name: 'Blue Economy', color: '#1E40AF' }
+];
+
+const YEARS = [2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+
+// Heatmap data: [track][year_index] = percentage of panels
+const HEATMAP = {
+  tech:     [12, 14, 15, 17, 18, 19, 20, 22, 24, 23, 24, 25, 26, 27, 28],
+  energy:   [ 8,  9, 10, 11, 12, 13, 14, 15, 17, 19, 20, 21, 22, 22, 22],
+  mobility: [25, 24, 23, 22, 22, 21, 20, 19, 18, 17, 16, 16, 16, 16, 16],
+  gov:      [14, 14, 14, 15, 15, 16, 15, 14, 13, 14, 14, 14, 14, 14, 14],
+  living:   [ 6,  7,  8,  9, 10, 10, 11, 12, 13, 13, 13, 13, 14, 14, 14],
+  infra:    [18, 17, 16, 15, 14, 13, 12, 12, 11, 10, 10, 10, 10, 10, 10],
+  blue:     [ 0,  0,  0,  0,  0,  0,  0,  1,  2,  3,  4,  5,  5,  6,  6]
+};
+
+// Tracer topics: stage emergence vs. city adoption
+const TRACERS = [
+  { name: 'Digital Twins', track: 'tech', firstAt: 2017, peakAt: 2022, cityPeak: 2023, lag: 4, cities: 47 },
+  { name: '15-Minute City', track: 'gov', firstAt: 2019, peakAt: 2022, cityPeak: 2024, lag: 3, cities: 68 },
+  { name: 'Superblocks', track: 'mobility', firstAt: 2016, peakAt: 2018, cityPeak: 2023, lag: 5, cities: 23 },
+  { name: 'Urban AI Ethics', track: 'tech', firstAt: 2023, peakAt: 2025, cityPeak: null, lag: null, cities: 14 },
+  { name: 'Open Data', track: 'gov', firstAt: 2012, peakAt: 2015, cityPeak: 2019, lag: 4, cities: 156 },
+  { name: 'Active Mobility', track: 'mobility', firstAt: 2014, peakAt: 2021, cityPeak: 2023, lag: 2, cities: 112 }
+];
+
+// City case studies
+const CITIES = [
+  { flag: '🇧🇷', name: 'Curitiba', country: 'Brazil', spokeAt: 'SCEWC 2019', spokeAbout: 'Urban Digital Twin', adoptedAt: 'PDM 2022', topic: 'Digital Twins · Mobility · Governance' },
+  { flag: '🇫🇮', name: 'Helsinki', country: 'Finland', spokeAt: 'SCEWC 2015', spokeAbout: 'MyData Principles', adoptedAt: 'City Strategy 2018', topic: 'Data Governance · Civic Tech' },
+  { flag: '🇨🇴', name: 'Medellín', country: 'Colombia', spokeAt: 'SCEWC 2017', spokeAbout: 'Mobility-as-a-Service', adoptedAt: 'Mobility Plan 2021', topic: 'Mobility · Inclusion' },
+  { flag: '🇪🇸', name: 'Barcelona', country: 'Spain', spokeAt: 'SCEWC 2016', spokeAbout: 'Superblocks Model', adoptedAt: 'Urban Mobility Plan 2018', topic: 'Mobility · Living & Inclusion' },
+  { flag: '🇰🇷', name: 'Seoul', country: 'South Korea', spokeAt: 'SCEWC 2023', spokeAbout: 'Urban AI Ethics', adoptedAt: 'AI Charter 2024', topic: 'Enabling Tech · Governance' },
+  { flag: '🇦🇪', name: 'Dubai', country: 'UAE', spokeAt: 'SCEWC 2018', spokeAbout: 'Autonomous Mobility', adoptedAt: 'RTA 2025 Strategy', topic: 'Mobility · Enabling Tech' }
+];
+
+const DIFFUSION_CITIES = [
+  { flag: '🇦🇹', name: 'Vienna', country: 'Austria', spokeAt: 'SCEWC 2018', spokeAbout: 'Affordable Housing Models', adoptedAt: 'Smart City Wien 2022', topic: 'Living & Inclusion' },
+  { flag: '🇸🇬', name: 'Singapore', country: 'Singapore', spokeAt: 'SCEWC 2014', spokeAbout: 'National Digital Twin', adoptedAt: 'Virtual Singapore 2017', topic: 'Enabling Tech' },
+  { flag: '🇦🇷', name: 'Buenos Aires', country: 'Argentina', spokeAt: 'SCEWC 2019', spokeAbout: 'Superblocks Adaptation', adoptedAt: 'Plan Urbano 2023', topic: 'Mobility · Living' },
+  { flag: '🇰🇪', name: 'Nairobi', country: 'Kenya', spokeAt: 'SCEWC 2021', spokeAbout: 'Heat Resilience Plan', adoptedAt: 'NCC Climate Plan 2024', topic: 'Energy & Environment' },
+  { flag: '🇸🇪', name: 'Stockholm', country: 'Sweden', spokeAt: 'SCEWC 2017', spokeAbout: 'Circular Economy Strategy', adoptedAt: 'Circular Plan 2020', topic: 'Energy & Environment' },
+  { flag: '🇨🇱', name: 'Santiago', country: 'Chile', spokeAt: 'SCEWC 2022', spokeAbout: 'Active Mobility Network', adoptedAt: 'PIMUS 2024', topic: 'Mobility' }
+];
+
+// Three-corpus scatter data: research%, practice%, stagetime
+const SCATTER_TOPICS = [
+  { name: 'Digital Twins', x: 78, y: 62, size: 42, track: 'tech' },
+  { name: '15-Minute City', x: 58, y: 74, size: 38, track: 'gov' },
+  { name: 'Open Data', x: 42, y: 78, size: 32, track: 'gov' },
+  { name: 'Urban AI Ethics', x: 82, y: 18, size: 28, track: 'tech' },
+  { name: 'Superblocks', x: 24, y: 48, size: 22, track: 'mobility' },
+  { name: 'Heat Resilience', x: 71, y: 28, size: 18, track: 'energy' },
+  { name: 'Active Mobility', x: 48, y: 82, size: 36, track: 'mobility' },
+  { name: 'Circular Economy', x: 66, y: 58, size: 30, track: 'energy' },
+  { name: 'Smart Parking', x: 18, y: 64, size: 24, track: 'mobility' },
+  { name: 'Citizen Science', x: 52, y: 22, size: 14, track: 'gov' },
+  { name: 'Smart Grids', x: 64, y: 70, size: 28, track: 'energy' },
+  { name: 'Affordable Housing', x: 38, y: 84, size: 20, track: 'living' },
+  { name: 'Mission-Led Cities', x: 68, y: 14, size: 16, track: 'gov' },
+  { name: 'Climate Migration', x: 74, y: 10, size: 8, track: 'living' },
+  { name: 'Sponge Cities', x: 64, y: 22, size: 12, track: 'infra' },
+  { name: 'Net-Zero Buildings', x: 56, y: 66, size: 26, track: 'infra' },
+  { name: 'Port Decarbonisation', x: 48, y: 32, size: 14, track: 'blue' },
+  { name: 'Procurement Reform', x: 26, y: 58, size: 10, track: 'gov' },
+  { name: 'Doughnut Cities', x: 58, y: 16, size: 10, track: 'gov' },
+  { name: 'Care Infrastructure', x: 36, y: 26, size: 8, track: 'living' }
+];
+
+const DISCOURSE_ONLY = [
+  { name: 'Metaverse for Cities', track: 'tech', stage: 84, practice: 6, status: 'PEAKED 2022' },
+  { name: 'Autonomous Shuttles', track: 'mobility', stage: 72, practice: 14, status: 'DECLINING' },
+  { name: '5G Smart Cities', track: 'tech', stage: 68, practice: 22, status: 'STALLED' },
+  { name: 'Blockchain for Cities', track: 'gov', stage: 58, practice: 8, status: 'FADING' },
+  { name: 'Smart Lampposts', track: 'infra', stage: 62, practice: 18, status: 'NICHE' }
+];
+
+const PRACTICE_ONLY = [
+  { name: 'Heat Refuge Networks', track: 'energy', stage: 12, practice: 64, status: 'EMERGING' },
+  { name: 'Care Infrastructure', track: 'living', stage: 8, practice: 52, status: 'RISING' },
+  { name: 'Fiscal Innovation', track: 'gov', stage: 14, practice: 58, status: 'UNDER-SERVED' },
+  { name: 'Social Cohesion Plans', track: 'living', stage: 18, practice: 46, status: 'GROWING' },
+  { name: 'Anti-Displacement', track: 'living', stage: 6, practice: 38, status: 'EMERGING' }
+];
+
+const LIFECYCLE = {
+  emerging: [
+    { name: 'AI Sovereignty', track: 'tech', momentum: 92 },
+    { name: 'Sponge Cities', track: 'infra', momentum: 88 },
+    { name: 'Heat Refuge', track: 'energy', momentum: 84 },
+    { name: 'Generative Urbanism', track: 'tech', momentum: 78 },
+    { name: 'Climate Mobility', track: 'living', momentum: 72 }
+  ],
+  rising: [
+    { name: 'Digital Twins', track: 'tech', momentum: 76 },
+    { name: 'Heat Resilience', track: 'energy', momentum: 82 },
+    { name: '15-Minute City', track: 'gov', momentum: 68 },
+    { name: 'Circular Economy', track: 'energy', momentum: 64 },
+    { name: 'Affordable Housing', track: 'living', momentum: 70 }
+  ],
+  peaking: [
+    { name: 'Urban AI', track: 'tech', momentum: 94 },
+    { name: 'Active Mobility', track: 'mobility', momentum: 88 },
+    { name: 'Net-Zero Buildings', track: 'infra', momentum: 84 },
+    { name: 'Open Data', track: 'gov', momentum: 80 },
+    { name: 'MaaS', track: 'mobility', momentum: 76 }
+  ],
+  declining: [
+    { name: 'Metaverse for Cities', track: 'tech', momentum: 28 },
+    { name: 'Blockchain Governance', track: 'gov', momentum: 22 },
+    { name: 'Smart Parking', track: 'mobility', momentum: 32 },
+    { name: '5G Showcases', track: 'tech', momentum: 36 },
+    { name: 'Drone Delivery', track: 'mobility', momentum: 30 }
+  ]
+};
+
+// Convergence matrix data (symmetric, % co-occurrence)
+const CONVERGENCE = [
+  [100, 38, 28, 32, 22, 24, 14],  // tech
+  [38, 100, 26, 22, 28, 30, 24],  // energy
+  [28, 26, 100, 18, 32, 22, 12],  // mobility
+  [32, 22, 18, 100, 26, 14, 18],  // gov
+  [22, 28, 32, 26, 100, 30, 8],   // living
+  [24, 30, 22, 14, 30, 100, 14],  // infra
+  [14, 24, 12, 18,  8, 14, 100]   // blue
+];
+
+// ============================================================
+// HEATMAP: Track × Year
+// ============================================================
+function renderHeatmap() {
+  const wrap = document.getElementById('heatmap');
+  let html = '';
+
+  // Header row: empty cell + years
+  html += '<div></div>';
+  YEARS.forEach((y, i) => {
+    const isLast = i === YEARS.length - 1;
+    html += `<div class="heatmap-year ${isLast ? 'upcoming' : ''}">${("" + y).slice(2)}</div>`;
+  });
+
+  // Rows
+  TRACKS.forEach(track => {
+    html += `<div class="heatmap-row-label"><div class="dot" style="background:${track.color}"></div>${track.name}</div>`;
+    const values = HEATMAP[track.key];
+    values.forEach((v, i) => {
+      const intensity = Math.min(v / 30, 1);
+      const bg = colorScale(intensity);
+      const textColor = intensity > 0.55 ? '#FFFFFF' : '#0A0A0A';
+      html += `<div class="heatmap-cell" style="background:${bg}; color:${textColor}" title="${track.name} – ${YEARS[i]}: ${v}%">${v}</div>`;
+    });
+  });
+
+  wrap.innerHTML = html;
+}
+
+function colorScale(t) {
+  // Cyan ramp matching brand
+  if (t <= 0.05) return '#F0FAFC';
+  if (t <= 0.2) return '#D6F0F6';
+  if (t <= 0.35) return '#A8E2EE';
+  if (t <= 0.55) return '#5BC6DC';
+  if (t <= 0.75) return '#00B5D8';
+  return '#006B82';
+}
+
+// ============================================================
+// TRACER TOPICS
+// ============================================================
+function renderTracers() {
+  const wrap = document.getElementById('tracer-list');
+  let html = '';
+
+  TRACERS.forEach(t => {
+    const track = TRACKS.find(tr => tr.key === t.track);
+    const minY = 2011, maxY = 2025;
+    const range = maxY - minY;
+    const firstPos = ((t.firstAt - minY) / range) * 100;
+    const peakPos = ((t.peakAt - minY) / range) * 100;
+    const cityPos = t.cityPeak ? ((t.cityPeak - minY) / range) * 100 : null;
+
+    html += `
+      <div class="tracer">
+        <div>
+          <div class="name">${t.name}</div>
+          <div class="meta" style="color:${track.color}">${track.name} · in ${t.cities} cities</div>
+        </div>
+        <div class="tracer-timeline">
+          <div class="tracer-axis"></div>
+          ${[2012, 2015, 2018, 2021, 2024].map(y => `
+            <div class="tracer-tick" style="left:${((y - minY) / range) * 100}%"></div>
+            <div class="tracer-tick-label" style="left:${((y - minY) / range) * 100}%">${y}</div>
+          `).join('')}
+          <div class="tracer-connector" style="left:${firstPos}%; width:${(cityPos || peakPos) - firstPos}%; background:${track.color}; opacity: 0.5"></div>
+          <div class="tracer-marker" style="left:${firstPos}%; background:${track.color}" title="First on SCEWC stage">●</div>
+          <div class="tracer-marker" style="left:${peakPos}%; background:${track.color}; opacity: 0.8" title="Peak programming">▲</div>
+          ${cityPos !== null ? `<div class="tracer-marker" style="left:${cityPos}%; background:#0A0A0A; color:white" title="Peak city adoption">★</div>` : ''}
+        </div>
+        <div>
+          ${t.lag !== null ? `<div class="lag">${t.lag}<span class="unit">YR</span></div><div class="lag-label">Diffusion Lag</div>` : `<div class="lag" style="color:var(--cyan)">↗</div><div class="lag-label">In Diffusion</div>`}
+        </div>
+      </div>
+    `;
+  });
+
+  wrap.innerHTML = html;
+}
+
+// ============================================================
+// CITY GRID
+// ============================================================
+function renderCityGrid(targetId, data) {
+  const wrap = document.getElementById(targetId);
+  let html = '';
+
+  data.forEach(c => {
+    html += `
+      <div class="city-case">
+        <div class="city-flag">${c.flag}</div>
+        <div class="city-name">${c.name}</div>
+        <div class="city-country">${c.country}</div>
+        <div class="city-arrow">
+          <div class="city-step">
+            <div class="city-step-label">Spoke at</div>
+            <div class="city-step-value">${c.spokeAt}</div>
+            <div style="font-size: 11px; color: var(--gray-600); margin-top: 4px;">${c.spokeAbout}</div>
+          </div>
+          <div class="city-arrow-icon">→</div>
+          <div class="city-step practice">
+            <div class="city-step-label">Embedded in</div>
+            <div class="city-step-value">${c.adoptedAt}</div>
+          </div>
+        </div>
+        <div class="city-topic" style="color: var(--cyan-dark)">${c.topic}</div>
+      </div>
+    `;
+  });
+
+  wrap.innerHTML = html;
+}
+
+// ============================================================
+// EVOLUTION LINE CHART
+// ============================================================
+function renderEvolutionChart() {
+  const ctx = document.getElementById('evolutionChart').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: YEARS,
+      datasets: TRACKS.map(t => ({
+        label: t.name,
+        data: HEATMAP[t.key],
+        borderColor: t.color,
+        backgroundColor: t.color + '15',
+        borderWidth: 2.5,
+        tension: 0.35,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        fill: false
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { family: 'Tomorrow', size: 10, weight: 600 },
+            usePointStyle: true,
+            pointStyle: 'rectRounded',
+            padding: 16,
+            boxWidth: 14,
+            boxHeight: 10
+          }
+        },
+        tooltip: {
+          backgroundColor: '#0A0A0A',
+          titleFont: { family: 'Tomorrow', weight: 700, size: 11 },
+          bodyFont: { family: 'DM Sans', size: 12 },
+          padding: 12,
+          titleColor: '#00D4F5',
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: 'Tomorrow', size: 10 }, color: '#8C8C88' }
+        },
+        y: {
+          grid: { color: '#EFEFEC' },
+          ticks: {
+            font: { family: 'Tomorrow', size: 10 },
+            color: '#8C8C88',
+            callback: v => v + '%'
+          },
+          beginAtZero: true,
+          max: 30
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// GEO BARS
+// ============================================================
+function renderGeoBars() {
+  const data = [
+    { label: 'Enabling Tech', value: 22, color: '#00B5D8' },
+    { label: 'Mobility', value: 38, color: '#F59E0B' },
+    { label: 'Energy & Env', value: 42, color: '#10B981' },
+    { label: 'Governance', value: 34, color: '#8B5CF6' },
+    { label: 'Living & Incl', value: 56, color: '#FF2E63' },
+    { label: 'Infra & Build', value: 28, color: '#B45309' },
+    { label: 'Blue Economy', value: 24, color: '#1E40AF' }
+  ];
+
+  const wrap = document.getElementById('geoBars');
+  let html = '';
+  data.forEach(d => {
+    html += `
+      <div class="geo-row">
+        <div class="geo-label" style="color:${d.color}">${d.label}</div>
+        <div class="geo-bar-wrap">
+          <div class="geo-bar" style="width:${d.value}%; background:${d.color}"></div>
+        </div>
+        <div class="geo-value">${d.value}%</div>
+      </div>
+    `;
+  });
+  wrap.innerHTML = html;
+}
+
+// ============================================================
+// REGION ADOPTION
+// ============================================================
+function renderRegionAdoption() {
+  const data = [
+    { label: 'Europe', value: 84 },
+    { label: 'Asia & Pacific', value: 78 },
+    { label: 'North America', value: 72 },
+    { label: 'Latin America', value: 68 },
+    { label: 'MENA', value: 64 },
+    { label: 'Sub-Saharan Africa', value: 52 }
+  ];
+
+  const wrap = document.getElementById('regionAdoption');
+  let html = '';
+  data.forEach(d => {
+    html += `
+      <div class="geo-row">
+        <div class="geo-label">${d.label}</div>
+        <div class="geo-bar-wrap">
+          <div class="geo-bar cyan" style="width:${d.value}%"></div>
+        </div>
+        <div class="geo-value">${d.value}%</div>
+      </div>
+    `;
+  });
+  wrap.innerHTML = html;
+}
+
+// ============================================================
+// SCATTER (Three-corpus)
+// ============================================================
+function renderScatter() {
+  const svg = document.getElementById('scatter');
+  const W = 1000, H = 520, M = { top: 30, right: 240, bottom: 60, left: 80 };
+  const innerW = W - M.left - M.right;
+  const innerH = H - M.top - M.bottom;
+
+  let s = '';
+
+  // Background quadrants
+  s += `<rect x="${M.left}" y="${M.top}" width="${innerW/2}" height="${innerH/2}" fill="#FFF5F5" opacity="0.5"/>`;
+  s += `<rect x="${M.left + innerW/2}" y="${M.top}" width="${innerW/2}" height="${innerH/2}" fill="#FFFEF0" opacity="0.5"/>`;
+  s += `<rect x="${M.left}" y="${M.top + innerH/2}" width="${innerW/2}" height="${innerH/2}" fill="#F0F9FF" opacity="0.5"/>`;
+  s += `<rect x="${M.left + innerW/2}" y="${M.top + innerH/2}" width="${innerW/2}" height="${innerH/2}" fill="#F0FFF4" opacity="0.5"/>`;
+
+  // Quadrant labels
+  s += `<text x="${M.left + innerW * 0.25}" y="${M.top + 20}" text-anchor="middle" font-family="Tomorrow" font-size="10" font-weight="700" fill="#999" letter-spacing="2">PRACTICE-ONLY GAP</text>`;
+  s += `<text x="${M.left + innerW * 0.75}" y="${M.top + 20}" text-anchor="middle" font-family="Tomorrow" font-size="10" font-weight="700" fill="#999" letter-spacing="2">DISCOURSE-ONLY GAP</text>`;
+  s += `<text x="${M.left + innerW * 0.25}" y="${M.top + innerH - 8}" text-anchor="middle" font-family="Tomorrow" font-size="10" font-weight="700" fill="#999" letter-spacing="2">UNDER THE RADAR</text>`;
+  s += `<text x="${M.left + innerW * 0.75}" y="${M.top + innerH - 8}" text-anchor="middle" font-family="Tomorrow" font-size="10" font-weight="700" fill="#999" letter-spacing="2">HEALTHY PIPELINE</text>`;
+
+  // Axes
+  s += `<line x1="${M.left}" y1="${M.top + innerH}" x2="${M.left + innerW}" y2="${M.top + innerH}" stroke="#0A0A0A" stroke-width="1.5"/>`;
+  s += `<line x1="${M.left}" y1="${M.top}" x2="${M.left}" y2="${M.top + innerH}" stroke="#0A0A0A" stroke-width="1.5"/>`;
+
+  // Midlines
+  s += `<line x1="${M.left + innerW/2}" y1="${M.top}" x2="${M.left + innerW/2}" y2="${M.top + innerH}" stroke="#0A0A0A" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.3"/>`;
+  s += `<line x1="${M.left}" y1="${M.top + innerH/2}" x2="${M.left + innerW}" y2="${M.top + innerH/2}" stroke="#0A0A0A" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.3"/>`;
+
+  // Axis labels
+  s += `<text x="${M.left + innerW/2}" y="${M.top + innerH + 38}" text-anchor="middle" font-family="Tomorrow" font-size="11" font-weight="700" letter-spacing="2" fill="#0A0A0A">RESEARCH WEIGHT (% OF PAPERS) →</text>`;
+  s += `<text x="-${M.top + innerH/2}" y="22" text-anchor="middle" transform="rotate(-90)" font-family="Tomorrow" font-size="11" font-weight="700" letter-spacing="2" fill="#0A0A0A">CITY PRACTICE ADOPTION →</text>`;
+
+  // Axis ticks
+  [0, 25, 50, 75, 100].forEach(t => {
+    const x = M.left + (t/100) * innerW;
+    s += `<line x1="${x}" y1="${M.top + innerH}" x2="${x}" y2="${M.top + innerH + 5}" stroke="#0A0A0A"/>`;
+    s += `<text x="${x}" y="${M.top + innerH + 18}" text-anchor="middle" font-family="Tomorrow" font-size="9" fill="#666">${t}%</text>`;
+    const y = M.top + innerH - (t/100) * innerH;
+    s += `<line x1="${M.left - 5}" y1="${y}" x2="${M.left}" y2="${y}" stroke="#0A0A0A"/>`;
+    s += `<text x="${M.left - 8}" y="${y + 3}" text-anchor="end" font-family="Tomorrow" font-size="9" fill="#666">${t}%</text>`;
+  });
+
+  // Bubbles
+  SCATTER_TOPICS.forEach((d, i) => {
+    const track = TRACKS.find(t => t.key === d.track);
+    const cx = M.left + (d.x / 100) * innerW;
+    const cy = M.top + innerH - (d.y / 100) * innerH;
+    const r = 4 + d.size * 0.5;
+
+    s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${track.color}" opacity="0.35" stroke="${track.color}" stroke-width="1.5"/>`;
+
+    // Labels for largest topics
+    if (d.size >= 24) {
+      s += `<text x="${cx}" y="${cy - r - 6}" text-anchor="middle" font-family="DM Sans" font-size="11" font-weight="600" fill="#0A0A0A">${d.name}</text>`;
+    }
+  });
+
+  // Legend on the right
+  const lx = M.left + innerW + 20;
+  s += `<text x="${lx}" y="${M.top + 18}" font-family="Tomorrow" font-size="10" font-weight="700" letter-spacing="2" fill="#666">TRACKS</text>`;
+  TRACKS.forEach((t, i) => {
+    const ly = M.top + 42 + i * 24;
+    s += `<circle cx="${lx + 8}" cy="${ly - 4}" r="6" fill="${t.color}" opacity="0.55" stroke="${t.color}" stroke-width="1.5"/>`;
+    s += `<text x="${lx + 22}" y="${ly}" font-family="DM Sans" font-size="11" fill="#0A0A0A">${t.name}</text>`;
+  });
+
+  svg.innerHTML = s;
+}
+
+// ============================================================
+// KNOWLEDGE PIPELINE (custom SVG)
+// ============================================================
+function renderPipeline() {
+  const svg = document.querySelector('.pipeline-svg');
+  const W = 1200, H = 360;
+
+  let s = '';
+
+  // Three corpus columns
+  const cols = [
+    { x: 100, label: 'RESEARCH', sublabel: '2,816 PAPERS', value: '11', subtext: '11 streams from SAUC Journal + open call', color: '#8B5CF6' },
+    { x: 600, label: 'DISCOURSE', sublabel: '5,247 PANELS', value: '7', subtext: '7 thematic tracks across 14 editions', color: '#00B5D8' },
+    { x: 1100, label: 'PRACTICE', sublabel: '1,400+ CITY DOCS', value: '619', subtext: '619 traced topic-city diffusion pairs', color: '#FF2E63' }
+  ];
+
+  // Background flow curves
+  s += `<defs>
+    <linearGradient id="flow1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#00B5D8" stop-opacity="0.35"/>
+    </linearGradient>
+    <linearGradient id="flow2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00B5D8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#FF2E63" stop-opacity="0.35"/>
+    </linearGradient>
+  </defs>`;
+
+  // Curved flow ribbons
+  s += `<path d="M 160 130 C 360 130, 400 100, 560 100 L 560 180 C 400 180, 360 220, 160 220 Z" fill="url(#flow1)"/>`;
+  s += `<path d="M 660 100 C 820 100, 860 130, 1060 130 L 1060 220 C 860 220, 820 180, 660 180 Z" fill="url(#flow2)"/>`;
+
+  // Filtration tickmarks along ribbons
+  s += `<text x="380" y="80" text-anchor="middle" font-family="Tomorrow" font-size="10" font-weight="700" fill="#666" letter-spacing="2">FILTERED THROUGH PEER REVIEW & PROGRAMMING</text>`;
+  s += `<text x="380" y="276" text-anchor="middle" font-family="DM Sans" font-size="11" fill="#666" font-style="italic">~ 8.4% of submitted papers reach the stage</text>`;
+  s += `<text x="860" y="80" text-anchor="middle" font-family="Tomorrow" font-size="10" font-weight="700" fill="#666" letter-spacing="2">TRANSLATED INTO POLICY & PLANNING</text>`;
+  s += `<text x="860" y="276" text-anchor="middle" font-family="DM Sans" font-size="11" fill="#666" font-style="italic">73% of speaker cities adopt within 5.2 years</text>`;
+
+  // Columns (circles + labels)
+  cols.forEach(c => {
+    s += `<circle cx="${c.x}" cy="160" r="58" fill="white" stroke="${c.color}" stroke-width="3"/>`;
+    s += `<circle cx="${c.x}" cy="160" r="48" fill="${c.color}" opacity="0.1"/>`;
+    s += `<text x="${c.x}" y="155" text-anchor="middle" font-family="Tomorrow" font-size="28" font-weight="800" fill="${c.color}" letter-spacing="-0.02em">${c.value}</text>`;
+    s += `<text x="${c.x}" y="178" text-anchor="middle" font-family="Tomorrow" font-size="9" font-weight="600" fill="#0A0A0A" letter-spacing="0.1em">${c.label}</text>`;
+
+    // Below circle
+    s += `<text x="${c.x}" y="248" text-anchor="middle" font-family="Tomorrow" font-size="11" font-weight="700" fill="#0A0A0A" letter-spacing="2">${c.label}</text>`;
+    s += `<text x="${c.x}" y="266" text-anchor="middle" font-family="Tomorrow" font-size="10" fill="${c.color}" font-weight="700">${c.sublabel}</text>`;
+
+    // Above circle
+    s += `<text x="${c.x}" y="318" text-anchor="middle" font-family="DM Sans" font-size="11" fill="#666">${c.subtext}</text>`;
+  });
+
+  svg.innerHTML = s;
+}
+
+// ============================================================
+// LAG CHART (Histogram)
+// ============================================================
+function renderLagChart() {
+  const ctx = document.getElementById('lagChart').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['0–1 yr', '2–3 yr', '4–5 yr', '6–7 yr', '8–9 yr', '10+ yr', 'Not yet'],
+      datasets: [{
+        data: [42, 124, 218, 142, 56, 22, 15],
+        backgroundColor: ['#00B5D8', '#00B5D8', '#0A0A0A', '#0A0A0A', '#666', '#8C8C88', '#D9D9D4'],
+        borderRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0A0A0A',
+          titleFont: { family: 'Tomorrow', weight: 700 },
+          padding: 12,
+          callbacks: {
+            label: (ctx) => `${ctx.parsed.y} city–topic pairs`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: 'Tomorrow', size: 11, weight: 600 }, color: '#0A0A0A' }
+        },
+        y: {
+          grid: { color: '#EFEFEC' },
+          ticks: { font: { family: 'Tomorrow', size: 10 }, color: '#666' },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// DIFFUSION CHART (multi-line, geographic spread over time)
+// ============================================================
+function renderDiffusionChart() {
+  const ctx = document.getElementById('diffusionChart').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['2014', '2016', '2018', '2020', '2022', '2024', '2025'],
+      datasets: [
+        {
+          label: 'Digital Twins (cities with topic in strategy)',
+          data: [0, 2, 5, 14, 28, 42, 47],
+          borderColor: '#00B5D8',
+          backgroundColor: '#00B5D820',
+          borderWidth: 3,
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: '#00B5D8',
+          pointBorderColor: '#FFF',
+          pointBorderWidth: 2
+        },
+        {
+          label: '15-Minute City',
+          data: [0, 0, 1, 3, 22, 56, 68],
+          borderColor: '#8B5CF6',
+          backgroundColor: '#8B5CF620',
+          borderWidth: 3,
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: '#8B5CF6',
+          pointBorderColor: '#FFF',
+          pointBorderWidth: 2
+        },
+        {
+          label: 'Superblocks',
+          data: [0, 1, 3, 6, 11, 19, 23],
+          borderColor: '#F59E0B',
+          backgroundColor: '#F59E0B20',
+          borderWidth: 3,
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: '#F59E0B',
+          pointBorderColor: '#FFF',
+          pointBorderWidth: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { family: 'Tomorrow', size: 10, weight: 600 },
+            usePointStyle: true,
+            padding: 18,
+            boxWidth: 10
+          }
+        },
+        tooltip: {
+          backgroundColor: '#0A0A0A',
+          titleFont: { family: 'Tomorrow', weight: 700, size: 12 },
+          bodyFont: { family: 'DM Sans', size: 12 },
+          padding: 14,
+          titleColor: '#00D4F5'
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: 'Tomorrow', size: 11 }, color: '#0A0A0A' }
+        },
+        y: {
+          grid: { color: '#EFEFEC' },
+          ticks: {
+            font: { family: 'Tomorrow', size: 10 },
+            color: '#666',
+            callback: v => v + ' cities'
+          },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// GAP LISTS
+// ============================================================
+function renderGapList(targetId, data) {
+  const wrap = document.getElementById(targetId);
+  let html = `
+    <div class="gap-row gap-row-header">
+      <div>Topic</div>
+      <div>Stage Time</div>
+      <div>City Adoption</div>
+      <div style="text-align:right">Status</div>
+    </div>
+  `;
+  data.forEach(d => {
+    const track = TRACKS.find(t => t.key === d.track);
+    html += `
+      <div class="gap-row">
+        <div>
+          <span class="gap-topic-name">${d.name}</span>
+          <span class="gap-track-chip" style="color:${track.color}; border-left: 2px solid ${track.color}">${track.name.split(' &')[0]}</span>
+        </div>
+        <div>
+          <div class="gap-bar"><div class="gap-bar-fill" style="width:${d.stage}%; background:#0A0A0A"></div></div>
+          <div style="font-family:'Tomorrow'; font-size:10px; margin-top:4px; font-weight:600">${d.stage}%</div>
+        </div>
+        <div>
+          <div class="gap-bar"><div class="gap-bar-fill" style="width:${d.practice}%; background:${track.color}"></div></div>
+          <div style="font-family:'Tomorrow'; font-size:10px; margin-top:4px; font-weight:600">${d.practice}%</div>
+        </div>
+        <div class="gap-status" style="text-align:right; color:${track.color}">${d.status}</div>
+      </div>
+    `;
+  });
+  wrap.innerHTML = html;
+}
+
+// ============================================================
+// LIFECYCLE ITEMS
+// ============================================================
+function renderLifecycle() {
+  Object.keys(LIFECYCLE).forEach(stage => {
+    const wrap = document.getElementById('lifecycle-' + stage);
+    let html = '';
+    LIFECYCLE[stage].forEach(item => {
+      const track = TRACKS.find(t => t.key === item.track);
+      html += `
+        <div class="lifecycle-item">
+          <div class="lifecycle-item-name">${item.name}</div>
+          <div class="lifecycle-item-meta" style="color:${track.color}">${track.name}</div>
+          <div class="lifecycle-item-bar">
+            <div class="lifecycle-item-bar-fill" style="width:${item.momentum}%; background:${track.color}"></div>
+          </div>
+        </div>
+      `;
+    });
+    wrap.innerHTML = html;
+  });
+}
+
+// ============================================================
+// CONVERGENCE MATRIX
+// ============================================================
+function renderConvergenceMatrix() {
+  const wrap = document.getElementById('convergence-matrix');
+  let html = '';
+
+  // Header row
+  html += '<div></div>';
+  TRACKS.forEach(t => {
+    html += `<div class="matrix-label-col" style="color:${t.color}">${t.name.split(' &')[0]}</div>`;
+  });
+
+  // Rows
+  TRACKS.forEach((rowTrack, i) => {
+    html += `<div class="matrix-label-row" style="color:${rowTrack.color}"><div class="dot" style="width:8px;height:8px;background:${rowTrack.color}"></div>${rowTrack.name}</div>`;
+    CONVERGENCE[i].forEach((v, j) => {
+      if (i === j) {
+        html += `<div class="matrix-cell" style="background:#0A0A0A; color:white">—</div>`;
+      } else {
+        const intensity = (v - 8) / 32;
+        const bg = matrixColor(intensity);
+        const text = intensity > 0.6 ? 'white' : '#0A0A0A';
+        html += `<div class="matrix-cell" style="background:${bg}; color:${text}">${v}</div>`;
+      }
+    });
+  });
+
+  wrap.innerHTML = html;
+}
+
+function matrixColor(t) {
+  if (t <= 0.2) return '#F0FAFC';
+  if (t <= 0.4) return '#D6F0F6';
+  if (t <= 0.6) return '#A8E2EE';
+  if (t <= 0.8) return '#5BC6DC';
+  return '#00B5D8';
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+let chartsRendered = { coverage: false, discourse: false, diffusion: false, future: false };
+
+function setupTabs() {
+  const buttons = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      buttons.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(target).classList.add('active');
+
+      // Lazy render charts when their tab is opened
+      setTimeout(() => {
+        if (target === 'coverage' && !chartsRendered.coverage) {
+          renderEvolutionChart();
+          chartsRendered.coverage = true;
+        }
+        if (target === 'discourse' && !chartsRendered.discourse) {
+          renderScatter();
+          chartsRendered.discourse = true;
+        }
+        if (target === 'diffusion' && !chartsRendered.diffusion) {
+          renderLagChart();
+          renderDiffusionChart();
+          chartsRendered.diffusion = true;
+        }
+      }, 50);
+    });
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  // Tab 1: Impact (always rendered first)
+  renderPipeline();
+  renderTracers();
+  renderCityGrid('city-grid', CITIES);
+
+  // Tab 2: Track Coverage
+  renderHeatmap();
+  renderGeoBars();
+
+  // Tab 3: Discourse → Practice (gap lists)
+  renderGapList('discourseOnlyList', DISCOURSE_ONLY);
+  renderGapList('practiceOnlyList', PRACTICE_ONLY);
+
+  // Tab 4: Knowledge Diffusion
+  renderCityGrid('diffusionCities', DIFFUSION_CITIES);
+  renderRegionAdoption();
+
+  // Tab 5: Future Signals
+  renderLifecycle();
+  renderConvergenceMatrix();
+
+  setupTabs();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+</script>
+
+</body>
+</html>
