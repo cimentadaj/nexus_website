@@ -16,6 +16,7 @@ import support from './pages/support.js';
 import documentation from './pages/documentation.js';
 import auditLog from './pages/audit-log.js';
 import chapters from './pages/chapters.js';
+import askPage from './pages/ask.js';
 import finalVlr from './pages/final-vlr.js';
 
 const routes = [
@@ -30,6 +31,7 @@ const routes = [
   { path: '/projects/:id/vlr', page: finalVlr, nav: 'projects' },
   { path: '/review/:id', page: review, nav: 'projects' },
   { path: '/tasks', page: tasks, nav: 'tasks' },
+  { path: '/ask', page: askPage, nav: 'ask' },
   { path: '/settings', page: settings, nav: 'settings' },
   { path: '/support', page: support, nav: 'support' },
   { path: '/documentation', page: documentation, nav: 'documentation' },

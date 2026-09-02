@@ -1,6 +1,7 @@
 /* actions.js — every user-facing mutation. Pages call these; they never mutate state directly. */
 import { getState, update, resetState, getProject, getProjectDocs, getDoc, getExtraction, getTask, getProjectExtractions, getChapter, getProjectChapters, getBook, getProjectBook } from './store.js';
 import { applyFeedback, reviseBlockFromComment } from './reviewer.js';
+import { answerQuestion } from './ask.js';
 import { startRun, startSingleTask, retryTask as _retryTask, cancelTask as _cancelTask, executeAll as _executeAll, appendLog, logActivity, makeTask, enqueueTasks, bootEngine } from './pipeline.js';
 import { uid, docTypeFromName, fileExt, titleCase, initials, SDG_TITLES } from './ui.js';
 import { buildTemplateExtractions, STEP_META } from './seed.js';
@@ -374,3 +375,29 @@ export function finalizeBook(bookId) {
 export function reopenBook(bookId) {
   update(s => { const b = s.books.find(x => x.id === bookId); if (b) { b.status = 'draft'; b.finalizedAt = null; } });
 }
+
+/* ---------------- Ask (VLR Assist) ---------------- */
+export function askQuestion(text) {
+  const q = String(text || '').trim();
+  if (!q) return null;
+  if (getState().ask.messages.some(m => m.pending)) return null;
+  const pendingId = uid('msg');
+  update(s => {
+    s.ask.messages.push({ id: uid('msg'), role: 'user', at: Date.now(), text: q, by: s.auth.user?.name },
+      { id: pendingId, role: 'assistant', at: Date.now(), pending: true, text: '' });
+    if (s.ask.messages.length > 80) s.ask.messages.splice(0, s.ask.messages.length - 80);
+  });
+  const delay = 900 + Math.min(1800, q.length * 14);
+  setTimeout(() => {
+    update(s => {
+      const m = s.ask.messages.find(x => x.id === pendingId);
+      if (!m) return;
+      let a;
+      try { a = answerQuestion(q, { scope: s.ask.scope }); } catch (e) { console.error(e); a = { text: 'I hit a snag reading the evidence base — try rephrasing the question.', citations: [], followUps: [] }; }
+      Object.assign(m, a, { pending: false, at: Date.now() });
+    });
+  }, delay);
+  return pendingId;
+}
+export function setAskScope(scope) { update(s => { s.ask.scope = scope; }); }
+export function clearAsk() { update(s => { s.ask.messages = []; }); }

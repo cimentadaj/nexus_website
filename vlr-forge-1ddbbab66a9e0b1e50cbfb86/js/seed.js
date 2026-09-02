@@ -541,6 +541,7 @@ export function buildSeed() {
       { id: uid('cmt'), extractionId: madridExt.find(e => e.sdg === '11.1.1')?.id, author: 'María López', kind: 'comment', text: 'Please double-check the denominator — the survey covers outer districts only.', createdAt: now - 3 * DAY },
     ], activity, logs, tickets, reports,
     chapters: bogotaChapters, books: [bogotaBook],
+    ask: { messages: [], scope: 'all' },
     ui: { tasksProjectFilter: 'all', autoRefresh: true },
     meta: { seededAt: now, node: 'EU-WEST-1', ip: '192.168.1.104' },
   };
