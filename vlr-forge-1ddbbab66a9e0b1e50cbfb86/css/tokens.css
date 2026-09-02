@@ -1,0 +1,89 @@
+/* VLR Forge — design tokens (derived from the discussion #30 mockups) */
+:root {
+  /* Brand */
+  --navy: #0f2f5c;
+  --navy-700: #0b2549;
+  --navy-800: #081c38;
+  --navy-900: #061529;
+  --sky: #7cc4f8;
+  --sky-600: #5fb2ef;
+  --sky-100: #e8f2fd;
+  --sky-50: #f2f7fe;
+  --link: #1d6fb8;
+  --link-hover: #155a97;
+
+  /* Surfaces */
+  --bg: #f7f9fc;
+  --bg-sidebar: #eef3fb;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --surface-tint: #e9f1fb;
+  --surface-info: #eef5fd;
+  --border: #dde5ef;
+  --border-strong: #c9d5e3;
+  --border-soft: #e9eef5;
+
+  /* Text */
+  --text: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
+  --text-on-dark: #ffffff;
+
+  /* Semantic */
+  --success: #16a34a;
+  --success-600: #15803d;
+  --success-bg: #dcfce7;
+  --success-border: #bbf7d0;
+  --danger: #c0392b;
+  --danger-600: #b91c1c;
+  --danger-bg: #fdecec;
+  --danger-row: #fdf4f4;
+  --danger-border: #f5c2c0;
+  --warning: #b45309;
+  --warning-bg: #fef9c3;
+  --warning-border: #f5d565;
+  --info: #1d6fb8;
+  --info-bg: #dbeafe;
+  --info-border: #bfdbfe;
+  --neutral-bg: #eef2f7;
+  --neutral-border: #dbe3ee;
+  --neutral-text: #64748b;
+  --running: #1d6fb8;
+  --running-bg: #e6f0fb;
+
+  /* SDG official colours */
+  --sdg-1: #e5243b; --sdg-2: #dda63a; --sdg-3: #4c9f38; --sdg-4: #c5192d; --sdg-5: #ff3a21;
+  --sdg-6: #26bde2; --sdg-7: #fcc30b; --sdg-8: #a21942; --sdg-9: #fd6925; --sdg-10: #dd1367;
+  --sdg-11: #fd9d24; --sdg-12: #bf8b2e; --sdg-13: #3f7e44; --sdg-14: #0a97d9; --sdg-15: #56c02b;
+  --sdg-16: #00689d; --sdg-17: #19486a;
+
+  /* Typography */
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 13.5px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 18px;
+  --fs-2xl: 22px;
+  --fs-3xl: 28px;
+  --fs-4xl: 34px;
+
+  /* Layout */
+  --sidebar-w: 240px;
+  --topbar-h: 62px;
+  --content-pad: 32px;
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.10);
+  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.18);
+
+  --ease: cubic-bezier(.2,.7,.2,1);
+}
