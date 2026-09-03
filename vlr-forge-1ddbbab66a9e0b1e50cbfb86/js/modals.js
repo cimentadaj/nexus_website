@@ -43,7 +43,7 @@ function bindDropzone(el, id, files, { defaultLang = 'EN', onChange, existingNam
       const ext = fileExt(f.name);
       const sizeKb = f.size ? Math.round(f.size / 1024) : (ext === 'pdf' ? 4200 + files.length * 810 : 320 + files.length * 90);
       const pages = ext === 'pdf' ? Math.max(6, Math.round(sizeKb / 180)) : ext === 'docx' ? Math.max(3, Math.round(sizeKb / 40)) : ['xlsx', 'csv'].includes(ext) ? Math.max(1, Math.round(sizeKb / 60)) : 12;
-      files.push({ name: f.name, size: sizeKb * 1024, pages: Math.min(pages, 600), type: docTypeFromName(f.name), language: defaultLang });
+      files.push({ name: f.name, size: sizeKb * 1024, pages: Math.min(pages, 600), type: docTypeFromName(f.name), language: f.language || '' });
     }
     renderList();
   };
@@ -53,11 +53,11 @@ function bindDropzone(el, id, files, { defaultLang = 'EN', onChange, existingNam
         ${fileTypeIcon(f.name)}
         <div class="grow"><div class="name">${esc(f.name)}</div><div class="meta">${fmtBytes(f.size / 1024)} · ~${f.pages} pages</div></div>
         <select class="select select-sm" data-i="${i}" data-field="type">${DOC_TYPES.map(t => `<option ${t === f.type ? 'selected' : ''}>${t}</option>`).join('')}</select>
-        <select class="select select-sm" data-i="${i}" data-field="language">${LANGS.map(l => `<option ${l === f.language ? 'selected' : ''}>${l}</option>`).join('')}</select>
+        <select class="select select-sm ${f.language ? '' : 'lang-missing'}" data-i="${i}" data-field="language" data-tip="Document language"><option value="" disabled ${f.language ? '' : 'selected'}>Lang…</option>${LANGS.map(l => `<option ${l === f.language ? 'selected' : ''}>${l}</option>`).join('')}</select>
         <button type="button" class="btn-icon danger" data-remove="${i}" aria-label="Remove">${icon('x', 'icon-sm')}</button>
       </div>`).join('');
     refreshIcons(list);
-    list.querySelectorAll('select').forEach(s => s.addEventListener('change', () => { files[Number(s.dataset.i)][s.dataset.field] = s.value; onChange?.(); }));
+    list.querySelectorAll('select').forEach(s => s.addEventListener('change', () => { files[Number(s.dataset.i)][s.dataset.field] = s.value; if (s.dataset.field === 'language') s.classList.toggle('lang-missing', !s.value); onChange?.(); }));
     list.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', () => { files.splice(Number(b.dataset.remove), 1); renderList(); }));
     onChange?.();
   };
@@ -153,6 +153,7 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
       return ok;
     }
     if (step === 2 && !data.sdgs.length) { toast.warning('No SDGs selected', 'Select at least one goal, or continue and configure later.'); }
+    if (step === 3 && data.files.some(f => !f.language)) { toast.error('Set the language of every document', 'Each uploaded file needs its language before you can continue.'); return false; }
     return true;
   }
   function bind() {
@@ -177,7 +178,11 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
       el.querySelector('#np-sdg-all').onclick = () => { data.sdgs = Object.keys(SDG_TITLES).map(Number); render(); };
       el.querySelector('#np-sdg-none').onclick = () => { data.sdgs = []; render(); };
     }
-    if (step === 3) bindDropzone(el, 'np', data.files, { defaultLang: data.languages.find(l => l !== 'EN') || 'EN' });
+    if (step === 3) {
+      const gate = () => { const btn = el.querySelector('#np-next'); if (!btn) return; const missing = data.files.filter(f => !f.language).length; btn.disabled = !!missing; btn.title = missing ? `Set the language for ${missing} file(s)` : ''; };
+      bindDropzone(el, 'np', data.files, { onChange: gate });
+      gate();
+    }
   }
   render();
   return api;
@@ -201,9 +206,13 @@ export function openUploadModal({ projectId = null, onDone } = {}) {
       <label class="checkbox"><input type="checkbox" id="up-parse" checked> Start parsing immediately after upload (LlamaParse)</label>`,
     footer: `<span class="left xs muted" id="up-summary">No files selected</span><button class="btn btn-ghost" id="up-cancel">Cancel</button><button class="btn btn-primary" id="up-go" disabled>${icon('upload', 'icon-sm')}Upload</button>`,
     onMount(el, api) {
-      const update = () => { el.querySelector('#up-summary').textContent = files.length ? `${files.length} file(s) · ${fmtBytes(sum(files, f => f.size) / 1024)}` : 'No files selected'; el.querySelector('#up-go').disabled = !files.length; };
+      const update = () => {
+        const missing = files.filter(f => !f.language).length;
+        el.querySelector('#up-summary').textContent = files.length ? `${files.length} file(s) · ${fmtBytes(sum(files, f => f.size) / 1024)}${missing ? ` · set language for ${missing}` : ''}` : 'No files selected';
+        const go = el.querySelector('#up-go'); go.disabled = !files.length || !!missing; go.title = missing ? `Set the language for ${missing} file(s)` : '';
+      };
       const project = getProject(pid);
-      bindDropzone(el, 'up', files, { defaultLang: (project?.languages || []).find(l => l !== 'EN') || 'EN', onChange: update, existingNames: new Set(getProjectDocs(pid).map(d => d.name)) });
+      bindDropzone(el, 'up', files, { onChange: update, existingNames: new Set(getProjectDocs(pid).map(d => d.name)) });
       el.querySelector('#up-project').addEventListener('change', (e) => { pid = e.target.value; });
       el.querySelector('#up-cancel').onclick = api.close;
       el.querySelector('#up-go').onclick = () => {

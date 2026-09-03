@@ -35,3 +35,5 @@
 .file-row .select-sm { padding: 3px 26px 3px 8px; font-size: 12px; }
 .pillar-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .pillar-form-grid .span-2 { grid-column: span 2; }
+
+.select-sm.lang-missing { border-color: var(--danger-border); background-color: var(--danger-bg); color: var(--danger); }
