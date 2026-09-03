@@ -1,5 +1,5 @@
 /* Projects list — mock-up design-refs/01-projects-list.png */
-import { esc, icon, sdgChips, bindActions, openMenu, confirmDialog, toast, progressHtml, refreshIcons } from '../ui.js';
+import { esc, icon, sdgChips, bindActions, openMenu, confirmDialog, toast, refreshIcons } from '../ui.js';
 import { getState, projectStats, getProjectDocs, getProjectExtractions } from '../store.js';
 import { archiveProject, unarchiveProject, deleteProject } from '../actions.js';
 import { openConfigureProjectModal } from '../modals.js';
@@ -20,6 +20,31 @@ function matches(p, q) {
   if (!q) return true;
   const hay = `${p.name} ${p.city || ''} ${p.country || ''} ${p.jurisdiction || ''} ${p.year || ''}`.toLowerCase();
   return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
+}
+
+/** Lifecycle stages shown on each card: completed → green check, current → navy, upcoming → grey. */
+const STAGES = [
+  { key: 'extraction', label: 'Urban data' },
+  { key: 'review', label: 'Review' },
+  { key: 'chapters', label: 'Chapters' },
+  { key: 'final', label: 'Final VLR' },
+];
+function stageState(stats) {
+  const done = {
+    extraction: stats.extractions > 0 && stats.pillarsDone === 4,
+    review: stats.allReviewed,
+    chapters: stats.chapters > 0 && stats.chaptersApproved === stats.chapters,
+    final: stats.bookFinal,
+  };
+  const current = STAGES.find(st => !done[st.key])?.key || null; // null → everything done
+  return { done, current };
+}
+function stagePills(stats) {
+  const { done, current } = stageState(stats);
+  return `<div class="pc-stages">${STAGES.map(st => {
+    const cls = done[st.key] ? 'done' : st.key === current ? 'current' : 'todo';
+    return `<span class="pc-stage ${cls}" data-tip="${st.key === current ? 'Current stage' : done[st.key] ? 'Completed' : 'Upcoming'}">${done[st.key] ? icon('check', 'icon-xs') : ''}${esc(st.label)}</span>`;
+  }).join('')}</div>`;
 }
 
 function footerButton(p) {
@@ -51,10 +76,7 @@ function projectCard(p) {
         <span class="pc-stat-value">${icon('file-text', 'icon-sm')}<span>${pad2(stats.docs)} Documents</span></span>
       </div>
     </div>
-    <div class="pc-progress">
-      <div class="pc-progress-row"><span>${esc(stats.queueLabel)}</span><span>${esc(stats.queueMeta)}</span></div>
-      ${progressHtml(stats.barPct, archived ? 'success' : stats.barCls)}
-    </div>
+    ${stagePills(stats)}
     ${footerButton(p)}
   </article>`;
 }
