@@ -137,7 +137,6 @@ export default {
       <button class="btn-icon dv-back" data-action="back" aria-label="Back">${icon('arrow-left', 'icon-lg')}</button>
       <div class="dv-heading">
         <div class="row gap-6">${fileTypeIcon(doc.name)}<span class="topbar-title dv-title" title="${esc(doc.name)}">${esc(doc.name)}</span></div>
-        <div class="topbar-subtitle">${esc(doc.code)} · ${esc(doc.language)}${doc.translated && doc.language !== 'EN' ? ` → ${esc(doc.translatedTo || 'EN')}` : ''}</div>
       </div>
       <span class="grow"></span>
       ${avatarButton()}`;
