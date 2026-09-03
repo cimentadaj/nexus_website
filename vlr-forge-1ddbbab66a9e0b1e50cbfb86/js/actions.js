@@ -423,3 +423,19 @@ export function runPreprocessing(projectId) {
   logActivity({ projectId, title: `${run.label} started (${tasks.length} tasks)`, provenance: `${projectId.slice(0, 3).toUpperCase()}-PRE-001`, status: 'running', type: 'run' });
   return run;
 }
+
+/** Re-run preprocessing for one document (e.g. after the source changed): fresh parse (+ translate for non-EN). */
+export function reprocessDocument(docId) {
+  const d = getDoc(docId);
+  if (!d) return null;
+  const inflight = getState().tasks.some(t => t.inputDocId === docId && ['parse', 'xml_extraction', 'translate'].includes(t.step) && ['queued', 'running'].includes(t.status));
+  if (inflight) return null;
+  const tasks = [];
+  const parse = makeTask({ projectId: d.projectId, step: d.ext === 'xml' ? 'xml_extraction' : 'parse', inputDoc: d.name, inputDocId: d.id, pages: d.pages });
+  tasks.push(parse);
+  if (d.language !== 'EN') tasks.push(makeTask({ projectId: d.projectId, step: 'translate', inputDoc: d.name, inputDocId: d.id, pages: d.pages, dependsOn: [parse.id] }));
+  update(st => { const x = st.documents.find(q => q.id === docId); if (x) { x.status = 'uploaded'; x.progress = 0; if (x.language !== 'EN') x.translated = false; } });
+  enqueueTasks(tasks);
+  logActivity({ projectId: d.projectId, title: `Re-preprocessing queued: ${d.name}`, provenance: d.code, status: 'queued', type: 'task' });
+  return tasks;
+}

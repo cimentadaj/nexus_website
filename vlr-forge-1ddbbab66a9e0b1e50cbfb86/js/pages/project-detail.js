@@ -1,7 +1,7 @@
 /* Project detail — Overview (mock-up 02) and History view. Route #/projects/:id and #/projects/:id/history */
 import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime, SDG_TITLES } from '../ui.js';
 import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, getProjectRuns, getProjectReports, getProjectActivity, projectStats, getTask, getDoc, getLogs } from '../store.js';
-import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing } from '../actions.js';
+import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
 import { topbarActions, searchBox, topbarTabs, statusBarHtml } from '../shell.js';
 import { PILLARS, STEP_META, STEP_ORDER } from '../seed.js';
@@ -170,7 +170,7 @@ function ppDocDetail(doc, project, st) {
     <div class="mt-12"><a class="link-text xs" href="#/projects/${esc(project.id)}/documents/${esc(doc.id)}">${icon('eye', 'icon-xs')} Open in Document Viewer</a></div>`
   : `<div class="pp-meta-wait">${st.parse === 'running' ? `${icon('loader-2', 'icon-sm spin')} Parsing — extracting the metadata header, page-by-page markdown and tables…` : st.parse === 'failed' ? `${icon('alert-circle', 'icon-sm danger-text')} Parse failed — see the log; retry from the task.` : `${icon('clock', 'icon-sm')} Not parsed yet — run preprocessing to extract this document.`}</div>`;
   return `
-  <tr class="pp-detail-row"><td colspan="3">
+  <tr class="pp-detail-row"><td colspan="4">
     <div class="pp-detail">
       <div class="pp-detail-meta">${meta}</div>
       <div class="pp-detail-log">
@@ -192,16 +192,15 @@ function preprocessHtml(ctx, project) {
   const wikiRows = ppWikiRows(project);
   const wikiTargets = wikiRows.reduce((a, r) => a + r.targets, 0), wikiInd = wikiRows.reduce((a, r) => a + r.indicators, 0);
   const pendingWork = docs.some(d => d.status !== 'processed' || (d.language !== 'EN' && !d.translated)) || !project.wikiLoaded;
-  // expansion: an explicit pick wins; while running, follow the document currently being processed
+  // expansion is inspection-only: a document opens on click once it is done (or failed) — nothing streams open on its own
   const states = new Map(docs.map(d => [d.id, ppDocState(d, tasks)]));
-  const autoDoc = running ? (docs.find(d => { const st = states.get(d.id); return st.parse === 'running' || st.translate === 'running'; })?.id || null) : null;
-  const openId = ctx.local.ppSel !== undefined ? ctx.local.ppSel : autoDoc;
+  const openId = ctx.local.ppSel ?? null;
   const wikiOpen = ctx.local.ppWikiOpen ?? false;
   return `
   <div class="page-header">
     <div>
       <h1 class="page-title">${esc(project.city)} ${esc(project.year)}</h1>
-      <p class="page-subtitle">${icon('layers', 'icon-sm')} Step 1 — Preprocessing · parse the source documents, translate them to English and load the SDG reference. Click a document to inspect what was extracted and its log.</p>
+      <p class="page-subtitle">${icon('layers', 'icon-sm')} Step 1 — Preprocessing · parse the source documents, translate them to English and load the SDG reference. Documents show a processing state while running; once done, click one to inspect what was extracted and its log.</p>
     </div>
     <div class="row gap-6">
       <button class="btn btn-light" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload documents</button>
@@ -225,15 +224,22 @@ function preprocessHtml(ctx, project) {
   <section class="card">
     <div class="card-header tinted"><div class="card-title-caps">${icon('folder-open')}Source documents (${docs.length})</div></div>
     ${docs.length ? `<table class="table pp-table">
-      <thead><tr><th>Filename</th><th>Language</th><th>Preprocessing</th></tr></thead>
-      <tbody>${docs.map(d => { const st = states.get(d.id); const open = openId === d.id; return `
-        <tr class="clickable ${open ? 'pp-open' : ''}" data-action="pp-doc" data-doc="${esc(d.id)}">
-          <td><div class="row gap-12">${icon(open ? 'chevron-down' : 'chevron-right', 'icon-sm faint')}${fileTypeIcon(d.name)}<span class="cell-title mono">${esc(d.name)}</span></div></td>
+      <thead><tr><th>Filename</th><th>Language</th><th>Preprocessing</th><th class="th-right"></th></tr></thead>
+      <tbody>${docs.map(d => { const st = states.get(d.id); const busy = st.parse === 'running' || st.translate === 'running';
+        const docDone = st.parse === 'done' && (st.translate === 'done' || st.translate === 'na');
+        const docFailed = st.parse === 'failed' || st.translate === 'failed';
+        const inspectable = docDone || docFailed;
+        const open = openId === d.id && inspectable;
+        const pills = busy ? PP_PILL.running('Processing…')
+          : docDone ? `${PP_PILL.done('Parsed')}${st.translate === 'na' ? PP_PILL.na('Translate · not needed (EN)') : PP_PILL.done('Translated')}`
+          : docFailed ? `${st.parse === 'failed' ? PP_PILL.failed('Parse failed', st.parseTask?.id) : PP_PILL.done('Parsed')}${st.translate === 'failed' ? PP_PILL.failed('Translation failed', st.trTask?.id) : ''}`
+          : PP_PILL.pending('Not processed');
+        return `
+        <tr class="${inspectable ? 'clickable' : ''} ${open ? 'pp-open' : ''}" ${inspectable ? `data-action="pp-doc" data-doc="${esc(d.id)}"` : ''}>
+          <td><div class="row gap-12">${inspectable ? icon(open ? 'chevron-down' : 'chevron-right', 'icon-sm faint') : '<span style="width:15px"></span>'}${fileTypeIcon(d.name)}<span class="cell-title mono">${esc(d.name)}</span></div></td>
           <td><span class="badge badge-lang">${esc(d.language)}</span></td>
-          <td><div class="row gap-6 wrap">
-            ${PP_PILL[st.parse](st.parse === 'done' ? 'Parsed' : st.parse === 'running' ? 'Parsing' : st.parse === 'failed' ? 'Parse failed' : 'Parse · pending', st.parseTask?.id)}
-            ${st.translate === 'na' ? PP_PILL.na('Translate · not needed (EN)') : PP_PILL[st.translate](st.translate === 'done' ? 'Translated' : st.translate === 'running' ? 'Translating' : st.translate === 'failed' ? 'Translation failed' : 'Translate · pending', st.trTask?.id)}
-          </div></td>
+          <td><div class="row gap-6 wrap">${pills}</div></td>
+          <td class="td-right"><span data-tip="${busy ? 'Processing…' : docDone || docFailed ? 'Reprocess this document (fresh parse and translation)' : 'Preprocess this document only'}"><button class="btn-icon" data-action="pp-run-doc" data-doc="${esc(d.id)}" ${busy ? 'disabled' : ''}>${icon(busy ? 'loader-2' : docDone || docFailed ? 'rotate-ccw' : 'play', busy ? 'icon-sm spin' : 'icon-sm')}</button></span></td>
         </tr>${open ? ppDocDetail(d, project, st) : ''}`; }).join('')}</tbody>
     </table>` : `<div class="empty">${icon('file-plus-2')}<div class="empty-title">No source documents yet</div><div class="empty-sub">Upload the city's documents to begin preprocessing.</div><div class="mt-12"><button class="btn btn-primary btn-sm" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload documents</button></div></div>`}
   </section>`;
@@ -523,6 +529,7 @@ export default {
       'pp-continue': () => navigate(`#/projects/${project.id}`),
       'pp-doc': (el) => { const cur = ctx.local.ppSel; ctx.local.ppSel = cur === el.dataset.doc ? null : el.dataset.doc; ctx.rerender(); },
       'pp-wiki-toggle': () => { ctx.local.ppWikiOpen = !(ctx.local.ppWikiOpen ?? false); ctx.rerender(); },
+      'pp-run-doc': (el, ev) => { ev.stopPropagation(); const d = getDoc(el.dataset.doc); if (!d) return; const ts = reprocessDocument(d.id); if (!ts) { toast.info('Already processing', d.name); return; } toast.success('Preprocessing queued', `${d.name} — fresh parse${d.language !== 'EN' ? ' and translation' : ''}.`); },
       'pp-open-task': (el, ev) => { ev.stopPropagation(); if (el.dataset.task) openTaskDrawer(el.dataset.task); },
       'write-vlr': () => { const ts = composeChapters(project.id); if (!ts.length) { toast.warning('Nothing to compose', 'Approve evidence first.'); return; } toast.success('VLR composition started', `${ts.length - 1} chapter${ts.length - 1 === 1 ? '' : 's'} queued — follow them in the Task Queue.`); navigate(`#/projects/${project.id}/chapters`); },
       'run-pipeline-empty': doRunPipeline,
