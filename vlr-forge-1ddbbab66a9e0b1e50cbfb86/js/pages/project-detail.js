@@ -93,7 +93,7 @@ function applyDocFilter(docs, f) {
 /* ---------- top bar ---------- */
 function topbarHtml(ctx, project, active) {
   return `
-    <div class="breadcrumb"><a href="#/projects">Projects</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">${esc(project.name)}</span></div>
+    <div class="breadcrumb"><span class="crumb-current">${esc(project.name)}</span></div>
     ${searchBox({ id: 'pd-search', placeholder: 'Search project data...', value: ctx.local.q || '' })}
     <span class="grow"></span>
     ${topbarActions({ projectId: project.id, upload: false })}`;
@@ -465,7 +465,7 @@ export default {
   render(ctx) {
     const project = getProject(ctx.params.id);
     if (!project) {
-      ctx.topbar.innerHTML = `<div class="breadcrumb"><a href="#/projects">Projects</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">Not found</span></div><span class="grow"></span>${topbarActions()}`;
+      ctx.topbar.innerHTML = `<div class="breadcrumb"><span class="crumb-current">Not found</span></div><span class="grow"></span>${topbarActions()}`;
       ctx.content.innerHTML = `<div class="card"><div class="empty">${icon('folder-x')}<div class="empty-title">Project not found</div><div class="empty-sub">The project "${esc(ctx.params.id)}" does not exist or was deleted.</div><a class="btn btn-primary btn-sm mt-12" href="#/projects">Back to projects</a></div></div>`;
       ctx.footer.innerHTML = '';
       return;

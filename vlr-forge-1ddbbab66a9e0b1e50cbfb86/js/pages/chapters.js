@@ -340,7 +340,7 @@ export default {
   render(ctx) {
     const project = getProject(ctx.params.id);
     if (!project) {
-      ctx.topbar.innerHTML = `<div class="breadcrumb"><a href="#/projects">Projects</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">Not found</span></div><span class="grow"></span>${avatarButton()}`;
+      ctx.topbar.innerHTML = `<div class="breadcrumb"><span class="crumb-current">Not found</span></div><span class="grow"></span>${avatarButton()}`;
       ctx.content.innerHTML = `<div class="card"><div class="empty">${icon('folder-x')}<div class="empty-title">Project not found</div><div class="empty-sub">The project "${esc(ctx.params.id)}" does not exist or was deleted.</div><a class="btn btn-primary btn-sm mt-12" href="#/projects">Back to projects</a></div></div>`;
       ctx.footer.innerHTML = '';
       return;
@@ -373,7 +373,7 @@ export default {
       assembleBtn = `<span ${tip ? `data-tip="${esc(tip)}"` : ''}><button class="btn btn-primary" data-action="assemble" ${tip ? 'disabled' : ''}>${icon('book-open-check', 'icon-sm')}Assemble final VLR</button></span>`;
     }
     ctx.topbar.innerHTML = `
-      <div class="breadcrumb"><a href="#/projects">Projects</a>${icon('chevron-right', 'icon-sm')}<a href="#/projects/${esc(project.id)}">${esc(project.name)}</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">Chapters</span></div>
+      <div class="breadcrumb"><a href="#/projects/${esc(project.id)}">${esc(project.name)}</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">Chapters</span></div>
       <span class="grow"></span>
       ${projectStepper(project, 'chapters', { compact: true })}
       <span class="badge badge-pill ${allApproved ? 'badge-success' : 'badge-neutral'} ch-progress-pill">${icon(allApproved ? 'check-circle-2' : 'pen-line', 'icon-xs')}${stats.chaptersApproved}/${chapters.length} chapters approved</span>
