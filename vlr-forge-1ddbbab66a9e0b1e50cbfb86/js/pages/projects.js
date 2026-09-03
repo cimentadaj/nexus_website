@@ -1,8 +1,8 @@
 /* Projects list — mock-up design-refs/01-projects-list.png */
 import { esc, icon, sdgChips, relTime, bindActions, openMenu, confirmDialog, toast, progressHtml, refreshIcons } from '../ui.js';
-import { getState, projectStats, getProjectActivity, getProjectDocs, getProjectExtractions, runningTasks } from '../store.js';
-import { runPipeline, archiveProject, unarchiveProject, deleteProject } from '../actions.js';
-import { openConfigureProjectModal, openUploadModal } from '../modals.js';
+import { getState, projectStats, getProjectActivity, getProjectDocs, getProjectExtractions } from '../store.js';
+import { archiveProject, unarchiveProject, deleteProject } from '../actions.js';
+import { openConfigureProjectModal } from '../modals.js';
 import { topbarActions, searchBox, topbarTabs } from '../shell.js';
 import { navigate } from '../router.js';
 
@@ -96,11 +96,6 @@ function openCardMenu(anchor, p) {
   openMenu(anchor, [
     { label: 'Open', icon: 'folder-open', onClick: () => navigate(`#/projects/${p.id}`) },
     { label: 'Configure', icon: 'settings', onClick: () => openConfigureProjectModal(p.id) },
-    { label: 'Upload documents', icon: 'upload', onClick: () => {
-        if (archived) { toast.warning('Project is archived', 'Restore the project before uploading documents.'); return; }
-        openUploadModal({ projectId: p.id });
-      } },
-    { label: 'Run full pipeline', icon: 'play', onClick: () => runFull(p) },
     'divider',
     archived
       ? { label: 'Restore', icon: 'archive-restore', onClick: () => { unarchiveProject(p.id); toast.success('Project restored', `${p.name} is active again.`); } }
@@ -116,15 +111,6 @@ function openCardMenu(anchor, p) {
         }
       } },
   ], { minWidth: '210px' });
-}
-
-function runFull(p) {
-  if (p.status === 'archived') { toast.warning('Project is archived', 'Restore the project before running the pipeline.'); return; }
-  if (runningTasks(p.id).length) { toast.info('Pipeline already running', `${p.name} has tasks in progress. See the Tasks page.`); return; }
-  if (!getProjectDocs(p.id).length) { toast.warning('No documents to process', 'Upload documents before running the pipeline.'); return; }
-  const run = runPipeline(p.id);
-  if (!run) { toast.info('Nothing to run', 'All documents are already processed.'); return; }
-  toast.success('Pipeline run started', `${run.label} · ${run.taskIds?.length ?? ''} tasks queued for ${p.name}`);
 }
 
 export default {
