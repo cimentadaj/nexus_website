@@ -104,9 +104,7 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
         <div class="field"><label class="label">Jurisdiction / reporting entity</label><input class="input" id="np-jur" placeholder="e.g. Dahab City Council" value="${esc(data.jurisdiction)}"><div class="hint">The entity that signs the review — appears on the cover and in citations.</div></div>
         <div class="field"><label class="label">Region<span class="req">*</span></label><select class="select" id="np-region"><option value="" disabled ${data.region ? '' : 'selected'}>Select region…</option>${REGION_OPTIONS.map(r => `<option value="${esc(r.value)}" ${data.region === r.value ? 'selected' : ''}>${esc(r.label)}</option>`).join('')}</select><div class="hint">Regional SDG report family used for the regional context and figures in every chapter.</div></div>
         <div class="field"><label class="label">Population</label><input class="input" id="np-population" placeholder="e.g. 15,000" value="${esc(data.population)}"><div class="hint">Kept as reported locally (text is fine) — quoted in the city profile, never recalculated.</div></div>
-        <div class="field"><label class="label">Geography</label><input class="input" id="np-geography" placeholder="e.g. Coastal city on the Gulf of Aqaba, South Sinai Governorate" value="${esc(data.geography)}"><div class="hint">One line situating the city — grounds the chapters' bridge sentences.</div></div>
         <div class="field"><label class="label">Reporting year</label><select class="select" id="np-year">${YEARS.map(y => `<option ${y === Number(data.year) ? 'selected' : ''}>${y}</option>`).join('')}</select><div class="hint">The VLR cycle this review covers (also the book's cover year).</div></div>
-        <div class="field"><label class="label">Project name</label><input class="input" id="np-name" placeholder="Auto-generated from city and year" value="${esc(data.name)}"><div class="hint">Leave blank to use "<span id="np-name-preview">${esc(data.city || 'City')} ${data.year} VLR</span>".</div></div>
         <div class="field span-2"><label class="label">Description</label><textarea class="textarea" id="np-desc" placeholder="Anything else the writers should know — scope, partners, priorities, special context…" style="min-height:70px">${esc(data.description)}</textarea><div class="hint">Free text carried into the book's introduction; everything not covered by the fields above.</div></div>
       </div>`;
     if (step === 2) body += `
@@ -125,7 +123,7 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
         <div><div class="k">Reporting year</div><div class="v">${data.year}</div></div>
         <div><div class="k">Region</div><div class="v">${esc((REGION_OPTIONS.find(r => r.value === data.region) || {}).label || '—')}</div></div>
         <div><div class="k">Population</div><div class="v">${esc(data.population || '—')}</div></div>
-        <div><div class="k">Geography</div><div class="v">${esc(data.geography || '—')}</div></div>
+
         <div><div class="k">Processing node</div><div class="v mono">${esc(getState().settings.org.region || 'EU-WEST-1')}</div></div>
         <div class="span-2" style="grid-column:span 2"><div class="k">Target SDGs (${data.sdgs.length})</div><div class="v"><div class="sdg-chips">${data.sdgs.map(n => sdgChip(n)).join('') || '<span class="muted">None selected — you can configure them later.</span>'}</div></div></div>
         <div style="grid-column:span 2"><div class="k">Source documents (${data.files.length})</div><div class="v">${data.files.length ? data.files.map(f => `<span class="badge badge-neutral badge-mono" style="margin:2px 4px 2px 0">${esc(f.name)}</span>`).join('') : '<span class="muted">None yet — the project will be created in Provisioning state.</span>'}</div></div>
@@ -144,7 +142,7 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
 
   function collect() {
     const q = (id) => api.el.querySelector(id);
-    if (step === 1) { data.city = q('#np-city').value.trim(); data.country = q('#np-country').value.trim(); data.jurisdiction = q('#np-jur').value.trim(); data.year = Number(q('#np-year').value); data.name = q('#np-name').value.trim(); data.description = q('#np-desc').value.trim(); data.population = q('#np-population').value.trim(); data.geography = q('#np-geography').value.trim(); data.region = q('#np-region').value; }
+    if (step === 1) { data.city = q('#np-city').value.trim(); data.country = q('#np-country').value.trim(); data.jurisdiction = q('#np-jur').value.trim(); data.year = Number(q('#np-year').value); data.description = q('#np-desc').value.trim(); data.population = q('#np-population').value.trim(); data.region = q('#np-region').value; }
     if (step === 4) { const r = q('#np-run'); if (r) data.runNow = r.checked; }
   }
   function validate() {
@@ -172,8 +170,6 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
       navigate(`#/projects/${p.id}`);
     });
     if (step === 1) {
-      el.querySelector('#np-city').addEventListener('input', (e) => { el.querySelector('#np-name-preview').textContent = `${e.target.value || 'City'} ${el.querySelector('#np-year').value} VLR`; });
-      el.querySelector('#np-year').addEventListener('change', (e) => { el.querySelector('#np-name-preview').textContent = `${el.querySelector('#np-city').value || 'City'} ${e.target.value} VLR`; });
       el.querySelectorAll('.input').forEach(i => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); el.querySelector('#np-next').click(); } }));
     }
     if (step === 2) {
