@@ -1,6 +1,6 @@
 /* shell.js — sidebar, topbar building blocks, avatar menu, status bar */
 import { icon, esc, avatarHtml, openMenu, refreshIcons } from './ui.js';
-import { getState, currentUser } from './store.js';
+import { getState, currentUser, projectStats } from './store.js';
 import { navigate, inAppNavigations } from './router.js';
 import { logout } from './actions.js';
 import { APP_VERSION } from './seed.js';
@@ -57,6 +57,32 @@ export function topbarActions({ upload = true, newProject = true, projectId = nu
 
 export function searchBox({ id = 'global-search', placeholder = 'Search...', value = '', cls = 'search-wide' } = {}) {
   return `<div class="search ${cls}">${icon('search')}<input class="input" id="${id}" type="search" placeholder="${esc(placeholder)}" value="${esc(value)}" autocomplete="off"></div>`;
+}
+
+/** Sequential lifecycle stepper: Preprocessing → Overview → Chapters → Final VLR (connected circles). */
+export function projectStepper(project, active, { compact = false } = {}) {
+  const stats = projectStats(project);
+  const done = {
+    preprocess: !!project.preprocessedAt,
+    overview: stats.allReviewed,
+    chapters: stats.chapters > 0 && stats.chaptersApproved === stats.chapters,
+    vlr: stats.bookFinal,
+  };
+  const steps = [
+    { key: 'preprocess', label: 'Preprocessing', to: `#/projects/${project.id}/preprocessing` },
+    { key: 'overview', label: 'Overview', to: `#/projects/${project.id}` },
+    { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters` },
+    { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr` },
+  ];
+  const locked = (k) => k !== 'preprocess' && !project.preprocessedAt;
+  return `<nav class="proj-stepper ${compact ? 'compact' : ''}" aria-label="VLR lifecycle">${steps.map((st, i) => {
+    const state = st.key === active ? 'current' : done[st.key] ? 'done' : 'todo';
+    const inner = `<span class="ps-circle">${done[st.key] && st.key !== active ? icon('check', 'icon-xs') : i + 1}</span><span class="ps-label">${esc(st.label)}</span>`;
+    const node = locked(st.key)
+      ? `<span class="ps-step ${state} disabled" data-tip="Finish preprocessing first">${inner}</span>`
+      : `<a class="ps-step ${state}" href="${st.to}">${inner}</a>`;
+    return `${i ? `<span class="ps-line ${done[steps[i - 1].key] ? 'done' : ''}"></span>` : ''}${node}`;
+  }).join('')}</nav>`;
 }
 
 export function topbarTabs(items, activeKey) {

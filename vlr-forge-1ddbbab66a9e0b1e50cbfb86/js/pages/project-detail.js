@@ -3,7 +3,7 @@ import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTim
 import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, getProjectRuns, getProjectReports, getProjectActivity, projectStats, getTask, getDoc, getLogs } from '../store.js';
 import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
-import { topbarActions, searchBox, topbarTabs, statusBarHtml } from '../shell.js';
+import { topbarActions, searchBox, topbarTabs, statusBarHtml, projectStepper } from '../shell.js';
 import { PILLARS, STEP_META, STEP_ORDER } from '../seed.js';
 import { navigate } from '../router.js';
 
@@ -92,18 +92,10 @@ function applyDocFilter(docs, f) {
 
 /* ---------- top bar ---------- */
 function topbarHtml(ctx, project, active) {
-  const locked = project.preprocessedAt ? undefined : 'Finish preprocessing first — parse, translate and load the SDG reference';
   return `
     <div class="breadcrumb"><a href="#/projects">Projects</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">${esc(project.name)}</span></div>
     ${searchBox({ id: 'pd-search', placeholder: 'Search project data...', value: ctx.local.q || '' })}
     <span class="grow"></span>
-    ${topbarTabs([
-      { key: 'preprocess', label: 'Preprocessing', to: `#/projects/${project.id}/preprocessing` },
-      { key: 'overview', label: 'Overview', to: `#/projects/${project.id}`, disabled: locked },
-      { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters`, disabled: locked },
-      { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr`, disabled: locked },
-      { key: 'history', label: 'History', to: `#/projects/${project.id}/history`, disabled: locked },
-    ], active)}
     ${topbarActions({ projectId: project.id, upload: false })}`;
 }
 
@@ -211,6 +203,7 @@ function preprocessHtml(ctx, project) {
           : `<button class="btn btn-primary" data-action="run-preprocess" ${docs.length ? '' : 'disabled data-tip="Upload documents first"'}>${icon('play', 'icon-sm')}Run preprocessing</button>`}
     </div>
   </div>
+  ${projectStepper(project, 'preprocess')}
   ${failed ? `<div class="callout danger mb-16">${icon('alert-circle')}<span>${failed} preprocessing task${failed === 1 ? '' : 's'} failed — click the red pill on the document to inspect its log and retry.</span></div>` : ''}
   <section class="card pp-wiki">
     <div class="card-body row-between clickable" data-action="pp-wiki-toggle">
@@ -288,6 +281,7 @@ function overviewHtml(ctx, project, stats) {
     </div>
 
     </div>
+      ${projectStepper(project, 'overview')}
       <div class="pd-actions">
         <span ${cantRun ? `data-tip="${esc(cantRun)}"` : ''}><button class="btn btn-primary" data-action="run-pipeline" ${cantRun ? 'disabled' : ''}>${icon('play', 'icon-sm')}Run Full Pipeline</button></span>
         <button class="btn btn-light" data-action="run-step-menu">Run step${icon('chevron-down', 'icon-sm')}</button>
@@ -420,7 +414,7 @@ function historyHtml(ctx, project) {
 
   return `
   <div class="page-header">
-    <div><h1 class="page-title">Pipeline History</h1><p class="page-subtitle">Every run, task and deliverable for ${esc(project.name)}, with cost per step and full provenance.</p></div>
+    <div><h1 class="page-title">Pipeline History</h1><p class="page-subtitle">Every run, task and deliverable for ${esc(project.name)}, with cost per step and full provenance.</p>${projectStepper(project, 'overview')}</div>
     <div class="row"><button class="btn btn-light" data-action="goto-tasks">${icon('clipboard-list', 'icon-sm')}Open task board</button><button class="btn btn-primary" data-action="new-report" data-project="${esc(project.id)}">${icon('file-output', 'icon-sm')}New Report</button></div>
   </div>
 

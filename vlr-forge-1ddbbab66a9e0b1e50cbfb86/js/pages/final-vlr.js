@@ -7,7 +7,7 @@ import { esc, icon, initials, relTime, fmtDateTime, sdgChips, progressHtml, bind
 import { getProject, getProjectBook, getProjectChapters, getProjectTasks, projectStats, currentUser } from '../store.js';
 import { assembleFinalBook, addBookComment, replyBookComment, resolveBookComment, deleteBookComment, reviseFromComment, finalizeBook, reopenBook } from '../actions.js';
 import { bookOutline, bookExport } from '../export.js';
-import { avatarButton, topbarTabs, statusBarHtml } from '../shell.js';
+import { avatarButton, statusBarHtml, projectStepper } from '../shell.js';
 import { STEP_META } from '../seed.js';
 import { navigate } from '../router.js';
 
@@ -335,7 +335,7 @@ export default {
     const tasks = getProjectTasks(project.id);
     const me = currentUser()?.name || 'Reviewer';
     const isFinal = book?.status === 'final';
-    const tabs = topbarTabs([{ key: 'preprocess', label: 'Preprocessing', to: `#/projects/${project.id}/preprocessing` }, { key: 'overview', label: 'Overview', to: `#/projects/${project.id}` }, { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters` }, { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr` }, { key: 'history', label: 'History', to: `#/projects/${project.id}/history` }], 'vlr');
+    const tabs = projectStepper(project, 'vlr', { compact: true });
 
     /* ---------- top bar ---------- */
     const sub = book

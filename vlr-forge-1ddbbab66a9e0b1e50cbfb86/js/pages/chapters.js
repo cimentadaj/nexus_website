@@ -7,7 +7,7 @@ import { esc, icon, sdgChip, statusBadge, progressHtml, bindActions, toast, open
 import { getProject, getProjectChapters, getChapter, getProjectTasks, getExtraction, projectStats, currentUser, getProjectBook } from '../store.js';
 import { composeChapters, recomposeChapter, sendChapterFeedback, approveChapter, reopenChapter, editChapterBlock, assembleFinalBook } from '../actions.js';
 import { openTaskDrawer } from '../modals.js';
-import { avatarButton, topbarTabs, statusBarHtml } from '../shell.js';
+import { avatarButton, statusBarHtml, projectStepper } from '../shell.js';
 import { STEP_META } from '../seed.js';
 import { REVIEW_CHIPS } from '../reviewer.js';
 import { navigate } from '../router.js';
@@ -375,7 +375,7 @@ export default {
     ctx.topbar.innerHTML = `
       <div class="breadcrumb"><a href="#/projects">Projects</a>${icon('chevron-right', 'icon-sm')}<a href="#/projects/${esc(project.id)}">${esc(project.name)}</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">Chapters</span></div>
       <span class="grow"></span>
-      ${topbarTabs([{ key: 'preprocess', label: 'Preprocessing', to: `#/projects/${project.id}/preprocessing` }, { key: 'overview', label: 'Overview', to: `#/projects/${project.id}` }, { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters` }, { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr` }, { key: 'history', label: 'History', to: `#/projects/${project.id}/history` }], 'chapters')}
+      ${projectStepper(project, 'chapters', { compact: true })}
       <span class="badge badge-pill ${allApproved ? 'badge-success' : 'badge-neutral'} ch-progress-pill">${icon(allApproved ? 'check-circle-2' : 'pen-line', 'icon-xs')}${stats.chaptersApproved}/${chapters.length} chapters approved</span>
       ${assembleBtn}
       ${avatarButton()}`;
