@@ -29,13 +29,13 @@ export function updateProfile(patch) {
 }
 
 /* ---------------- projects ---------------- */
-export function createProject({ name, city, country, jurisdiction, year, sdgs = [], languages = ['EN'], description = '', files = [], lead }) {
+export function createProject({ name, city, country, jurisdiction, year, sdgs = [], languages = ['EN'], description = '', population = '', geography = '', region = '', files = [], lead }) {
   const base = `${city}-${year}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   let id = base, n = 2;
   while (getProject(id)) id = `${base}-${n++}`;
   const project = {
     id, name: name || `${city} ${year} VLR`, city, country, jurisdiction: jurisdiction || `${city} City Council`, year: Number(year), status: files.length ? 'active' : 'provisioning',
-    sdgs: [...sdgs].sort((a, b) => a - b), languages, createdAt: Date.now(), node: getState().settings.org.region || 'EU-WEST-1', description, lastSyncedAt: Date.now(), lead: lead || getState().auth.user?.name,
+    sdgs: [...sdgs].sort((a, b) => a - b), languages, createdAt: Date.now(), node: getState().settings.org.region || 'EU-WEST-1', description, population: population || null, geography: geography || null, region: region || null, lastSyncedAt: Date.now(), lead: lead || getState().auth.user?.name,
   };
   update(s => { s.projects.unshift(project); });
   logActivity({ projectId: id, title: `Project initialised: ${project.name}`, provenance: `${id.slice(0, 3).toUpperCase()}-PRJ-001`, status: 'success', type: 'project' });

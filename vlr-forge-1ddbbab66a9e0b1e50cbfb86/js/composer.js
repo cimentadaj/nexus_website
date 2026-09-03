@@ -60,6 +60,12 @@ const REGIONS = [
   { test: /.*/, name: 'Africa', report: 'Africa SDG Index and Dashboards Report 2026', publisher: 'SDG Center for Africa & SDSN' },
 ];
 export const regionFor = (country) => REGIONS.find(r => r.test.test(country || '')) || REGIONS[REGIONS.length - 1];
+/** Region chosen explicitly on the project wins; otherwise detected from the country. */
+export function projectRegion(project) {
+  if (project?.region) { const r = REGIONS.find(x => x.name === project.region); if (r) return r; }
+  return regionFor(project?.country);
+}
+export const REGION_OPTIONS = REGIONS.map(r => ({ value: r.name, label: r.name.replace(/^the /, '').replace(/^\w/, c => c.toUpperCase()) }));
 
 /** Global + regional + national context library per goal (numbers as reported in the Global SDG Report 2026 / regional dashboards). */
 const CONTEXT = {
@@ -116,7 +122,7 @@ export const wordCount = (chapter) => {
  * @param book { number, figureStart, boxStart, footnoteStart, reported: [goals] }
  */
 export function composeChapter(project, goal, extractions, docs, book = {}) {
-  const ctx = { project, region: regionFor(project.country), goal };
+  const ctx = { project, region: projectRegion(project), goal };
   const number = book.number || 1;
   const subject = GOAL_SUBJECT[goal] || SDG_TITLES[goal].toLowerCase();
   const title = `Chapter ${number} — SDG ${goal}: ${SDG_TITLES[goal]}`;
@@ -306,7 +312,7 @@ export function planBook(project, goals) {
 export function assembleBook(project, chapters, extractions, docs, stats) {
   const ordered = [...chapters].sort((a, b) => a.goal - b.goal);
   const blk = (type, text, extra = {}) => ({ id: uid('blk'), type, text, ...extra });
-  const region = regionFor(project.country);
+  const region = projectRegion(project);
   const ind = extractions.filter(e => e.pillar === 'indicators' && e.status === 'approved');
   const front = [
     { key: 'foreword', heading: `Message from the Mayor of ${project.city}`, blocks: [
@@ -340,7 +346,7 @@ export function assembleBook(project, chapters, extractions, docs, stats) {
       ] },
     ] },
     { key: 'profile', heading: `2. ${project.city} at a glance`, blocks: [
-      blk('kv', '', { rows: [['City', `${project.city}, ${project.country}`], ['Reporting entity', project.jurisdiction], ['Review year', String(project.year)], ['Goals reported', ordered.map(c => `SDG ${c.goal}`).join(', ')], ['Source documents', String(docs.length)], ['Languages of sources', (project.languages || []).join(', ')], ['Regional reporting family', region.name]] }),
+      blk('kv', '', { rows: [['City', `${project.city}, ${project.country}`], ...(project.population ? [['Population', project.population]] : []), ...(project.geography ? [['Geography', project.geography]] : []), ['Reporting entity', project.jurisdiction], ['Review year', String(project.year)], ['Goals reported', ordered.map(c => `SDG ${c.goal}`).join(', ')], ['Source documents', String(docs.length)], ['Languages of sources', (project.languages || []).join(', ')], ['Regional reporting family', region.name]] }),
     ] },
   ];
   const back = [

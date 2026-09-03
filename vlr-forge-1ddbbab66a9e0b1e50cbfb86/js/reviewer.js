@@ -5,7 +5,7 @@
  */
 import { uid } from './ui.js';
 import { SDG_TITLES } from './ui.js';
-import { targetRef, targetOf, regionFor, wordCount } from './composer.js';
+import { targetRef, targetOf, projectRegion, wordCount } from './composer.js';
 
 const SPEC = [
   { key: 'cite', re: /\b(cite|citation|footnote|reference|source|traceab|apa)\b/i },
@@ -70,7 +70,7 @@ export function applyFeedback(chapter, feedback, { project, docs = [] } = {}) {
   const filter = (s) => (secHint ? s.key === secHint : true);
   const changes = [];
   const changed = new Set();
-  const region = regionFor(project?.country);
+  const region = projectRegion(project);
   let fnNo = chapter.counters?.footnoteNext || chapter.footnotes.length + 1;
   const addFn = (t) => { const n = fnNo++; chapter.footnotes.push({ n, text: t }); return n; };
   const touch = (b, s, ss, what) => { changed.add(b.id); changes.push({ blockId: b.id, section: sectionLabel(s, ss), what }); };

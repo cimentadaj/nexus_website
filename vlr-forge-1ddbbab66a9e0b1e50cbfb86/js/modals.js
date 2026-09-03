@@ -5,6 +5,7 @@ import { getState, getProject, getProjectDocs, getDoc, getTask, getProjectTasks,
 import { createProject, addDocuments, startParse, runPipeline, generateReport, updateProject, activateProject, archiveProject, unarchiveProject, deleteProject, addManualExtraction, retryTask, cancelTask, translateDocument, deleteDocument, addComment } from './actions.js';
 import { navigate } from './router.js';
 import { STEP_META, LANGS, DOC_TYPES, PILLARS } from './seed.js';
+import { REGION_OPTIONS } from './composer.js';
 import { subscribe } from './store.js';
 import { reportContentFor } from './export.js';
 
@@ -87,7 +88,7 @@ function bindDropzone(el, id, files, { defaultLang = 'EN', onChange, existingNam
  * New VLR project wizard
  * ======================================================================= */
 export function openNewProjectModal({ initialCity = '' } = {}) {
-  const data = { name: '', city: initialCity, country: '', jurisdiction: '', year: new Date().getFullYear(), languages: ['EN'], sdgs: [], description: '', files: [], runNow: true };
+  const data = { name: '', city: initialCity, country: '', jurisdiction: '', year: new Date().getFullYear(), languages: ['EN'], sdgs: [], description: '', population: '', geography: '', region: '', files: [], runNow: true };
   let step = 1;
   const steps = ['Project details', 'Target SDGs', 'Source documents', 'Review & launch'];
   const api = openModal({ title: 'Initialize New VLR', sub: 'Create a new data governance project for your local jurisdiction.', size: 'lg', body: '', footer: '', backdropClose: false });
@@ -98,12 +99,15 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
     let body = stepperHtml();
     if (step === 1) body += `
       <div class="form-grid">
-        <div class="field"><label class="label">City <span class="req">*</span></label><input class="input" id="np-city" placeholder="e.g. Lisbon" value="${esc(data.city)}" autofocus></div>
-        <div class="field"><label class="label">Country <span class="req">*</span></label><input class="input" id="np-country" placeholder="e.g. Portugal" value="${esc(data.country)}"></div>
-        <div class="field"><label class="label">Jurisdiction / reporting entity</label><input class="input" id="np-jur" placeholder="e.g. Lisbon City Council" value="${esc(data.jurisdiction)}"></div>
-        <div class="field"><label class="label">Reporting year</label><select class="select" id="np-year">${YEARS.map(y => `<option ${y === Number(data.year) ? 'selected' : ''}>${y}</option>`).join('')}</select></div>
-        <div class="field span-2"><label class="label">Project name</label><input class="input" id="np-name" placeholder="Auto-generated from city and year" value="${esc(data.name)}"><div class="hint">Leave blank to use "<span id="np-name-preview">${esc(data.city || 'City')} ${data.year} VLR</span>".</div></div>
-        <div class="field span-2"><label class="label">Description</label><textarea class="textarea" id="np-desc" placeholder="Scope, reporting cycle, partners…" style="min-height:70px">${esc(data.description)}</textarea></div>
+        <div class="field"><label class="label">City <span class="req">*</span></label><input class="input" id="np-city" placeholder="e.g. Dahab" value="${esc(data.city)}" autofocus><div class="hint">Official city or municipality name — used across the review and the final book.</div></div>
+        <div class="field"><label class="label">Country <span class="req">*</span></label><input class="input" id="np-country" placeholder="e.g. Egypt" value="${esc(data.country)}"><div class="hint">Selects the national sources (Voluntary National Review) cited in the chapters.</div></div>
+        <div class="field"><label class="label">Jurisdiction / reporting entity</label><input class="input" id="np-jur" placeholder="e.g. Dahab City Council" value="${esc(data.jurisdiction)}"><div class="hint">The entity that signs the review — appears on the cover and in citations.</div></div>
+        <div class="field"><label class="label">Region</label><select class="select" id="np-region"><option value="">Auto — detect from country</option>${REGION_OPTIONS.map(r => `<option value="${esc(r.value)}" ${data.region === r.value ? 'selected' : ''}>${esc(r.label)}</option>`).join('')}</select><div class="hint">Regional SDG report family used for the regional context and figures in every chapter.</div></div>
+        <div class="field"><label class="label">Population</label><input class="input" id="np-population" placeholder="e.g. 15,000" value="${esc(data.population)}"><div class="hint">Kept as reported locally (text is fine) — quoted in the city profile, never recalculated.</div></div>
+        <div class="field"><label class="label">Geography</label><input class="input" id="np-geography" placeholder="e.g. Coastal city on the Gulf of Aqaba, South Sinai Governorate" value="${esc(data.geography)}"><div class="hint">One line situating the city — grounds the chapters' bridge sentences.</div></div>
+        <div class="field"><label class="label">Reporting year</label><select class="select" id="np-year">${YEARS.map(y => `<option ${y === Number(data.year) ? 'selected' : ''}>${y}</option>`).join('')}</select><div class="hint">The VLR cycle this review covers (also the book's cover year).</div></div>
+        <div class="field"><label class="label">Project name</label><input class="input" id="np-name" placeholder="Auto-generated from city and year" value="${esc(data.name)}"><div class="hint">Leave blank to use "<span id="np-name-preview">${esc(data.city || 'City')} ${data.year} VLR</span>".</div></div>
+        <div class="field span-2"><label class="label">Description</label><textarea class="textarea" id="np-desc" placeholder="Anything else the writers should know — scope, partners, priorities, special context…" style="min-height:70px">${esc(data.description)}</textarea><div class="hint">Free text carried into the book's introduction; everything not covered by the fields above.</div></div>
       </div>`;
     if (step === 2) body += `
       <div class="row-between"><div><strong class="navy">Select the SDGs this review will report on</strong><div class="hint">${data.sdgs.length} of 17 selected · all four pillars will be extracted for each selected goal.</div></div><div class="row"><button type="button" class="btn btn-light btn-sm" id="np-sdg-all">Select all</button><button type="button" class="btn btn-light btn-sm" id="np-sdg-none">Clear</button></div></div>
@@ -119,6 +123,9 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
         <div><div class="k">Jurisdiction</div><div class="v">${esc(data.jurisdiction || `${data.city} City Council`)}</div></div>
         <div><div class="k">Location</div><div class="v">${esc(data.city)}, ${esc(data.country)}</div></div>
         <div><div class="k">Reporting year</div><div class="v">${data.year}</div></div>
+        <div><div class="k">Region</div><div class="v">${esc((REGION_OPTIONS.find(r => r.value === data.region) || {}).label || 'Auto (from country)')}</div></div>
+        <div><div class="k">Population</div><div class="v">${esc(data.population || '—')}</div></div>
+        <div><div class="k">Geography</div><div class="v">${esc(data.geography || '—')}</div></div>
         <div><div class="k">Processing node</div><div class="v mono">${esc(getState().settings.org.region || 'EU-WEST-1')}</div></div>
         <div class="span-2" style="grid-column:span 2"><div class="k">Target SDGs (${data.sdgs.length})</div><div class="v"><div class="sdg-chips">${data.sdgs.map(n => sdgChip(n)).join('') || '<span class="muted">None selected — you can configure them later.</span>'}</div></div></div>
         <div style="grid-column:span 2"><div class="k">Source documents (${data.files.length})</div><div class="v">${data.files.length ? data.files.map(f => `<span class="badge badge-neutral badge-mono" style="margin:2px 4px 2px 0">${esc(f.name)}</span>`).join('') : '<span class="muted">None yet — the project will be created in Provisioning state.</span>'}</div></div>
@@ -137,7 +144,7 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
 
   function collect() {
     const q = (id) => api.el.querySelector(id);
-    if (step === 1) { data.city = q('#np-city').value.trim(); data.country = q('#np-country').value.trim(); data.jurisdiction = q('#np-jur').value.trim(); data.year = Number(q('#np-year').value); data.name = q('#np-name').value.trim(); data.description = q('#np-desc').value.trim(); }
+    if (step === 1) { data.city = q('#np-city').value.trim(); data.country = q('#np-country').value.trim(); data.jurisdiction = q('#np-jur').value.trim(); data.year = Number(q('#np-year').value); data.name = q('#np-name').value.trim(); data.description = q('#np-desc').value.trim(); data.population = q('#np-population').value.trim(); data.geography = q('#np-geography').value.trim(); data.region = q('#np-region').value; }
     if (step === 4) { const r = q('#np-run'); if (r) data.runNow = r.checked; }
   }
   function validate() {
