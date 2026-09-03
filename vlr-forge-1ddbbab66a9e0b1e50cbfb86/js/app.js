@@ -2,7 +2,7 @@
 import { createRouter } from './router.js';
 import { getState, subscribe, isLoggedIn, getProject } from './store.js';
 import { bindActions, preserveFocus, refreshIcons, toast, closeMenu, esc, fmtCost } from './ui.js';
-import { sidebarHtml, globalActionHandlers } from './shell.js';
+import { mainNavHtml, globalActionHandlers } from './shell.js';
 import { bootEngine, onRunFinished, onTaskFinished } from './pipeline.js';
 
 import login from './pages/login.js';
@@ -47,7 +47,13 @@ let cleanup = null;
 let renderQueued = false;
 
 function buildShell(navKey) {
-  app.innerHTML = `<div class="app-shell">${sidebarHtml(navKey)}<div class="main"><header class="topbar" id="topbar"></header><main class="content" id="content"></main><div id="footer"></div></div></div>`;
+  app.innerHTML = `<div class="app-shell no-sidebar"><div class="main">
+    <header class="topbar">
+      <a class="topbar-brand" href="#/projects" data-tip="VLR Forge — Governance Dashboard"><span class="brand-mark">VF</span><span class="topbar-brand-name">VLR Forge</span></a>
+      ${mainNavHtml(navKey)}
+      <div class="topbar-page" id="topbar"></div>
+    </header>
+    <main class="content" id="content"></main><div id="footer"></div></div></div>`;
   refreshIcons(app);
 }
 
@@ -74,8 +80,8 @@ function renderPage() {
     return;
   }
   if (!app.querySelector('.app-shell')) buildShell(r.nav);
-  // sidebar active state
-  app.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.toggle('active', el.dataset.nav === r.nav));
+  // main-nav active state
+  app.querySelectorAll('.topbar-mainnav .topbar-tab').forEach(el => el.classList.toggle('active', el.dataset.nav === r.nav));
   try { cleanup?.(); } catch { /* ignore */ }
   // Replace the page containers with fresh clones: every listener a page attached to them is dropped,
   // so delegated handlers never accumulate across the ~350ms re-renders.

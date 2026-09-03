@@ -26,6 +26,11 @@ export function sidebarHtml(activeKey) {
   </aside>`;
 }
 
+/** Global navigation shown in the top bar next to the brand (the app has no sidebar). */
+export function mainNavHtml(activeKey) {
+  return `<nav class="topbar-tabs topbar-mainnav">${NAV.map(n => `<a class="topbar-tab ${activeKey === n.key ? 'active' : ''}" href="${n.to}" data-nav="${n.key}">${n.label}</a>`).join('')}</nav>`;
+}
+
 /** Avatar button that opens the user menu. */
 export function avatarButton() {
   return `<button class="avatar-btn" data-action="user-menu" aria-label="Account menu">${avatarHtml(currentUser())}</button>`;

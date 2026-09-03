@@ -3,7 +3,7 @@ import { esc, icon, sdgChips, bindActions, openMenu, confirmDialog, toast, refre
 import { getState, projectStats, getProjectDocs, getProjectExtractions } from '../store.js';
 import { archiveProject, unarchiveProject, deleteProject } from '../actions.js';
 import { openConfigureProjectModal } from '../modals.js';
-import { topbarActions, searchBox, topbarTabs } from '../shell.js';
+import { topbarActions, searchBox, } from '../shell.js';
 import { navigate } from '../router.js';
 
 const pad2 = (n) => String(n).padStart(2, '0');
@@ -118,11 +118,6 @@ export default {
 
     ctx.topbar.innerHTML = `
       ${searchBox({ id: 'projects-search', placeholder: 'Search VLR Projects...', value: q })}
-      ${topbarTabs([
-        { key: 'projects', label: 'Projects', to: '#/projects' },
-        { key: 'tasks', label: 'Tasks', to: '#/tasks' },
-        { key: 'settings', label: 'Settings', to: '#/settings' },
-      ], 'projects')}
       <span class="grow"></span>
       ${topbarActions()}`;
 
