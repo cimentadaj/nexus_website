@@ -64,7 +64,6 @@ function projectCard(p) {
         <div class="pc-jurisdiction">Jurisdiction: ${esc(p.jurisdiction || '—')}</div>
       </div>
       <div class="pc-head-right">
-        ${p.status === 'provisioning' ? `<span class="badge badge-provisioning">Provisioning</span>` : ''}
         <button class="btn-icon pc-kebab" data-action="card-menu" data-id="${esc(p.id)}" aria-label="Project actions" data-tip="More actions">${icon('more-horizontal')}</button>
       </div>
     </div>
