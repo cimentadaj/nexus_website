@@ -39,7 +39,6 @@ const LANG_BANKS = {
   },
 };
 
-const ZOOMS = [90, 100, 120];
 
 /* ---------- deterministic policy prose ---------- */
 function prng(seedStr) {
@@ -123,7 +122,6 @@ export default {
       if (ctx.query.page || local.hl) local.pendingScroll = { page: local.page, hl: local.hl };
     }
     local.page = clamp(Number(local.page) || 1, 1, doc.pages);
-    local.zoom = ZOOMS.includes(local.zoom) ? local.zoom : 100;
     local.jump = local.jump ?? '';
     const page = local.page;
     const hlExt = local.hl ? getExtraction(local.hl) : null;
@@ -178,9 +176,7 @@ export default {
       <div class="dv-main">
         <div class="card dv-toolbar">
           <div class="row gap-6">
-            <button class="btn btn-light btn-sm dv-nav" data-action="prev" data-tip="Previous page (←)">${icon('chevron-left', 'icon-sm')}</button>
             <span class="dv-pageno">Page <strong id="dv-pageno-cur">${page}</strong> / ${doc.pages}</span>
-            <button class="btn btn-light btn-sm dv-nav" data-action="next" data-tip="Next page (→)">${icon('chevron-right', 'icon-sm')}</button>
           </div>
           <div class="row gap-6 dv-jump">
             <label class="xs muted" for="dv-jump">Go to</label>
@@ -195,12 +191,10 @@ export default {
             </span>` : ''}
             ${orig && exts.length ? `<span class="xs muted" data-tip="Extraction quotes are anchored to the translated text">${icon('highlighter', 'icon-xs')} highlights in EN view</span>` : ''}
             ${hlExt && !orig ? `<span class="badge badge-sky dv-hl-badge" data-action="focus-ext" data-id="${esc(hlExt.id)}" data-tip="Jump to highlighted evidence">${icon('highlighter', 'icon-xs')}SDG ${esc(hlExt.sdg)} · p.${Number(hlExt.source.page)}</span><button class="btn-icon" data-action="clear-hl" data-tip="Clear highlight" aria-label="Clear highlight">${icon('x', 'icon-sm')}</button>` : ''}
-            <label class="xs muted" for="dv-zoom">Zoom</label>
-            <select class="select select-sm" id="dv-zoom">${ZOOMS.map(z => `<option value="${z}" ${z === local.zoom ? 'selected' : ''}>${z}%</option>`).join('')}</select>
           </div>
         </div>
 
-        <div class="dv-canvas-wrap" style="--dv-scale:${(local.zoom / 100).toFixed(2)}">
+        <div class="dv-canvas-wrap">
           ${local.sheetsHtml}
         </div>
       </div>
@@ -276,11 +270,9 @@ export default {
     };
     jumpEl.addEventListener('input', () => { local.jump = jumpEl.value; });
     jumpEl.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); handlers.jump(); } });
-    ctx.content.querySelector('#dv-zoom').addEventListener('change', (ev) => { local.zoom = Number(ev.target.value); ctx.rerender(); });
     ctx.content.querySelectorAll('[data-action="dv-lang"]').forEach(b => b.addEventListener('click', () => { ctx.local.dvLang = b.dataset.lang; ctx.rerender(); }));
 
     const handlers = {
-      prev: () => goto(local.page - 1), next: () => goto(local.page + 1),
       jump: () => {
         const v = Math.trunc(Number(jumpEl.value));
         if (!jumpEl.value.trim() || Number.isNaN(v)) { jumpEl.focus(); return; }
