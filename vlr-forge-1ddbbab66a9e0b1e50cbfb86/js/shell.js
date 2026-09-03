@@ -23,12 +23,6 @@ export function sidebarHtml(activeKey) {
     <nav class="nav">
       ${NAV.map(n => `<a class="nav-item ${activeKey === n.key ? 'active' : ''}" href="${n.to}" data-nav="${n.key}">${icon(n.icon)}<span>${n.label}</span></a>`).join('')}
     </nav>
-    <div class="sidebar-bottom">
-      <div class="sidebar-divider"></div>
-      <button class="btn btn-primary btn-new-report" data-action="new-report">${icon('plus')}<span>New Report</span></button>
-      <a class="nav-item ${activeKey === 'support' ? 'active' : ''}" href="#/support" data-nav="support">${icon('help-circle')}<span>Support</span></a>
-      <a class="nav-item ${activeKey === 'documentation' ? 'active' : ''}" href="#/documentation" data-nav="documentation">${icon('file-text')}<span>Documentation</span></a>
-    </div>
   </aside>`;
 }
 
@@ -53,8 +47,8 @@ export function openUserMenu(anchor) {
 
 /** Standard right-hand cluster: [Upload Documents] [New Project] (avatar). */
 export function topbarActions({ upload = true, newProject = true, projectId = null } = {}) {
+  void upload; void projectId; // upload button removed from the top bar (project-level upload lives on the project page)
   return `
-    ${upload ? `<button class="btn btn-soft" data-action="upload-documents" ${projectId ? `data-project="${esc(projectId)}"` : ''}>Upload Documents</button>` : ''}
     ${newProject ? `<button class="btn btn-primary" data-action="new-project">${icon('plus', 'icon-sm')}New Project</button>` : ''}
     ${avatarButton()}`;
 }
