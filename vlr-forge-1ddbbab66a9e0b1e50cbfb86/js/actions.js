@@ -434,6 +434,8 @@ export function reprocessDocument(docId) {
   const parse = makeTask({ projectId: d.projectId, step: d.ext === 'xml' ? 'xml_extraction' : 'parse', inputDoc: d.name, inputDocId: d.id, pages: d.pages });
   tasks.push(parse);
   if (d.language !== 'EN') tasks.push(makeTask({ projectId: d.projectId, step: 'translate', inputDoc: d.name, inputDocId: d.id, pages: d.pages, dependsOn: [parse.id] }));
+  const proj = getProject(d.projectId);
+  if (proj && !proj.wikiLoaded && !getState().tasks.some(t => t.projectId === d.projectId && t.step === 'wiki_load' && ['queued', 'running'].includes(t.status))) tasks.push(makeTask({ projectId: d.projectId, step: 'wiki_load', inputDoc: `SDG wiki (${proj.sdgs?.length || 0} goals)` }));
   update(st => { const x = st.documents.find(q => q.id === docId); if (x) { x.status = 'uploaded'; x.progress = 0; if (x.language !== 'EN') x.translated = false; } });
   enqueueTasks(tasks);
   logActivity({ projectId: d.projectId, title: `Re-preprocessing queued: ${d.name}`, provenance: d.code, status: 'queued', type: 'task' });

@@ -1,5 +1,5 @@
 /* Project detail — Overview (mock-up 02) and History view. Route #/projects/:id and #/projects/:id/history */
-import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime, SDG_TITLES } from '../ui.js';
+import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime } from '../ui.js';
 import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, getProjectRuns, getProjectReports, getProjectActivity, projectStats, getTask, getDoc, getLogs } from '../store.js';
 import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
@@ -131,9 +131,6 @@ function ppExtract(doc, project) {
     chunks: Math.max(2, Math.round((doc.pages || 10) / 2)),
   };
 }
-function ppWikiRows(project) {
-  return (project.sdgs || []).map(g => ({ goal: g, targets: hashN('t' + g, 5, 7), indicators: hashN('i' + g, 8, 10) }));
-}
 function ppDocDetail(doc, project, st) {
   const x = ppExtract(doc, project);
   const logs = [...(st.parseTask?.logs || []), ...(st.trTask?.logs || [])].sort((a, b) => a.ts - b.ts);
@@ -179,20 +176,15 @@ function preprocessHtml(ctx, project) {
   const running = ppTasks.some(t => ['queued', 'running'].includes(t.status));
   const failed = ppTasks.filter(t => t.status === 'failed').length;
   const done = !!project.preprocessedAt;
-  const wikiTask = ppTasks.filter(t => t.step === 'wiki_load').sort((a, b) => b.createdAt - a.createdAt)[0];
-  const wikiState = project.wikiLoaded ? 'done' : wikiTask?.status === 'failed' ? 'failed' : ['queued', 'running'].includes(wikiTask?.status) ? 'running' : 'pending';
-  const wikiRows = ppWikiRows(project);
-  const wikiTargets = wikiRows.reduce((a, r) => a + r.targets, 0), wikiInd = wikiRows.reduce((a, r) => a + r.indicators, 0);
   const pendingWork = docs.some(d => d.status !== 'processed' || (d.language !== 'EN' && !d.translated)) || !project.wikiLoaded;
   // expansion is inspection-only: a document opens on click once it is done (or failed) — nothing streams open on its own
   const states = new Map(docs.map(d => [d.id, ppDocState(d, tasks)]));
   const openId = ctx.local.ppSel ?? null;
-  const wikiOpen = ctx.local.ppWikiOpen ?? false;
   return `
   <div class="page-header">
     <div>
       <h1 class="page-title">${esc(project.city)} ${esc(project.year)}</h1>
-      <p class="page-subtitle">${icon('layers', 'icon-sm')} Step 1 — Preprocessing · parse the source documents, translate them to English and load the SDG reference. Documents show a processing state while running; once done, click one to inspect what was extracted and its log.</p>
+      <p class="page-subtitle">${icon('layers', 'icon-sm')} Step 1 — Preprocessing · parse the source documents and translate them to English (the SDG reference loads behind the scenes). Once a document is done, click it to inspect what was extracted and its log.</p>
     </div>
     <div class="row gap-6">
       ${running
@@ -204,15 +196,6 @@ function preprocessHtml(ctx, project) {
   </div>
   ${projectStepper(project, 'preprocess')}
   ${failed ? `<div class="callout danger mb-16">${icon('alert-circle')}<span>${failed} preprocessing task${failed === 1 ? '' : 's'} failed — click the red pill on the document to inspect its log and retry.</span></div>` : ''}
-  <section class="card pp-wiki">
-    <div class="card-body row-between clickable" data-action="pp-wiki-toggle">
-      <div class="row gap-12">${icon('library', 'icon-lg navy')}<div><div class="strong">SDG wiki reference</div><div class="xs muted">Official targets and indicator definitions for the ${wikiRows.length} selected goal${wikiRows.length === 1 ? '' : 's'} — loaded once per project.</div></div></div>
-      <div class="row gap-6">${wikiState === 'done' ? PP_PILL.done(`Loaded · ${wikiTargets} targets · ${wikiInd} indicators`) : wikiState === 'running' ? PP_PILL.running('Loading…') : wikiState === 'failed' ? PP_PILL.failed('Failed', wikiTask?.id) : PP_PILL.pending('Wiki load · pending')}${icon(wikiOpen ? 'chevron-up' : 'chevron-down', 'icon-sm')}</div>
-    </div>
-    ${wikiOpen ? `<div class="pp-wiki-detail">${wikiState === 'done'
-      ? wikiRows.map(r => `<div class="pp-wiki-row"><span class="mono">SDG${r.goal}</span><span>${esc(SDG_TITLES[r.goal] || '')}</span><span class="muted">${r.targets} targets · ${r.indicators} indicators</span></div>`).join('')
-      : `<div class="xs muted" style="padding:10px 22px 14px">Loads the official goal, target and indicator descriptions from the Obsidian SDG wiki — the reference every extraction is matched against.</div>`}</div>` : ''}
-  </section>
   <section class="card">
     <div class="card-header tinted"><div class="card-title-caps">${icon('folder-open')}Source documents (${docs.length})</div><button class="btn btn-light btn-sm" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload more documents</button></div>
     ${docs.length ? `<table class="table pp-table">
@@ -520,7 +503,6 @@ export default {
       'run-pipeline': doRunPipeline,
       'run-preprocess': () => { const run = runPreprocessing(project.id); if (!run) { toast.info('Nothing to preprocess', 'Every document is already parsed and translated.'); return; } toast.success('Preprocessing started', `${run.taskIds.length} task${run.taskIds.length === 1 ? '' : 's'} queued — open the logs to follow each document.`); },
       'pp-doc': (el) => { const cur = ctx.local.ppSel; ctx.local.ppSel = cur === el.dataset.doc ? null : el.dataset.doc; ctx.rerender(); },
-      'pp-wiki-toggle': () => { ctx.local.ppWikiOpen = !(ctx.local.ppWikiOpen ?? false); ctx.rerender(); },
       'pp-run-doc': (el, ev) => { ev.stopPropagation(); const d = getDoc(el.dataset.doc); if (!d) return; const ts = reprocessDocument(d.id); if (!ts) { toast.info('Already processing', d.name); return; } toast.success('Preprocessing queued', `${d.name} — fresh parse${d.language !== 'EN' ? ' and translation' : ''}.`); },
       'pp-open-task': (el, ev) => { ev.stopPropagation(); if (el.dataset.task) openTaskDrawer(el.dataset.task); },
       'write-vlr': () => { const ts = composeChapters(project.id); if (!ts.length) { toast.warning('Nothing to compose', 'Approve evidence first.'); return; } toast.success('VLR composition started', `${ts.length - 1} chapter${ts.length - 1 === 1 ? '' : 's'} queued — follow them in the Task Queue.`); navigate(`#/projects/${project.id}/chapters`); },
