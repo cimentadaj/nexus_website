@@ -31,6 +31,13 @@ function extValueLine(e) {
   return `<span class="ext-k">Group:</span> <span class="ext-v">${esc(e.group || '—')}</span>${e.engagement ? ` <span class="ext-sep">·</span> <span class="ext-k">${esc(e.engagement)}</span>` : ''}`;
 }
 
+function extCells(e) {
+  if (e.pillar === 'indicators') return [e.value ?? '—', e.unit || '—'];
+  if (e.pillar === 'documentary') return [e.category || '—', e.categoryLabel || '—'];
+  if (e.pillar === 'projects') return [e.projectStatus || '—', e.budget || '—'];
+  return [e.group || '—', e.engagement || '—'];
+}
+
 function extStatusMark(e) {
   if (e.status === 'approved') return `<span class="ext-mark approved" data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''}">${icon('check', 'icon-xs')}</span>`;
   if (e.status === 'rerun_queued') return `<span class="ext-mark rerun" data-tip="Rerun queued">${icon('rotate-ccw', 'icon-xs')}</span>`;
@@ -232,11 +239,6 @@ function overviewHtml(ctx, project, stats) {
   else if (filter === 'rerun_queued') exts = exts.filter(e => e.status === 'rerun_queued');
   exts = exts.filter(e => matchQ(q, e.title, e.sdg, e.source?.docName, e.value, e.category, e.group, e.projectStatus));
 
-  /* task queue */
-  const active = tasks.filter(t => t.status === 'running' || t.status === 'queued')
-    .sort((a, b) => (a.status === b.status ? a.createdAt - b.createdAt : a.status === 'running' ? -1 : 1));
-  const queue = active.slice(0, 5);
-
   /* documents */
   const docFilter = ctx.local.docFilter || 'all';
   const filteredDocs = applyDocFilter(docs, docFilter).filter(d => matchQ(q, d.name, d.type, d.language, d.code, d.status));
@@ -285,35 +287,42 @@ function overviewHtml(ctx, project, stats) {
           <button class="btn btn-light btn-sm" data-action="add-entry">${icon('plus', 'icon-sm')}Add entry</button>
           <select class="select select-sm" id="pd-ext-filter" data-action="ext-filter">${EXT_FILTERS.map(f => `<option value="${f.key}" ${f.key === filter ? 'selected' : ''}>${f.label}</option>`).join('')}</select>
         </div>
-        ${exts.length ? `<div class="ext-grid">${exts.map(e => `
-          <a class="ext-card status-${esc(e.status)}" href="#/review/${esc(e.id)}">
-            ${extStatusMark(e)}
-            <span class="badge badge-sdg">SDG ${esc(e.sdg)}</span>
-            <div class="ext-title">${esc(e.title)}</div>
-            <div class="ext-foot">
-              <div class="ext-val ${e.pillar === 'indicators' ? 'stacked' : ''}">${extValueLine(e)}</div>
-              <div class="ext-src">${icon('link', 'icon-xs')}<span><span class="ext-k">Source:</span><i>${esc(e.source?.docName || 'Manual entry')}</i></span></div>
-            </div>
-          </a>`).join('')}</div>`
+        ${exts.length ? `<div class="pd-table-wrap"><table class="table pd-ext-table">
+          <thead><tr><th>SDG</th><th>Extraction</th><th>Value</th><th>Unit</th><th>Source</th><th></th></tr></thead>
+          <tbody>${exts.map(e => { const [val, unit] = extCells(e); return `
+            <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
+              <td><span class="badge badge-sdg">SDG ${esc(e.sdg)}</span></td>
+              <td><span class="cell-title">${esc(e.title)}</span></td>
+              <td>${esc(val)}</td>
+              <td>${esc(unit)}</td>
+              <td class="xs muted">${e.source?.page ? `p. ${esc(e.source.page)} · ¶${esc(e.source.paragraph || 1)}` : 'Manual entry'}</td>
+              <td class="td-right">${extStatusMark(e)}</td>
+            </tr>`; }).join('')}</tbody>
+        </table></div>`
         : pillarTotal ? `<div class="empty">${icon('search-x')}<div class="empty-title">No matches</div><div class="empty-sub">No ${esc(pillar.label.toLowerCase())} match the current filter${q ? ' and search' : ''}.</div><button class="btn btn-light btn-sm mt-12" data-action="clear-filters">Clear filters</button></div>`
         : `<div class="empty">${icon(pillar.icon)}<div class="empty-title">No ${esc(pillar.label.toLowerCase())} extracted yet</div><div class="empty-sub">${esc(pillar.desc)}</div><button class="btn btn-primary btn-sm mt-12" data-action="run-pillar" data-step="${esc(pillar.step)}">${icon('play', 'icon-sm')}Run ${esc(pillar.label.toLowerCase())} extraction</button></div>`}
       </div>
     </section>
 
     <aside class="card pd-queue">
-      <div class="card-header tinted"><div class="card-title-caps">${icon('clock')}Task Queue</div><span class="badge badge-sky">${active.length} active</span></div>
-      ${queue.length ? `<div class="tq-list">${queue.map(t => {
-        const meta = STEP_META[t.step] || {};
-        const dep = t.status === 'queued' && depsPending(t);
-        return `<button class="tq-row" data-action="open-task" data-task="${esc(t.id)}">
-          <div class="tq-top"><span class="tq-label">${esc(meta.queueLabel || t.label)} [${esc(meta.tag || meta.engine || t.node)}]</span>
-            ${t.status === 'running' ? `<span class="tq-pct">${Math.round(t.progress || 0)}%</span>` : dep ? `<span class="tq-queued">Queued</span>` : `<span class="tq-pending">Pending...</span>`}</div>
-          ${t.status === 'running' ? progressHtml(t.progress || 0, 'sky sm') : ''}
-          <div class="tq-sub">${taskSubLine(t, project)}</div>
-        </button>`; }).join('')}</div>
-        ${active.length > queue.length ? `<div class="tq-more xs muted">+${active.length - queue.length} more in queue</div>` : ''}`
-      : `<div class="empty tq-empty">${icon('check-circle-2')}<div class="empty-title">No active tasks</div><div class="empty-sub">The queue for this project is idle.</div><button class="btn btn-light btn-sm mt-12" data-action="run-pipeline-empty">${icon('play', 'icon-sm')}Run pipeline</button></div>`}
-      <div class="card-footer centered"><a class="tq-history" href="#/projects/${esc(project.id)}/history">View All History</a></div>
+      <div class="card-header tinted"><div class="card-title-caps">${icon('scan-search')}Extraction details</div></div>
+      ${(() => {
+        const e = allExt.find(x => x.id === ctx.local.extSel);
+        if (!e) return `<div class="empty tq-empty">${icon('mouse-pointer-click')}<div class="empty-title">Nothing selected</div><div class="empty-sub">Click a row in the table to inspect the extraction.</div></div>`;
+        const [val, unit] = extCells(e);
+        return `<div class="pd-ext-detail">
+          <div class="row gap-6 mb-8"><span class="badge badge-sdg">SDG ${esc(e.sdg)}</span>${extStatusMark(e)}</div>
+          <dl class="kv">
+            <dt>Extraction</dt><dd>${esc(e.title)}</dd>
+            <dt>Value</dt><dd>${esc(val)}</dd>
+            <dt>Unit</dt><dd>${esc(unit)}</dd>
+            <dt>Page</dt><dd>${e.source?.page ? esc(e.source.page) : '—'}</dd>
+            <dt>Paragraph</dt><dd>${e.source?.paragraph ? esc(e.source.paragraph) : '—'}</dd>
+          </dl>
+          ${e.source?.quote ? `<blockquote class="pd-ext-quote">${icon('quote', 'icon-xs')}${esc(e.source.quote)}</blockquote>` : ''}
+          ${e.source?.docId ? `<a class="btn btn-light btn-sm mt-12" href="#/projects/${esc(project.id)}/documents/${esc(e.source.docId)}?page=${esc(e.source.page || 1)}&hl=${esc(e.id)}">${icon('eye', 'icon-sm')}See in document</a>` : ''}
+        </div>`;
+      })()}
     </aside>
   </div>`;
 }
@@ -442,6 +451,7 @@ export default {
 
     const unbindClick = bindActions(ctx.content, {
       'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.rerender(); },
+      'ext-sel': (el) => { ctx.local.extSel = ctx.local.extSel === el.dataset.id ? null : el.dataset.id; ctx.rerender(); },
       'run-pipeline': doRunPipeline,
       'run-preprocess': () => { const run = runPreprocessing(project.id); if (!run) { toast.info('Nothing to preprocess', 'Every document is already parsed and translated.'); return; } toast.success('Preprocessing started', `${run.taskIds.length} task${run.taskIds.length === 1 ? '' : 's'} queued — open the logs to follow each document.`); },
       'pp-doc': (el) => { const cur = ctx.local.ppSel; ctx.local.ppSel = cur === el.dataset.doc ? null : el.dataset.doc; ctx.rerender(); },

@@ -183,3 +183,11 @@
 tr.pp-open td { background: var(--sky-50); }
 @media (max-width: 1100px) { .pp-detail { grid-template-columns: 1fr; } }
 .topbar-tab.disabled { opacity: .4; cursor: not-allowed; }
+
+/* Urban data: extraction table + side detail panel */
+.pd-ext-table tr.row-sel td { background: rgba(124,196,248,.18); }
+.pd-ext-detail { padding: 16px 18px; }
+.pd-ext-detail .kv { display: grid; grid-template-columns: 92px 1fr; gap: 7px 12px; font-size: 13.5px; }
+.pd-ext-detail .kv dt { color: var(--text-muted); font-weight: 600; }
+.pd-ext-detail .kv dd { color: var(--text); }
+.pd-ext-quote { margin: 14px 0 0; padding: 10px 12px; background: var(--surface-tint); border-left: 3px solid var(--sky-600); border-radius: 6px; font-size: 13px; font-style: italic; color: var(--text-secondary); display: flex; gap: 8px; align-items: flex-start; }
