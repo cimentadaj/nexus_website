@@ -59,7 +59,7 @@ export function searchBox({ id = 'global-search', placeholder = 'Search...', val
   return `<div class="search ${cls}">${icon('search')}<input class="input" id="${id}" type="search" placeholder="${esc(placeholder)}" value="${esc(value)}" autocomplete="off"></div>`;
 }
 
-/** Sequential lifecycle stepper: Preprocessing → Overview → Chapters → Final VLR (connected circles). */
+/** Sequential lifecycle stepper: Preprocessing → Urban data → Chapters → Final VLR (connected circles). */
 export function projectStepper(project, active, { compact = false } = {}) {
   const stats = projectStats(project);
   const done = {
@@ -70,7 +70,7 @@ export function projectStepper(project, active, { compact = false } = {}) {
   };
   const steps = [
     { key: 'preprocess', label: 'Preprocessing', to: `#/projects/${project.id}/preprocessing` },
-    { key: 'overview', label: 'Overview', to: `#/projects/${project.id}` },
+    { key: 'overview', label: 'Urban data', to: `#/projects/${project.id}` },
     { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters` },
     { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr` },
   ];
