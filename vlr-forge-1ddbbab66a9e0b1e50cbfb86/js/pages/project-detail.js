@@ -195,11 +195,10 @@ function preprocessHtml(ctx, project) {
       <p class="page-subtitle">${icon('layers', 'icon-sm')} Step 1 — Preprocessing · parse the source documents, translate them to English and load the SDG reference. Documents show a processing state while running; once done, click one to inspect what was extracted and its log.</p>
     </div>
     <div class="row gap-6">
-      <button class="btn btn-light" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload documents</button>
       ${running
         ? `<span class="pp-runstate"><span class="pp-dot"></span>Preprocessing running</span>`
         : done && !pendingWork
-          ? `<button class="btn btn-primary" data-action="pp-continue">Continue to project ${icon('arrow-right', 'icon-sm')}</button>`
+          ? ''
           : `<button class="btn btn-primary" data-action="run-preprocess" ${docs.length ? '' : 'disabled data-tip="Upload documents first"'}>${icon('play', 'icon-sm')}Run preprocessing</button>`}
     </div>
   </div>
@@ -215,7 +214,7 @@ function preprocessHtml(ctx, project) {
       : `<div class="xs muted" style="padding:10px 22px 14px">Loads the official goal, target and indicator descriptions from the Obsidian SDG wiki — the reference every extraction is matched against.</div>`}</div>` : ''}
   </section>
   <section class="card">
-    <div class="card-header tinted"><div class="card-title-caps">${icon('folder-open')}Source documents (${docs.length})</div></div>
+    <div class="card-header tinted"><div class="card-title-caps">${icon('folder-open')}Source documents (${docs.length})</div><button class="btn btn-light btn-sm" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload more documents</button></div>
     ${docs.length ? `<table class="table pp-table">
       <thead><tr><th>Filename</th><th>Language</th><th>Preprocessing</th><th class="th-right"></th></tr></thead>
       <tbody>${docs.map(d => { const st = states.get(d.id); const busy = st.parse === 'running' || st.translate === 'running';
@@ -520,7 +519,6 @@ export default {
       'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.rerender(); },
       'run-pipeline': doRunPipeline,
       'run-preprocess': () => { const run = runPreprocessing(project.id); if (!run) { toast.info('Nothing to preprocess', 'Every document is already parsed and translated.'); return; } toast.success('Preprocessing started', `${run.taskIds.length} task${run.taskIds.length === 1 ? '' : 's'} queued — open the logs to follow each document.`); },
-      'pp-continue': () => navigate(`#/projects/${project.id}`),
       'pp-doc': (el) => { const cur = ctx.local.ppSel; ctx.local.ppSel = cur === el.dataset.doc ? null : el.dataset.doc; ctx.rerender(); },
       'pp-wiki-toggle': () => { ctx.local.ppWikiOpen = !(ctx.local.ppWikiOpen ?? false); ctx.rerender(); },
       'pp-run-doc': (el, ev) => { ev.stopPropagation(); const d = getDoc(el.dataset.doc); if (!d) return; const ts = reprocessDocument(d.id); if (!ts) { toast.info('Already processing', d.name); return; } toast.success('Preprocessing queued', `${d.name} — fresh parse${d.language !== 'EN' ? ' and translation' : ''}.`); },
