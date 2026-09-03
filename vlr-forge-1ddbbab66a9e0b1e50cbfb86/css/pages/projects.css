@@ -52,21 +52,6 @@
 .pc-footer-btn { margin-top: 16px; justify-content: center; padding: 0 16px; height: 36px; font-size: 14px; gap: 8px; }
 .pc-footer-btn .icon { width: 15px; height: 15px; }
 
-/* ---------- Initialize New VLR ---------- */
-.new-vlr-card {
-  border: 2px dashed var(--border-strong); border-radius: var(--radius-md); background: transparent;
-  min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  padding: 32px 36px; text-align: center; color: var(--text-secondary); transition: background .15s, border-color .15s;
-  width: 100%;
-}
-.new-vlr-card:hover { background: var(--sky-50); border-color: var(--sky-600); }
-.new-vlr-icon {
-  width: 64px; height: 64px; border-radius: 12px; background: var(--surface-tint); display: grid; place-items: center;
-  color: var(--navy); margin-bottom: 18px;
-}
-.new-vlr-icon .icon { width: 30px; height: 30px; stroke-width: 1.8; }
-.new-vlr-title { font-size: 20px; font-weight: 700; color: var(--navy); }
-.new-vlr-sub { font-size: 13px; color: var(--text-secondary); max-width: 220px; margin-top: 6px; line-height: 1.45; }
 
 /* ---------- Empty search ---------- */
 .projects-empty { margin-bottom: 36px; }

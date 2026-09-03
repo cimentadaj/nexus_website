@@ -81,13 +81,6 @@ function projectCard(p) {
   </article>`;
 }
 
-const newVlrCard = () => `
-  <button class="new-vlr-card" data-action="new-project" type="button">
-    <span class="new-vlr-icon">${icon('plus-circle')}</span>
-    <span class="new-vlr-title">Initialize New VLR</span>
-    <span class="new-vlr-sub">Create a new data governance project for your local jurisdiction.</span>
-  </button>`;
-
 function openCardMenu(anchor, p) {
   const archived = p.status === 'archived';
   openMenu(anchor, [
@@ -150,12 +143,10 @@ export default {
         <button class="proj-view-tab ${view === 'archived' ? 'on' : ''}" role="tab" aria-selected="${view === 'archived'}" data-action="switch-view" data-view="archived">${icon('archive', 'icon-sm')}Archived<span class="pvt-count">${archivedCount}</span></button>
       </div>
 
-      ${visible.length || (!q && view === 'active') ? `
+      ${visible.length ? `
       <div class="project-grid">
         ${visible.map(projectCard).join('')}
-        ${view === 'active' ? newVlrCard() : ''}
-      </div>
-      ${!total && view === 'active' ? `<div class="callout projects-none">${icon('info')}<span>No VLR projects yet. Use <strong>Initialize New VLR</strong> or <strong>New Project</strong> to create your first Voluntary Local Review project.</span></div>` : ''}` : q ? `
+      </div>` : q ? `
       <div class="card projects-empty">
         <div class="empty">
           ${icon('search-x')}
@@ -166,13 +157,21 @@ export default {
             ${view === 'active' ? `<button class="btn btn-primary" data-action="new-project">${icon('plus', 'icon-sm')}New Project</button>` : ''}
           </div>
         </div>
-      </div>` : `
+      </div>` : view === 'archived' ? `
       <div class="card projects-empty">
         <div class="empty">
           ${icon('archive')}
           <div class="empty-title">No archived projects</div>
           <div class="empty-sub">Archive a project from its card menu (⋯ → Archive) and it will move here, frozen but fully readable.</div>
           <div class="row projects-empty-actions"><button class="btn btn-light" data-action="switch-view" data-view="active">${icon('folder-open', 'icon-sm')}Back to Active</button></div>
+        </div>
+      </div>` : `
+      <div class="card projects-empty">
+        <div class="empty">
+          ${icon('folder-plus')}
+          <div class="empty-title">No active projects</div>
+          <div class="empty-sub">Create your first Voluntary Local Review project to start uploading documents and extracting evidence.</div>
+          <div class="row projects-empty-actions"><button class="btn btn-primary" data-action="new-project">${icon('plus', 'icon-sm')}New Project</button></div>
         </div>
       </div>`}`;
 
