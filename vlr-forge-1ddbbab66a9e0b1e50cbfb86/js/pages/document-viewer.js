@@ -2,7 +2,7 @@
 import { esc, icon, refreshIcons, fmtDateTime, fmtBytes, relTime, statusBadge, progressHtml, bindActions, toast, download, fileTypeIcon, copyToClipboard, clamp } from '../ui.js';
 import { getDoc, getProject, getExtraction, getProjectExtractions, getProjectTasks, getProjectDocs } from '../store.js';
 import { translateDocument, startParse } from '../actions.js';
-import { openDocumentDrawer, openTaskDrawer } from '../modals.js';
+import { openDocumentDrawer } from '../modals.js';
 import { avatarButton } from '../shell.js';
 import { navigate } from '../router.js';
 import { STEP_META, PILLARS, quoteToHtml, quotePlain, parsedDocMeta } from '../seed.js';
@@ -120,18 +120,16 @@ export default {
       const hlExt = ctx.query.hl ? getExtraction(ctx.query.hl) : null;
       local.hl = hlExt && hlExt.source?.docId === doc.id ? hlExt.id : null;
       local.page = clamp(Number(ctx.query.page) || (hlExt?.source?.page) || 1, 1, doc.pages);
-      local.scrolledTo = null;
+      if (ctx.query.page || local.hl) local.pendingScroll = { page: local.page, hl: local.hl };
     }
     local.page = clamp(Number(local.page) || 1, 1, doc.pages);
     local.zoom = ZOOMS.includes(local.zoom) ? local.zoom : 100;
     local.jump = local.jump ?? '';
     const page = local.page;
     const hlExt = local.hl ? getExtraction(local.hl) : null;
-    const onPage = exts.filter(e => Number(e.source?.page) === page);
     const bank = LANG_BANKS[doc.language];
     const canOrig = doc.language !== 'EN' && doc.translated && !!bank;
     const orig = canOrig && ctx.local.dvLang === 'orig';
-    const text = pageText(doc, page, project, orig ? bank : null);
     // a task can be queued/running before the document status flips — treat that as "in progress" so buttons can't double-queue
     const pending = (steps) => tasks.some(t => t.inputDocId === doc.id && steps.includes(t.step) && (t.status === 'queued' || t.status === 'running'));
     const translating = doc.status === 'translating' || pending(['translate']);
@@ -151,23 +149,38 @@ export default {
       <button class="btn btn-soft" data-action="details">${icon('info', 'icon-sm')}Details</button>
       ${avatarButton()}`;
 
-    /* ----- page canvas ----- */
-    const hlPara = hlExt && Number(hlExt.source.page) === page ? hlExt : null;
-    const paragraphs = text.paragraphs.map((p, i) => {
-      const before = (i === 1 && !orig) ? onPage.map(e => `<p class="dv-para dv-extract ${hlPara && e.id === hlPara.id ? 'dv-hl-active' : ''}" id="dv-ext-${esc(e.id)}" data-action="focus-ext" data-id="${esc(e.id)}" data-tip="Extraction SDG ${esc(e.sdg)} · ${esc(e.title)} — click to open review">${quoteToHtml(e.source.quote, esc)}<span class="dv-ext-tag">${icon('link', 'icon-xs')}SDG ${esc(e.sdg)} · ¶${Number(e.source.paragraph) || 1}</span></p>`).join('') : '';
-      return `${before}<p class="dv-para">${esc(p)}</p>`;
-    }).join('');
+    /* ----- page canvas: continuous vertical scroll, every page rendered ----- */
+    const cacheKey = [doc.id, doc.status, Math.round((doc.progress || 0) / 5), orig ? 'orig' : 'en', hlExt?.id || '', exts.map(e => e.id + ':' + e.source?.page).join(','), project?.year || ''].join('|');
+    if (local.cacheKey !== cacheKey) {
+      const sheets = [];
+      for (let p = 1; p <= doc.pages; p++) {
+        const t = pageText(doc, p, project, orig ? bank : null);
+        const pageExts = exts.filter(e => Number(e.source?.page) === p);
+        const paras = t.paragraphs.map((par, i) => {
+          const before = (i === 1 && !orig) ? pageExts.map(e => `<p class="dv-para dv-extract ${hlExt?.id === e.id ? 'dv-hl-active' : ''}" id="dv-ext-${esc(e.id)}" data-action="focus-ext" data-id="${esc(e.id)}" data-tip="Extraction SDG ${esc(e.sdg)} · ${esc(e.title)} — click to open review">${quoteToHtml(e.source.quote, esc)}<span class="dv-ext-tag">${icon('link', 'icon-xs')}SDG ${esc(e.sdg)} · ¶${Number(e.source.paragraph) || 1}</span></p>`).join('') : '';
+          return `${before}<p class="dv-para">${esc(par)}</p>`;
+        }).join('');
+        sheets.push(`<article class="dv-sheet" id="dv-page-${p}" data-page="${p}">
+            <header class="dv-sheet-head"><span>${esc(docTitle(doc))} — ${orig && bank?.pageWord ? esc(bank.pageWord) : 'page'} ${p}</span><span class="mono">${esc(doc.code)}</span></header>
+            ${p === 1 && doc.status === 'uploaded' && !parsing ? `<div class="dv-notice">${icon('clock')}<div><strong>Not parsed yet.</strong> Text below is a preview rendition; run the parser to extract the real page content.</div><button class="btn btn-outline btn-sm" data-action="parse">${icon('play', 'icon-sm')}Start parse</button></div>` : ''}
+            ${p === 1 && doc.status === 'uploaded' && parsing ? `<div class="dv-notice">${icon('clock')}<div class="grow"><strong>Parse queued.</strong> The parser will pick this document up shortly; text below is a preview rendition.</div></div>` : ''}
+            ${p === 1 && doc.status === 'parsing' ? `<div class="dv-notice">${icon('loader-2', 'spin')}<div class="grow"><strong>Parsing in progress</strong> — ${doc.progress || 0}% ${progressHtml(doc.progress || 0, 'sky striped sm')}</div></div>` : ''}
+            <h2 class="dv-heading-text">${esc(t.heading)}</h2>
+            ${paras}
+            <footer class="dv-sheet-foot"><span>${esc(project?.jurisdiction || project?.name || '')}</span><span>${p} / ${doc.pages}</span></footer>
+          </article>`);
+      }
+      local.cacheKey = cacheKey; local.sheetsHtml = sheets.join('');
+    }
 
     ctx.content.innerHTML = `
     <div class="dv-layout">
       <div class="dv-main">
         <div class="card dv-toolbar">
           <div class="row gap-6">
-            <button class="btn btn-light btn-sm dv-nav" data-action="first" ${page <= 1 ? 'disabled' : ''} data-tip="First page">${icon('chevrons-left', 'icon-sm')}</button>
-            <button class="btn btn-light btn-sm dv-nav" data-action="prev" ${page <= 1 ? 'disabled' : ''} data-tip="Previous page (←)">${icon('chevron-left', 'icon-sm')}</button>
-            <span class="dv-pageno">Page <strong>${page}</strong> / ${doc.pages}</span>
-            <button class="btn btn-light btn-sm dv-nav" data-action="next" ${page >= doc.pages ? 'disabled' : ''} data-tip="Next page (→)">${icon('chevron-right', 'icon-sm')}</button>
-            <button class="btn btn-light btn-sm dv-nav" data-action="last" ${page >= doc.pages ? 'disabled' : ''} data-tip="Last page">${icon('chevrons-right', 'icon-sm')}</button>
+            <button class="btn btn-light btn-sm dv-nav" data-action="prev" data-tip="Previous page (←)">${icon('chevron-left', 'icon-sm')}</button>
+            <span class="dv-pageno">Page <strong id="dv-pageno-cur">${page}</strong> / ${doc.pages}</span>
+            <button class="btn btn-light btn-sm dv-nav" data-action="next" data-tip="Next page (→)">${icon('chevron-right', 'icon-sm')}</button>
           </div>
           <div class="row gap-6 dv-jump">
             <label class="xs muted" for="dv-jump">Go to</label>
@@ -180,23 +193,15 @@ export default {
               <button class="dv-lang ${orig ? '' : 'on'}" data-action="dv-lang" data-lang="en" data-tip="Translated markdown (used by the pillars)">EN · translated</button>
               <button class="dv-lang ${orig ? 'on' : ''}" data-action="dv-lang" data-lang="orig" data-tip="Original document as parsed">${esc(doc.language)} · original</button>
             </span>` : ''}
-            ${orig && onPage.length ? `<span class="xs muted" data-tip="Extraction quotes are anchored to the translated text">${icon('highlighter', 'icon-xs')} highlights in EN view</span>` : ''}
+            ${orig && exts.length ? `<span class="xs muted" data-tip="Extraction quotes are anchored to the translated text">${icon('highlighter', 'icon-xs')} highlights in EN view</span>` : ''}
             ${hlExt && !orig ? `<span class="badge badge-sky dv-hl-badge" data-action="focus-ext" data-id="${esc(hlExt.id)}" data-tip="Jump to highlighted evidence">${icon('highlighter', 'icon-xs')}SDG ${esc(hlExt.sdg)} · p.${Number(hlExt.source.page)}</span><button class="btn-icon" data-action="clear-hl" data-tip="Clear highlight" aria-label="Clear highlight">${icon('x', 'icon-sm')}</button>` : ''}
             <label class="xs muted" for="dv-zoom">Zoom</label>
             <select class="select select-sm" id="dv-zoom">${ZOOMS.map(z => `<option value="${z}" ${z === local.zoom ? 'selected' : ''}>${z}%</option>`).join('')}</select>
           </div>
         </div>
 
-        <div class="dv-canvas-wrap">
-          <article class="dv-sheet" style="--dv-scale:${(local.zoom / 100).toFixed(2)}" id="dv-sheet">
-            <header class="dv-sheet-head"><span>${esc(docTitle(doc))} — page ${page}</span><span class="mono">${esc(doc.code)}</span></header>
-            ${doc.status === 'uploaded' && !parsing ? `<div class="dv-notice">${icon('clock')}<div><strong>Not parsed yet.</strong> Text below is a preview rendition; run the parser to extract the real page content.</div><button class="btn btn-outline btn-sm" data-action="parse">${icon('play', 'icon-sm')}Start parse</button></div>` : ''}
-            ${doc.status === 'uploaded' && parsing ? `<div class="dv-notice">${icon('clock')}<div class="grow"><strong>Parse queued.</strong> The parser will pick this document up shortly; text below is a preview rendition.</div></div>` : ''}
-            ${doc.status === 'parsing' ? `<div class="dv-notice">${icon('loader-2', 'spin')}<div class="grow"><strong>Parsing in progress</strong> — ${doc.progress || 0}% ${progressHtml(doc.progress || 0, 'sky striped sm')}</div></div>` : ''}
-            <h2 class="dv-heading-text">${esc(text.heading)}</h2>
-            ${paragraphs}
-            <footer class="dv-sheet-foot"><span>${esc(project?.jurisdiction || project?.name || '')}</span><span>${page} / ${doc.pages}</span></footer>
-          </article>
+        <div class="dv-canvas-wrap" style="--dv-scale:${(local.zoom / 100).toFixed(2)}">
+          ${local.sheetsHtml}
         </div>
       </div>
 
@@ -206,7 +211,7 @@ export default {
           <div class="dv-ext-list">
             ${exts.length ? exts.map(e => {
               const pl = PILLARS.find(p => p.key === e.pillar);
-              return `<div class="dv-ext-item ${Number(e.source.page) === page ? 'on-page' : ''} ${hlExt?.id === e.id ? 'active' : ''}" data-action="goto" data-page="${Number(e.source.page) || 1}" data-hl="${esc(e.id)}">
+              return `<div class="dv-ext-item  ${hlExt?.id === e.id ? 'active' : ''}" data-action="goto" data-page="${Number(e.source.page) || 1}" data-hl="${esc(e.id)}">
                 <div class="row gap-6"><span class="badge badge-sdg">SDG ${esc(e.sdg)}</span>${icon(pl?.icon || 'bar-chart-2', 'icon-xs')}<span class="grow"></span>${e.status === 'approved' ? icon('check-circle-2', 'icon-xs success-text') : e.status === 'rerun_queued' ? icon('rotate-ccw', 'icon-xs warning-text') : ''}</div>
                 <div class="dv-ext-title">${esc(e.title)}</div>
                 <div class="row-between"><span class="xs muted">${e.value != null && e.value !== '' ? `Val: ${esc(e.value)}${/%/.test(e.unit || '') ? '%' : ''}` : esc(e.categoryLabel || e.category || e.projectStatus || e.group || '')}</span><button type="button" class="dv-page-link" data-action="goto" data-page="${Number(e.source.page) || 1}" data-hl="${esc(e.id)}">p.${Number(e.source.page) || 1}</button></div>
@@ -241,16 +246,6 @@ export default {
           </div>
         </section>
 
-        <section class="card">
-          <div class="card-header tinted"><div class="card-title-caps">${icon('history', 'icon-sm')}Processing history</div><span class="badge badge-neutral">${tasks.length}</span></div>
-          <div class="dv-task-list">
-            ${tasks.length ? tasks.slice(0, 8).map(t => `<button type="button" class="dv-task" data-action="open-task" data-task="${esc(t.id)}">
-                <span class="row gap-6">${icon(STEP_META[t.step]?.icon || 'cpu', 'icon-sm')}<span><span class="dv-task-label">${esc(t.label)}</span><span class="xs muted">${esc(relTime(t.createdAt))}${t.status === 'running' ? ` · ${t.progress}%` : ''}${t.inputDocId ? '' : ' · whole document pool'}</span></span></span>
-                ${statusBadge(t.status)}
-              </button>`).join('') : `<div class="xs muted" style="padding:14px 20px">No tasks have processed this document yet.</div>`}
-            ${tasks.length > 8 ? `<div class="xs muted" style="padding:8px 20px">+${tasks.length - 8} older tasks in the project History.</div>` : ''}
-          </div>
-        </section>
 
         ${siblings.length > 1 ? `<section class="card">
           <div class="card-header tinted"><div class="card-title-caps">${icon('folder-open', 'icon-sm')}Other documents</div></div>
@@ -260,25 +255,32 @@ export default {
     </div>`;
     ctx.footer.innerHTML = '';
 
-    /* ----- scroll to highlight once per (page, hl) ----- */
-    if (hlPara) {
-      const key = `${page}|${hlPara.id}`;
-      if (local.scrolledTo !== key) {
-        local.scrolledTo = key;
-        setTimeout(() => ctx.content.querySelector(`#dv-ext-${CSS.escape(hlPara.id)}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
-      }
+    /* ----- one-shot scroll: deep links (?page / ?hl) and highlight jumps ----- */
+    if (local.pendingScroll) {
+      const { page: tp, hl } = local.pendingScroll; local.pendingScroll = null;
+      setTimeout(() => {
+        const el = (hl && ctx.content.querySelector(`#dv-ext-${CSS.escape(hl)}`)) || ctx.content.querySelector('#dv-page-' + tp);
+        el?.scrollIntoView({ behavior: 'smooth', block: hl ? 'center' : 'start' });
+      }, 80);
     }
 
     /* ----- inputs ----- */
     const jumpEl = ctx.content.querySelector('#dv-jump');
-    const goto = (p, hl) => { local.page = clamp(Number(p) || 1, 1, doc.pages); if (hl !== undefined) local.hl = hl; local.jump = ''; ctx.rerender(); };
+    const setPageNo = (n) => { const el = ctx.content.querySelector('#dv-pageno-cur'); if (el) el.textContent = n; };
+    const goto = (p, hl) => {
+      const target = clamp(Number(p) || 1, 1, doc.pages);
+      local.jump = '';
+      if (hl !== undefined && hl !== local.hl) { local.hl = hl; local.page = target; local.pendingScroll = { page: target, hl }; ctx.rerender(); return; }
+      local.page = target; setPageNo(target);
+      ctx.content.querySelector('#dv-page-' + target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
     jumpEl.addEventListener('input', () => { local.jump = jumpEl.value; });
     jumpEl.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); handlers.jump(); } });
     ctx.content.querySelector('#dv-zoom').addEventListener('change', (ev) => { local.zoom = Number(ev.target.value); ctx.rerender(); });
     ctx.content.querySelectorAll('[data-action="dv-lang"]').forEach(b => b.addEventListener('click', () => { ctx.local.dvLang = b.dataset.lang; ctx.rerender(); }));
 
     const handlers = {
-      first: () => goto(1), prev: () => goto(page - 1), next: () => goto(page + 1), last: () => goto(doc.pages),
+      prev: () => goto(local.page - 1), next: () => goto(local.page + 1),
       jump: () => {
         const v = Math.trunc(Number(jumpEl.value));
         if (!jumpEl.value.trim() || Number.isNaN(v)) { jumpEl.focus(); return; }
@@ -286,20 +288,19 @@ export default {
         if (target !== v) toast.warning('Page out of range', `This document has ${doc.pages} pages — showing page ${target}.`);
         goto(target);
       },
-      goto: (el, ev) => { if (ev.target.closest('a')) return; ev.stopPropagation(); local.scrolledTo = null; goto(el.dataset.page, el.dataset.hl); },
+      goto: (el, ev) => { if (ev.target.closest('a')) return; ev.stopPropagation(); goto(el.dataset.page, el.dataset.hl); },
       'clear-hl': () => { local.hl = null; ctx.rerender(); },
       'focus-ext': (el, ev) => {
         if (ev.target.closest('a')) return;
         const e = getExtraction(el.dataset.id);
         if (!e) return;
-        if (el.classList.contains('dv-hl-badge')) { local.scrolledTo = null; goto(e.source.page, e.id); return; }
+        if (el.classList.contains('dv-hl-badge')) { goto(e.source.page, e.id); return; }
         navigate(`#/review/${e.id}`);
       },
       translate: () => { if (!canTranslate) return; translateDocument(doc.id); toast.info('Translation queued', `${doc.name} (${doc.language} → EN)`); },
       parse: () => { if (parsing) return; startParse(doc.id); toast.info('Parsing queued', doc.name); },
       download: () => { const md = markdownRendition(doc, project, exts); download(doc.name.replace(/\.[a-z0-9]+$/i, '') + '.md', md, 'text/markdown'); toast.success('Download started', `${docTitle(doc)} · Markdown rendition (${doc.pages} pages)`); },
       details: () => openDocumentDrawer(doc.id),
-      'open-task': (el) => openTaskDrawer(el.dataset.task),
       'copy-code': () => { copyToClipboard(doc.code); toast.success('Copied', doc.code); },
     };
     const unbindContent = bindActions(ctx.content, handlers);
@@ -307,11 +308,23 @@ export default {
 
     const onKey = (ev) => {
       if (ev.target?.closest?.('input, textarea, select, [contenteditable]') || document.querySelector('.modal, .modal-backdrop, .drawer, .menu')) return;
-      if (ev.key === 'ArrowLeft' && page > 1) { ev.preventDefault(); goto(page - 1); }
-      else if (ev.key === 'ArrowRight' && page < doc.pages) { ev.preventDefault(); goto(page + 1); }
+      if (ev.key === 'ArrowLeft' && local.page > 1) { ev.preventDefault(); goto(local.page - 1); }
+      else if (ev.key === 'ArrowRight' && local.page < doc.pages) { ev.preventDefault(); goto(local.page + 1); }
     };
     document.addEventListener('keydown', onKey);
+    // scroll spy: keep the "Page X / N" indicator in sync while scrolling (no re-render)
+    let spyPending = false;
+    const onScroll = () => {
+      if (spyPending) return; spyPending = true;
+      requestAnimationFrame(() => {
+        spyPending = false;
+        let cur = 1;
+        for (const sh of ctx.content.querySelectorAll('.dv-sheet')) { if (sh.getBoundingClientRect().top <= 140) cur = Number(sh.dataset.page); else break; }
+        if (cur !== local.page) { local.page = cur; setPageNo(cur); }
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
     refreshIcons(ctx.content);
-    return () => { unbindContent(); unbindTop(); document.removeEventListener('keydown', onKey); };
+    return () => { unbindContent(); unbindTop(); document.removeEventListener('keydown', onKey); window.removeEventListener('scroll', onScroll); };
   },
 };

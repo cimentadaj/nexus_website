@@ -89,3 +89,6 @@
 .dv-kv-parser { margin-bottom: 14px; }
 .dv-kv-parser dt { font-size: 11px; }
 .dv-kv-parser dd { font-size: 11.5px; }
+
+/* continuous scroll: stacked sheets */
+.dv-canvas-wrap .dv-sheet + .dv-sheet { margin-top: 28px; }
