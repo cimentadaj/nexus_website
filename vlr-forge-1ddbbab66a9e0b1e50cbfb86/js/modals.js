@@ -103,7 +103,6 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
         <div class="field"><label class="label">Jurisdiction / reporting entity</label><input class="input" id="np-jur" placeholder="e.g. Lisbon City Council" value="${esc(data.jurisdiction)}"></div>
         <div class="field"><label class="label">Reporting year</label><select class="select" id="np-year">${YEARS.map(y => `<option ${y === Number(data.year) ? 'selected' : ''}>${y}</option>`).join('')}</select></div>
         <div class="field span-2"><label class="label">Project name</label><input class="input" id="np-name" placeholder="Auto-generated from city and year" value="${esc(data.name)}"><div class="hint">Leave blank to use "<span id="np-name-preview">${esc(data.city || 'City')} ${data.year} VLR</span>".</div></div>
-        <div class="field span-2"><label class="label">Document languages</label><div class="lang-chips">${LANGS.map(l => `<button type="button" class="lang-chip ${data.languages.includes(l) ? 'on' : ''}" data-lang="${l}">${l}</button>`).join('')}</div><div class="hint">Non-English documents are translated to EN before extraction (Gemini). Pillar A extracts directly from the native language.</div></div>
         <div class="field span-2"><label class="label">Description</label><textarea class="textarea" id="np-desc" placeholder="Scope, reporting cycle, partners…" style="min-height:70px">${esc(data.description)}</textarea></div>
       </div>`;
     if (step === 2) body += `
@@ -120,7 +119,6 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
         <div><div class="k">Jurisdiction</div><div class="v">${esc(data.jurisdiction || `${data.city} City Council`)}</div></div>
         <div><div class="k">Location</div><div class="v">${esc(data.city)}, ${esc(data.country)}</div></div>
         <div><div class="k">Reporting year</div><div class="v">${data.year}</div></div>
-        <div><div class="k">Languages</div><div class="v mono">${data.languages.join(', ')}</div></div>
         <div><div class="k">Processing node</div><div class="v mono">${esc(getState().settings.org.region || 'EU-WEST-1')}</div></div>
         <div class="span-2" style="grid-column:span 2"><div class="k">Target SDGs (${data.sdgs.length})</div><div class="v"><div class="sdg-chips">${data.sdgs.map(n => sdgChip(n)).join('') || '<span class="muted">None selected — you can configure them later.</span>'}</div></div></div>
         <div style="grid-column:span 2"><div class="k">Source documents (${data.files.length})</div><div class="v">${data.files.length ? data.files.map(f => `<span class="badge badge-neutral badge-mono" style="margin:2px 4px 2px 0">${esc(f.name)}</span>`).join('') : '<span class="muted">None yet — the project will be created in Provisioning state.</span>'}</div></div>
@@ -159,7 +157,8 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
     el.querySelector('#np-next')?.addEventListener('click', () => { collect(); if (!validate()) return; step++; render(); });
     el.querySelector('#np-create')?.addEventListener('click', () => {
       collect();
-      const p = createProject({ ...data, name: data.name || `${data.city} ${data.year} VLR`, jurisdiction: data.jurisdiction || `${data.city} City Council` });
+      const languages = [...new Set(data.files.map(f => f.language))];
+      const p = createProject({ ...data, languages: languages.length ? languages : ['EN'], name: data.name || `${data.city} ${data.year} VLR`, jurisdiction: data.jurisdiction || `${data.city} City Council` });
       api.close();
       if (data.files.length && data.runNow) { runPipeline(p.id); toast.success(`${p.name} created`, 'Full pipeline started — follow progress in the Task Queue.'); }
       else toast.success(`${p.name} created`, data.files.length ? `${data.files.length} document(s) uploaded. Run the pipeline when ready.` : 'Upload source documents to begin extraction.');
@@ -168,7 +167,6 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
     if (step === 1) {
       el.querySelector('#np-city').addEventListener('input', (e) => { el.querySelector('#np-name-preview').textContent = `${e.target.value || 'City'} ${el.querySelector('#np-year').value} VLR`; });
       el.querySelector('#np-year').addEventListener('change', (e) => { el.querySelector('#np-name-preview').textContent = `${el.querySelector('#np-city').value || 'City'} ${e.target.value} VLR`; });
-      el.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => { const l = b.dataset.lang; data.languages = data.languages.includes(l) ? data.languages.filter(x => x !== l) : [...data.languages, l]; if (!data.languages.length) data.languages = ['EN']; b.classList.toggle('on', data.languages.includes(l)); }));
       el.querySelectorAll('.input').forEach(i => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); el.querySelector('#np-next').click(); } }));
     }
     if (step === 2) {
