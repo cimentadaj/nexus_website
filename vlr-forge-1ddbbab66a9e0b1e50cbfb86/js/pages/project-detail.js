@@ -31,6 +31,10 @@ function extValueLine(e) {
   return `<span class="ext-k">Group:</span> <span class="ext-v">${esc(e.group || '—')}</span>${e.engagement ? ` <span class="ext-sep">·</span> <span class="ext-k">${esc(e.engagement)}</span>` : ''}`;
 }
 
+/* per-project UI memory: active pillar tab, selected extraction, filter — survives
+ * navigating away (e.g. into the document viewer) and back */
+const uiMemo = {};
+
 function extCells(e) {
   if (e.pillar === 'indicators') return [e.value ?? '—', e.unit || '—'];
   if (e.pillar === 'documentary') return [e.category || '—', e.categoryLabel || '—'];
@@ -425,7 +429,12 @@ export default {
     }
     const isHistory = ctx.route.tab === 'history';
     const isPre = ctx.route.tab === 'preprocess' || (!isHistory && !project.preprocessedAt);
-    if (!ctx.local.tab) ctx.local.tab = PILLAR_KEYS.includes(ctx.query?.tab) ? ctx.query.tab : 'indicators';
+    const memo = (uiMemo[project.id] ||= {});
+    if (!ctx.local.tab) {
+      ctx.local.tab = PILLAR_KEYS.includes(ctx.query?.tab) ? ctx.query.tab : (memo.tab || 'indicators');
+      if (memo.extSel !== undefined) ctx.local.extSel = memo.extSel;
+      if (memo.filter) ctx.local.filter = memo.filter;
+    }
     const stats = projectStats(project);
 
     ctx.topbar.innerHTML = topbarHtml(ctx, project, isHistory ? 'history' : isPre ? 'preprocess' : 'overview');
@@ -452,8 +461,8 @@ export default {
     };
 
     const unbindClick = bindActions(ctx.content, {
-      'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.rerender(); },
-      'ext-sel': (el) => { ctx.local.extSel = ctx.local.extSel === el.dataset.id ? null : el.dataset.id; ctx.rerender(); },
+      'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.local.extSel = null; Object.assign(memo, { tab: el.dataset.tab, filter: 'all', extSel: null }); ctx.rerender(); },
+      'ext-sel': (el) => { ctx.local.extSel = ctx.local.extSel === el.dataset.id ? null : el.dataset.id; memo.extSel = ctx.local.extSel; ctx.rerender(); },
       'ext-approve': (el, ev) => { ev.stopPropagation(); approveExtraction(el.dataset.id); ctx.rerender(); },
       'ext-unapprove': (el, ev) => { ev.stopPropagation(); unapproveExtraction(el.dataset.id); ctx.rerender(); },
       'run-pipeline': doRunPipeline,
@@ -521,7 +530,7 @@ export default {
       'goto-tasks': () => navigate(`#/tasks?project=${encodeURIComponent(pid)}`),
     });
     const unbindChange = bindActions(ctx.content, {
-      'ext-filter': (el) => { ctx.local.filter = el.value; ctx.rerender(); },
+      'ext-filter': (el) => { ctx.local.filter = el.value; memo.filter = el.value; ctx.rerender(); },
     }, 'change');
     /* #content persists across the ~350 ms re-renders while tasks run: listeners must be removed or every click fires N times */
     return () => { unbindClick(); unbindChange(); };
