@@ -1,7 +1,7 @@
 /* Project detail — Overview (mock-up 02) and History view. Route #/projects/:id and #/projects/:id/history */
 import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime } from '../ui.js';
 import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, getProjectRuns, getProjectReports, getProjectActivity, projectStats, getTask, getDoc, getLogs } from '../store.js';
-import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument } from '../actions.js';
+import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument, approveExtraction, unapproveExtraction } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
 import { topbarActions, searchBox, topbarTabs, statusBarHtml, projectStepper } from '../shell.js';
 import { PILLARS, STEP_META, STEP_ORDER, parsedDocMeta } from '../seed.js';
@@ -296,7 +296,9 @@ function overviewHtml(ctx, project, stats) {
               <td>${esc(val)}</td>
               <td>${esc(unit)}</td>
               <td class="xs muted">${e.source?.page ? `p. ${esc(e.source.page)} · ¶${esc(e.source.paragraph || 1)}` : 'Manual entry'}</td>
-              <td class="td-right">${extStatusMark(e)}</td>
+              <td class="td-right"><div class="table-actions">${e.status === 'approved'
+                ? `<span data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''} — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle')}</button></span>`
+                : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Approve</button>`}</div></td>
             </tr>`; }).join('')}</tbody>
         </table></div>`
         : pillarTotal ? `<div class="empty">${icon('search-x')}<div class="empty-title">No matches</div><div class="empty-sub">No ${esc(pillar.label.toLowerCase())} match the current filter${q ? ' and search' : ''}.</div><button class="btn btn-light btn-sm mt-12" data-action="clear-filters">Clear filters</button></div>`
@@ -452,6 +454,8 @@ export default {
     const unbindClick = bindActions(ctx.content, {
       'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.rerender(); },
       'ext-sel': (el) => { ctx.local.extSel = ctx.local.extSel === el.dataset.id ? null : el.dataset.id; ctx.rerender(); },
+      'ext-approve': (el, ev) => { ev.stopPropagation(); approveExtraction(el.dataset.id); ctx.rerender(); },
+      'ext-unapprove': (el, ev) => { ev.stopPropagation(); unapproveExtraction(el.dataset.id); ctx.rerender(); },
       'run-pipeline': doRunPipeline,
       'run-preprocess': () => { const run = runPreprocessing(project.id); if (!run) { toast.info('Nothing to preprocess', 'Every document is already parsed and translated.'); return; } toast.success('Preprocessing started', `${run.taskIds.length} task${run.taskIds.length === 1 ? '' : 's'} queued — open the logs to follow each document.`); },
       'pp-doc': (el) => { const cur = ctx.local.ppSel; ctx.local.ppSel = cur === el.dataset.doc ? null : el.dataset.doc; ctx.rerender(); },
