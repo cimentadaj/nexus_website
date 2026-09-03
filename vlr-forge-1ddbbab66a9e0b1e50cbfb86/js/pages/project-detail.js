@@ -289,7 +289,6 @@ function overviewHtml(ctx, project, stats) {
           <span class="xs muted">${exts.length} of ${pillarTotal} shown</span>
           <span class="grow"></span>
           <button class="btn btn-light btn-sm" data-action="add-entry">${icon('plus', 'icon-sm')}Add entry</button>
-          <select class="select select-sm" id="pd-ext-filter" data-action="ext-filter">${EXT_FILTERS.map(f => `<option value="${f.key}" ${f.key === filter ? 'selected' : ''}>${f.label}</option>`).join('')}</select>
         </div>
         ${exts.length ? `<div class="pd-table-wrap"><table class="table pd-ext-table">
           <thead><tr><th>SDG</th><th>Extraction</th><th>Value</th><th>Unit</th><th>Source</th><th></th></tr></thead>
