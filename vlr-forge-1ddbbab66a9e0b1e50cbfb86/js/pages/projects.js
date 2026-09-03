@@ -33,15 +33,6 @@ function matches(p, q) {
   return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
 }
 
-function extractionCell(p, stats) {
-  const pct = stats.extractionPct;
-  let ic, cls;
-  if (p.status === 'provisioning') { ic = 'refresh-cw'; cls = 'ext-provisioning'; }
-  else if (p.status === 'archived' || pct >= 100) { ic = 'check-circle'; cls = 'ext-done'; }
-  else { ic = 'zap'; cls = 'ext-active'; }
-  return `<span class="pc-stat-value ${cls}">${icon(ic, 'icon-sm')}<span>${pct}%</span></span>`;
-}
-
 function footerButton(p) {
   if (p.status === 'archived') return `<button class="btn btn-outline btn-block pc-footer-btn" data-action="open-project" data-id="${esc(p.id)}">View Archive ${icon('history', 'icon-sm')}</button>`;
   if (p.status === 'provisioning') return `<button class="btn btn-primary btn-block pc-footer-btn" data-action="configure-project" data-id="${esc(p.id)}">Configure Project ${icon('settings', 'icon-sm')}</button>`;
@@ -70,10 +61,6 @@ function projectCard(p) {
       <div>
         <div class="pc-stat-label">Sources</div>
         <span class="pc-stat-value">${icon('file-text', 'icon-sm')}<span>${pad2(stats.docs)} Documents</span></span>
-      </div>
-      <div>
-        <div class="pc-stat-label">Extraction</div>
-        ${extractionCell(p, stats)}
       </div>
     </div>
     <div class="pc-progress">
