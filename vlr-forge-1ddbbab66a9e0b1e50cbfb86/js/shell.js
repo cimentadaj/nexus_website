@@ -8,9 +8,6 @@ import { openNewReportModal, openNewProjectModal, openUploadModal } from './moda
 
 export const NAV = [
   { key: 'projects', label: 'Projects', icon: 'folder', to: '#/projects' },
-  { key: 'ask', label: 'Ask', icon: 'sparkles', to: '#/ask' },
-  { key: 'tasks', label: 'Tasks', icon: 'clipboard-list', to: '#/tasks' },
-  { key: 'settings', label: 'Settings', icon: 'settings', to: '#/settings' },
 ];
 
 export function sidebarHtml(activeKey) {
