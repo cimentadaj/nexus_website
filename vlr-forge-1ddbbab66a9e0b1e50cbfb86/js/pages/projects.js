@@ -1,6 +1,6 @@
 /* Projects list — mock-up design-refs/01-projects-list.png */
-import { esc, icon, sdgChips, relTime, bindActions, openMenu, confirmDialog, toast, progressHtml, refreshIcons } from '../ui.js';
-import { getState, projectStats, getProjectActivity, getProjectDocs, getProjectExtractions } from '../store.js';
+import { esc, icon, sdgChips, bindActions, openMenu, confirmDialog, toast, progressHtml, refreshIcons } from '../ui.js';
+import { getState, projectStats, getProjectDocs, getProjectExtractions } from '../store.js';
 import { archiveProject, unarchiveProject, deleteProject } from '../actions.js';
 import { openConfigureProjectModal } from '../modals.js';
 import { topbarActions, searchBox, topbarTabs } from '../shell.js';
@@ -14,18 +14,8 @@ const displayName = (p) => {
   const auto = `${p.city} ${p.year}`;
   return !p.name || p.name === auto || p.name === `${auto} VLR` ? auto : p.name;
 };
-/** Project name for activity rows: the card title when the project still exists, else the logged name. */
-function activityProjectName(a) {
-  const p = a.projectId ? getState().projects.find(x => x.id === a.projectId) : null;
-  const logged = a.projectName && a.projectName !== '—' ? a.projectName : '';
-  return p ? displayName(p) : (logged || 'System');
-}
 
 const STATUS_LABEL = { active: 'Active', archived: 'Archived', provisioning: 'Provisioning' };
-const ACTIVITY_BADGE = {
-  success: ['success', 'Success'], failed: ['danger', 'Failed'], running: ['running', 'Running'],
-  queued: ['neutral', 'Queued'], cancelled: ['neutral', 'Cancelled'], info: ['info', 'Info'],
-};
 
 function matches(p, q) {
   if (!q) return true;
@@ -78,19 +68,6 @@ const newVlrCard = () => `
     <span class="new-vlr-sub">Create a new data governance project for your local jurisdiction.</span>
   </button>`;
 
-function activityRow(a) {
-  const [cls, label] = ACTIVITY_BADGE[a.status] || ['neutral', a.status];
-  // only rows whose project still exists navigate (deleted projects would 404)
-  const clickable = !!a.projectId && getState().projects.some(p => p.id === a.projectId);
-  return `
-  <tr class="${clickable ? 'clickable' : ''}" ${clickable ? `data-action="open-project" data-id="${esc(a.projectId)}"` : ''}>
-    <td><div class="cell-title">${esc(activityProjectName(a))}</div><div class="cell-sub">${esc(a.title)}</div></td>
-    <td><span class="prov">${icon('shield-check', 'icon-sm')}<span class="mono">${esc(a.provenance || '—')}</span></span></td>
-    <td class="muted">${esc(relTime(a.ts))}</td>
-    <td><span class="badge badge-${cls} act-badge">${esc(label)}</span></td>
-  </tr>`;
-}
-
 function openCardMenu(anchor, p) {
   const archived = p.status === 'archived';
   openMenu(anchor, [
@@ -122,7 +99,6 @@ export default {
     const visible = projects.filter(p => matches(p, q));
     const total = projects.length;
     const active = projects.filter(p => p.status === 'active').length;
-    const activity = getProjectActivity().slice(0, 8);
 
     ctx.topbar.innerHTML = `
       ${searchBox({ id: 'projects-search', placeholder: 'Search VLR Projects...', value: q })}
@@ -162,20 +138,7 @@ export default {
             <button class="btn btn-primary" data-action="new-project">${icon('plus', 'icon-sm')}New Project</button>
           </div>
         </div>
-      </div>`}
-
-      <section class="card activity-card">
-        <div class="card-header tinted">
-          <div class="card-title">Recent Processing Activity</div>
-          <a class="link-text" href="#/audit-log">View Audit Log</a>
-        </div>
-        ${activity.length ? `
-        <table class="table activity-table">
-          <thead><tr><th>Project / Task</th><th>Provenance</th><th>Timestamp</th><th>Status</th></tr></thead>
-          <tbody>${activity.map(activityRow).join('')}</tbody>
-        </table>` : `
-        <div class="empty">${icon('activity')}<div class="empty-title">No processing activity yet</div><div class="empty-sub">Upload documents and run the pipeline to see events here.</div></div>`}
-      </section>`;
+      </div>`}`;
 
     const unbindContent = bindActions(ctx.content, {
       'open-project': (el) => navigate(`#/projects/${el.dataset.id}`),

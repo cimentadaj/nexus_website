@@ -73,16 +73,3 @@
 .projects-none { margin: -12px 0 36px; }
 .projects-empty-actions { justify-content: center; margin-top: 16px; }
 
-/* ---------- Recent Processing Activity ---------- */
-.activity-card { overflow: hidden; }
-.activity-card .card-header { padding: 13px 24px; }
-.activity-card .card-title { font-size: 18px; }
-.activity-card .link-text { font-size: 13px; }
-.activity-table th { padding: 13px 24px; font-size: 11.5px; font-weight: 600; color: var(--text-muted); background: #f4f7fb; letter-spacing: .06em; }
-.activity-table td { padding: 15px 24px; }
-.activity-table th:first-child, .activity-table td:first-child { width: 44%; }
-.activity-table .cell-title { font-size: 14px; color: var(--navy); }
-.activity-table .cell-sub { font-size: 12.5px; }
-.activity-table .prov { display: inline-flex; align-items: center; gap: 8px; color: var(--link); }
-.activity-table .prov .mono { color: var(--text); font-weight: 500; }
-.activity-table .act-badge { text-transform: none; letter-spacing: 0; font-size: 11.5px; padding: 1px 8px; line-height: 16px; }
