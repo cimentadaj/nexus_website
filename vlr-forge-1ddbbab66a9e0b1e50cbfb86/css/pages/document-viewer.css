@@ -32,8 +32,7 @@
 .dv-sheet-head .mono { letter-spacing: .02em; text-transform: none; }
 .dv-heading-text { font-size: calc(19px * var(--dv-scale)); color: var(--navy); margin-bottom: calc(14px * var(--dv-scale)); letter-spacing: -0.01em; }
 .dv-para { margin: 0 0 calc(14px * var(--dv-scale)); text-align: justify; hyphens: auto; }
-.dv-extract { position: relative; padding: calc(10px * var(--dv-scale)) calc(14px * var(--dv-scale)) calc(12px * var(--dv-scale)); border-left: 3px solid var(--sky-600); background: var(--sky-50); border-radius: 0 4px 4px 0; cursor: pointer; transition: background .12s; }
-.dv-extract:hover { background: var(--sky-100); }
+.dv-extract { position: relative; padding: calc(10px * var(--dv-scale)) calc(14px * var(--dv-scale)) calc(12px * var(--dv-scale)); border-left: 3px solid var(--sky-600); background: var(--sky-50); border-radius: 0 4px 4px 0; }
 .dv-extract.dv-hl-active { border-left-color: var(--navy); background: #eaf3fd; box-shadow: 0 0 0 3px rgba(124,196,248,.45); animation: dvFlash 1.6s ease-out 1; }
 @keyframes dvFlash { 0% { box-shadow: 0 0 0 8px rgba(124,196,248,.7); } 100% { box-shadow: 0 0 0 3px rgba(124,196,248,.45); } }
 .dv-extract mark.hl { background: #93c5fd; color: var(--navy); font-weight: 700; padding: 1px 4px; border-radius: 2px; }

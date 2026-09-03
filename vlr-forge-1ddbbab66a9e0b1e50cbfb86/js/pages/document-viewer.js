@@ -3,7 +3,6 @@ import { esc, icon, refreshIcons, fmtDateTime, fmtBytes, relTime, statusBadge, p
 import { getDoc, getProject, getExtraction, getProjectExtractions, getProjectTasks, getProjectDocs } from '../store.js';
 import { startParse } from '../actions.js';
 import { avatarButton } from '../shell.js';
-import { navigate } from '../router.js';
 import { STEP_META, PILLARS, quoteToHtml, quotePlain, parsedDocMeta } from '../seed.js';
 
 /* Original-language sentence banks — same shapes as the English arrays, so the
@@ -149,7 +148,7 @@ export default {
         const t = pageText(doc, p, project, orig ? bank : null);
         const pageExts = exts.filter(e => Number(e.source?.page) === p);
         const paras = t.paragraphs.map((par, i) => {
-          const before = (i === 1 && !orig) ? pageExts.map(e => `<p class="dv-para dv-extract ${hlExt?.id === e.id ? 'dv-hl-active' : ''}" id="dv-ext-${esc(e.id)}" data-action="focus-ext" data-id="${esc(e.id)}" data-tip="Extraction SDG ${esc(e.sdg)} · ${esc(e.title)} — click to open review">${quoteToHtml(e.source.quote, esc)}<span class="dv-ext-tag">${icon('link', 'icon-xs')}SDG ${esc(e.sdg)} · ¶${Number(e.source.paragraph) || 1}</span></p>`).join('') : '';
+          const before = (i === 1 && !orig) ? pageExts.map(e => `<p class="dv-para dv-extract ${hlExt?.id === e.id ? 'dv-hl-active' : ''}" id="dv-ext-${esc(e.id)}" data-tip="Extraction SDG ${esc(e.sdg)} · ${esc(e.title)}">${quoteToHtml(e.source.quote, esc)}<span class="dv-ext-tag">${icon('link', 'icon-xs')}SDG ${esc(e.sdg)} · ¶${Number(e.source.paragraph) || 1}</span></p>`).join('') : '';
           return `${before}<p class="dv-para">${esc(par)}</p>`;
         }).join('');
         sheets.push(`<article class="dv-sheet" id="dv-page-${p}" data-page="${p}">
@@ -276,12 +275,9 @@ export default {
       },
       goto: (el, ev) => { if (ev.target.closest('a')) return; ev.stopPropagation(); goto(el.dataset.page, el.dataset.hl); },
       'clear-hl': () => { local.hl = null; ctx.rerender(); },
-      'focus-ext': (el, ev) => {
-        if (ev.target.closest('a')) return;
+      'focus-ext': (el) => {
         const e = getExtraction(el.dataset.id);
-        if (!e) return;
-        if (el.classList.contains('dv-hl-badge')) { goto(e.source.page, e.id); return; }
-        navigate(`#/review/${e.id}`);
+        if (e) goto(e.source.page, e.id);
       },
       parse: () => { if (parsing) return; startParse(doc.id); toast.info('Parsing queued', doc.name); },
       'copy-code': () => { copyToClipboard(doc.code); toast.success('Copied', doc.code); },
