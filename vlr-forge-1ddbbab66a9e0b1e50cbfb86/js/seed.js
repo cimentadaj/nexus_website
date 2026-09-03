@@ -281,13 +281,13 @@ export function buildSeed() {
   const now = Date.now();
   const projects = [
     { id: 'madrid-2024', name: 'Madrid 2024 VLR', city: 'Madrid', country: 'Spain', jurisdiction: 'Madrid City Council', year: 2024, status: 'active',
-      sdgs: [1, 3, 4, 5, 6, 7, 8, 11, 13, 16], languages: ['ES', 'EN'], createdAt: now - 62 * DAY, node: 'EU-WEST-1',
+      sdgs: [1, 3, 4, 5, 6, 7, 8, 11, 13, 16], languages: ['ES', 'EN'], region: 'Europe', createdAt: now - 62 * DAY, node: 'EU-WEST-1',
       description: 'Voluntary Local Review of the City of Madrid for the 2024 reporting cycle, covering the 2030 Agenda localisation strategy.', lastSyncedAt: now - 14 * MIN, lead: 'Jorge Cimentada' },
     { id: 'bogota-2023', name: 'Bogotá 2023 VLR', city: 'Bogotá', country: 'Colombia', jurisdiction: 'Alcaldía de Bogotá', year: 2023, status: 'archived',
-      sdgs: [2, 11, 14, 1, 3, 4, 5, 6, 8, 10, 13, 16], languages: ['ES'], createdAt: now - 400 * DAY, node: 'US-EAST-G01', archivedAt: now - 120 * DAY,
+      sdgs: [2, 11, 14, 1, 3, 4, 5, 6, 8, 10, 13, 16], languages: ['ES'], region: 'Latin America and the Caribbean', createdAt: now - 400 * DAY, node: 'US-EAST-G01', archivedAt: now - 120 * DAY,
       description: 'Second Voluntary Local Review of Bogotá D.C. Finalised and submitted to the UN DESA VLR repository.', lastSyncedAt: now - 120 * DAY, lead: 'Alex Santana' },
     { id: 'vancouver-2024', name: 'Vancouver 2024 VLR', city: 'Vancouver', country: 'Canada', jurisdiction: 'Metro Vancouver', year: 2024, status: 'provisioning',
-      sdgs: [13, 15], languages: ['EN', 'FR'], createdAt: now - 3 * DAY, node: 'US-EAST-G01',
+      sdgs: [13, 15], languages: ['EN', 'FR'], region: 'North America', createdAt: now - 3 * DAY, node: 'US-EAST-G01',
       description: 'First VLR of the Metro Vancouver regional district, focused on climate action and biodiversity.', lastSyncedAt: now - 2 * HOUR, lead: 'Jorge Cimentada' },
   ];
 

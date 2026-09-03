@@ -102,7 +102,7 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
         <div class="field"><label class="label">City <span class="req">*</span></label><input class="input" id="np-city" placeholder="e.g. Dahab" value="${esc(data.city)}" autofocus><div class="hint">Official city or municipality name — used across the review and the final book.</div></div>
         <div class="field"><label class="label">Country <span class="req">*</span></label><input class="input" id="np-country" placeholder="e.g. Egypt" value="${esc(data.country)}"><div class="hint">Selects the national sources (Voluntary National Review) cited in the chapters.</div></div>
         <div class="field"><label class="label">Jurisdiction / reporting entity</label><input class="input" id="np-jur" placeholder="e.g. Dahab City Council" value="${esc(data.jurisdiction)}"><div class="hint">The entity that signs the review — appears on the cover and in citations.</div></div>
-        <div class="field"><label class="label">Region</label><select class="select" id="np-region"><option value="">Auto — detect from country</option>${REGION_OPTIONS.map(r => `<option value="${esc(r.value)}" ${data.region === r.value ? 'selected' : ''}>${esc(r.label)}</option>`).join('')}</select><div class="hint">Regional SDG report family used for the regional context and figures in every chapter.</div></div>
+        <div class="field"><label class="label">Region<span class="req">*</span></label><select class="select" id="np-region"><option value="" disabled ${data.region ? '' : 'selected'}>Select region…</option>${REGION_OPTIONS.map(r => `<option value="${esc(r.value)}" ${data.region === r.value ? 'selected' : ''}>${esc(r.label)}</option>`).join('')}</select><div class="hint">Regional SDG report family used for the regional context and figures in every chapter.</div></div>
         <div class="field"><label class="label">Population</label><input class="input" id="np-population" placeholder="e.g. 15,000" value="${esc(data.population)}"><div class="hint">Kept as reported locally (text is fine) — quoted in the city profile, never recalculated.</div></div>
         <div class="field"><label class="label">Geography</label><input class="input" id="np-geography" placeholder="e.g. Coastal city on the Gulf of Aqaba, South Sinai Governorate" value="${esc(data.geography)}"><div class="hint">One line situating the city — grounds the chapters' bridge sentences.</div></div>
         <div class="field"><label class="label">Reporting year</label><select class="select" id="np-year">${YEARS.map(y => `<option ${y === Number(data.year) ? 'selected' : ''}>${y}</option>`).join('')}</select><div class="hint">The VLR cycle this review covers (also the book's cover year).</div></div>
@@ -123,7 +123,7 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
         <div><div class="k">Jurisdiction</div><div class="v">${esc(data.jurisdiction || `${data.city} City Council`)}</div></div>
         <div><div class="k">Location</div><div class="v">${esc(data.city)}, ${esc(data.country)}</div></div>
         <div><div class="k">Reporting year</div><div class="v">${data.year}</div></div>
-        <div><div class="k">Region</div><div class="v">${esc((REGION_OPTIONS.find(r => r.value === data.region) || {}).label || 'Auto (from country)')}</div></div>
+        <div><div class="k">Region</div><div class="v">${esc((REGION_OPTIONS.find(r => r.value === data.region) || {}).label || '—')}</div></div>
         <div><div class="k">Population</div><div class="v">${esc(data.population || '—')}</div></div>
         <div><div class="k">Geography</div><div class="v">${esc(data.geography || '—')}</div></div>
         <div><div class="k">Processing node</div><div class="v mono">${esc(getState().settings.org.region || 'EU-WEST-1')}</div></div>
@@ -150,8 +150,8 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
   function validate() {
     if (step === 1) {
       let ok = true;
-      for (const [id, key] of [['#np-city', 'city'], ['#np-country', 'country']]) { const el = api.el.querySelector(id); el.classList.toggle('input-invalid', !data[key]); if (!data[key]) ok = false; }
-      if (!ok) toast.error('City and country are required');
+      for (const [id, key] of [['#np-city', 'city'], ['#np-country', 'country'], ['#np-region', 'region']]) { const el = api.el.querySelector(id); el.classList.toggle('input-invalid', !data[key]); if (!data[key]) ok = false; }
+      if (!ok) toast.error('City, country and region are required');
       return ok;
     }
     if (step === 2 && !data.sdgs.length) { toast.warning('No SDGs selected', 'Select at least one goal, or continue and configure later.'); }
