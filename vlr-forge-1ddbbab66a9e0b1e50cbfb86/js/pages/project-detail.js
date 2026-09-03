@@ -318,51 +318,7 @@ function overviewHtml(ctx, project, stats) {
       : `<div class="empty tq-empty">${icon('check-circle-2')}<div class="empty-title">No active tasks</div><div class="empty-sub">The queue for this project is idle.</div><button class="btn btn-light btn-sm mt-12" data-action="run-pipeline-empty">${icon('play', 'icon-sm')}Run pipeline</button></div>`}
       <div class="card-footer centered"><a class="tq-history" href="#/projects/${esc(project.id)}/history">View All History</a></div>
     </aside>
-  </div>
-
-  <section class="card pd-docs">
-    <div class="card-header tinted">
-      <div class="card-title-caps">${icon('folder-open')}Source Documents</div>
-      <div class="row">
-        <button class="btn btn-light ${docFilter !== 'all' ? 'is-active' : ''}" data-action="doc-filter-menu">${icon('filter', 'icon-sm')}${esc(docFilterLabel(docFilter))}</button>
-        <button class="btn btn-primary" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload</button>
-      </div>
-    </div>
-    <div class="pd-table-wrap">
-    <table class="table">
-      <thead><tr><th>Filename</th><th>Language</th><th>Status</th><th class="th-right">Actions</th></tr></thead>
-      <tbody>
-        ${shownDocs.length ? shownDocs.map(d => {
-          const en = d.language === 'EN';
-          const noTranslate = en || d.translated;
-          const busy = d.status === 'parsing' || d.status === 'translating';
-          const pend = pendingByDoc[d.id] || {};
-          const parseQueued = (d.status === 'uploaded' || d.status === 'failed') && (pend.parse || pend.xml_extraction);
-          const translateQueued = !noTranslate && !busy && pend.translate;
-          const trDisabled = noTranslate ? 'lang' : busy ? 'busy' : translateQueued ? 'queued' : '';
-          return `<tr>
-            <td><a class="doc-name" href="#/projects/${esc(project.id)}/documents/${esc(d.id)}">${fileTypeIcon(d.name)}<span>${esc(d.name)}</span></a></td>
-            <td><span class="badge badge-lang">${esc(d.language)}</span></td>
-            <td>${parseQueued ? statusBadge('queued', { label: 'Parse queued' }) : statusBadge(d.status)}${d.status === 'parsing' || d.status === 'translating' ? `<div class="doc-progress">${progressHtml(d.progress || 0, 'sky sm striped')}</div>` : ''}</td>
-            <td class="td-right"><div class="table-actions">
-              <span data-tip="${noTranslate ? (en ? 'Already in English' : 'Already translated to EN') : busy ? 'Document is being processed' : translateQueued ? 'Translation already queued' : `Translate ${esc(d.language)} → EN`}"><button class="btn-icon ${trDisabled ? 'is-disabled' : ''}" data-action="translate" data-doc="${esc(d.id)}" data-disabled="${trDisabled}" aria-label="Translate">${icon('languages')}</button></span>
-              ${d.status === 'processed' ? `<span data-tip="Verified · open details"><button class="btn-icon success-text" data-action="doc-details" data-doc="${esc(d.id)}" aria-label="Details">${icon('check-circle')}</button></span>`
-                : parseQueued ? `<span data-tip="Queued for parsing · open task"><button class="btn-icon link-color" data-action="open-task" data-task="${esc((pend.parse || pend.xml_extraction).id)}" aria-label="Queued task">${icon('clock')}</button></span>`
-                : d.status === 'uploaded' ? `<button class="btn btn-primary btn-xs" data-action="start-parse" data-doc="${esc(d.id)}">Start parse</button>`
-                : d.status === 'failed' ? `<button class="btn btn-danger-outline btn-xs" data-action="start-parse" data-doc="${esc(d.id)}">Retry parse</button>`
-                : `<span data-tip="${d.status === 'parsing' ? 'Parsing' : 'Translating'} · ${Math.round(d.progress || 0)}%"><button class="btn-icon link-color" data-action="doc-details" data-doc="${esc(d.id)}" aria-label="Details">${icon('info')}</button></span>`}
-              <span data-tip="Delete document"><button class="btn-icon danger" data-action="delete-doc" data-doc="${esc(d.id)}" aria-label="Delete">${icon('trash-2')}</button></span>
-            </div></td>
-          </tr>`; }).join('')
-        : `<tr><td colspan="5"><div class="empty">${icon('folder-open')}<div class="empty-title">${docs.length ? 'No documents match' : 'No documents yet'}</div><div class="empty-sub">${docs.length ? 'Try another filter or clear the search.' : 'Upload the city’s source documents to start the pipeline.'}</div>${docs.length ? `<button class="btn btn-light btn-sm mt-12" data-action="clear-doc-filter">Clear filter</button>` : `<button class="btn btn-primary btn-sm mt-12" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload documents</button>`}</div></td></tr>`}
-      </tbody>
-    </table>
-    </div>
-    <div class="table-footer">
-      <span>Showing <strong>${shownDocs.length}</strong> of <strong>${filteredDocs.length}</strong> documents${filteredDocs.length !== docs.length ? ` <span class="muted">(${docs.length} total)</span>` : ''}</span>
-      ${filteredDocs.length > DOCS_PREVIEW ? `<button class="btn btn-light btn-sm" data-action="toggle-docs">${showAll ? 'Show less' : `Show all (${filteredDocs.length})`}</button>` : ''}
-    </div>
-  </section>`;
+  </div>`;
 }
 
 /* =========================================================================
