@@ -1,8 +1,7 @@
 /* Document viewer — #/projects/:id/documents/:docId?page=42&hl=<extractionId> */
-import { esc, icon, refreshIcons, fmtDateTime, fmtBytes, relTime, statusBadge, progressHtml, bindActions, toast, download, fileTypeIcon, copyToClipboard, clamp } from '../ui.js';
+import { esc, icon, refreshIcons, fmtDateTime, fmtBytes, relTime, statusBadge, progressHtml, bindActions, toast, fileTypeIcon, copyToClipboard, clamp } from '../ui.js';
 import { getDoc, getProject, getExtraction, getProjectExtractions, getProjectTasks, getProjectDocs } from '../store.js';
-import { translateDocument, startParse } from '../actions.js';
-import { openDocumentDrawer } from '../modals.js';
+import { startParse } from '../actions.js';
 import { avatarButton } from '../shell.js';
 import { navigate } from '../router.js';
 import { STEP_META, PILLARS, quoteToHtml, quotePlain, parsedDocMeta } from '../seed.js';
@@ -132,7 +131,6 @@ export default {
     const pending = (steps) => tasks.some(t => t.inputDocId === doc.id && steps.includes(t.step) && (t.status === 'queued' || t.status === 'running'));
     const translating = doc.status === 'translating' || pending(['translate']);
     const parsing = doc.status === 'parsing' || pending(['parse', 'xml_extraction']);
-    const canTranslate = doc.language !== 'EN' && !doc.translated && !translating;
 
     /* ----- top bar ----- */
     ctx.topbar.innerHTML = `
@@ -142,9 +140,6 @@ export default {
         <div class="topbar-subtitle">${esc(doc.code)} · ${esc(doc.language)}${doc.translated && doc.language !== 'EN' ? ` → ${esc(doc.translatedTo || 'EN')}` : ''}</div>
       </div>
       <span class="grow"></span>
-      ${doc.language !== 'EN' ? `<button class="btn btn-light" data-action="translate" ${canTranslate ? '' : 'disabled'} data-tip="${canTranslate ? `Translate ${esc(doc.language)} → EN (Gemini)` : translating ? 'Translation in progress' : 'Already translated to EN'}">${icon('languages', 'icon-sm')}Translate</button>` : ''}
-      <button class="btn btn-light" data-action="download" data-tip="Download a Markdown rendition of the parsed text">${icon('download', 'icon-sm')}Download</button>
-      <button class="btn btn-soft" data-action="details">${icon('info', 'icon-sm')}Details</button>
       ${avatarButton()}`;
 
     /* ----- page canvas: continuous vertical scroll, every page rendered ----- */
@@ -289,10 +284,7 @@ export default {
         if (el.classList.contains('dv-hl-badge')) { goto(e.source.page, e.id); return; }
         navigate(`#/review/${e.id}`);
       },
-      translate: () => { if (!canTranslate) return; translateDocument(doc.id); toast.info('Translation queued', `${doc.name} (${doc.language} → EN)`); },
       parse: () => { if (parsing) return; startParse(doc.id); toast.info('Parsing queued', doc.name); },
-      download: () => { const md = markdownRendition(doc, project, exts); download(doc.name.replace(/\.[a-z0-9]+$/i, '') + '.md', md, 'text/markdown'); toast.success('Download started', `${docTitle(doc)} · Markdown rendition (${doc.pages} pages)`); },
-      details: () => openDocumentDrawer(doc.id),
       'copy-code': () => { copyToClipboard(doc.code); toast.success('Copied', doc.code); },
     };
     const unbindContent = bindActions(ctx.content, handlers);
