@@ -15,7 +15,6 @@ const displayName = (p) => {
   return !p.name || p.name === auto || p.name === `${auto} VLR` ? auto : p.name;
 };
 
-const STATUS_LABEL = { active: 'Active', archived: 'Archived', provisioning: 'Provisioning' };
 
 function matches(p, q) {
   if (!q) return true;
@@ -32,7 +31,6 @@ function footerButton(p) {
 function projectCard(p) {
   const stats = projectStats(p);
   const archived = p.status === 'archived';
-  const badgeCls = archived ? 'badge-neutral' : p.status === 'provisioning' ? 'badge-provisioning' : 'badge-success';
   return `
   <article class="card project-card status-${esc(p.status)}" id="pc-${esc(p.id)}" data-action="open-project" data-id="${esc(p.id)}" role="link" tabindex="0" aria-label="Open ${esc(p.name)}">
     <div class="pc-head">
@@ -41,7 +39,7 @@ function projectCard(p) {
         <div class="pc-jurisdiction">Jurisdiction: ${esc(p.jurisdiction || '—')}</div>
       </div>
       <div class="pc-head-right">
-        <span class="badge ${badgeCls}">${esc(STATUS_LABEL[p.status] || p.status)}</span>
+        ${p.status === 'provisioning' ? `<span class="badge badge-provisioning">Provisioning</span>` : ''}
         <button class="btn-icon pc-kebab" data-action="card-menu" data-id="${esc(p.id)}" aria-label="Project actions" data-tip="More actions">${icon('more-horizontal')}</button>
       </div>
     </div>
@@ -75,10 +73,10 @@ function openCardMenu(anchor, p) {
     { label: 'Configure', icon: 'settings', onClick: () => openConfigureProjectModal(p.id) },
     'divider',
     archived
-      ? { label: 'Restore', icon: 'archive-restore', onClick: () => { unarchiveProject(p.id); toast.success('Project restored', `${p.name} is active again.`); } }
+      ? { label: 'Restore', icon: 'archive-restore', onClick: () => { unarchiveProject(p.id); toast.success('Project restored', `${p.name} moved back to the Active tab.`); } }
       : { label: 'Archive', icon: 'archive', onClick: async () => {
           if (await confirmDialog({ title: 'Archive project?', msg: `${esc(p.name)} will be frozen. Extractions remain readable and reports can still be downloaded.`, confirmText: 'Archive', icon: 'archive' })) {
-            archiveProject(p.id); toast.success('Project archived', p.name);
+            archiveProject(p.id); toast.success('Project archived', `${p.name} moved to the Archived tab.`);
           }
         } },
     { label: 'Delete', icon: 'trash-2', danger: true, onClick: async () => {
@@ -95,8 +93,11 @@ export default {
   render(ctx) {
     const state = getState();
     const q = ctx.local.q || '';
+    const view = ctx.local.view || 'active';
     const projects = state.projects;
-    const visible = projects.filter(p => matches(p, q));
+    const archivedCount = projects.filter(p => p.status === 'archived').length;
+    const pool = projects.filter(p => (view === 'archived' ? p.status === 'archived' : p.status !== 'archived'));
+    const visible = pool.filter(p => matches(p, q));
     const total = projects.length;
     const active = projects.filter(p => p.status === 'active').length;
 
@@ -122,21 +123,34 @@ export default {
         </div>
       </div>
 
-      ${visible.length || !q ? `
+      <div class="proj-view-tabs" role="tablist">
+        <button class="proj-view-tab ${view === 'active' ? 'on' : ''}" role="tab" aria-selected="${view === 'active'}" data-action="switch-view" data-view="active">${icon('folder-open', 'icon-sm')}Active<span class="pvt-count">${total - archivedCount}</span></button>
+        <button class="proj-view-tab ${view === 'archived' ? 'on' : ''}" role="tab" aria-selected="${view === 'archived'}" data-action="switch-view" data-view="archived">${icon('archive', 'icon-sm')}Archived<span class="pvt-count">${archivedCount}</span></button>
+      </div>
+
+      ${visible.length || (!q && view === 'active') ? `
       <div class="project-grid">
         ${visible.map(projectCard).join('')}
-        ${newVlrCard()}
+        ${view === 'active' ? newVlrCard() : ''}
       </div>
-      ${!total ? `<div class="callout projects-none">${icon('info')}<span>No VLR projects yet. Use <strong>Initialize New VLR</strong> or <strong>New Project</strong> to create your first Voluntary Local Review project.</span></div>` : ''}` : `
+      ${!total && view === 'active' ? `<div class="callout projects-none">${icon('info')}<span>No VLR projects yet. Use <strong>Initialize New VLR</strong> or <strong>New Project</strong> to create your first Voluntary Local Review project.</span></div>` : ''}` : q ? `
       <div class="card projects-empty">
         <div class="empty">
           ${icon('search-x')}
-          <div class="empty-title">No projects match “${esc(q)}”</div>
-          <div class="empty-sub">Try a different city, jurisdiction or year, or create a new VLR project.</div>
+          <div class="empty-title">No ${view === 'archived' ? 'archived ' : ''}projects match “${esc(q)}”</div>
+          <div class="empty-sub">Try a different city, jurisdiction or year${view === 'archived' ? ', or check the Active tab' : ', or create a new VLR project'}.</div>
           <div class="row projects-empty-actions">
             <button class="btn btn-light" data-action="clear-search">Clear search</button>
-            <button class="btn btn-primary" data-action="new-project">${icon('plus', 'icon-sm')}New Project</button>
+            ${view === 'active' ? `<button class="btn btn-primary" data-action="new-project">${icon('plus', 'icon-sm')}New Project</button>` : ''}
           </div>
+        </div>
+      </div>` : `
+      <div class="card projects-empty">
+        <div class="empty">
+          ${icon('archive')}
+          <div class="empty-title">No archived projects</div>
+          <div class="empty-sub">Archive a project from its card menu (⋯ → Archive) and it will move here, frozen but fully readable.</div>
+          <div class="row projects-empty-actions"><button class="btn btn-light" data-action="switch-view" data-view="active">${icon('folder-open', 'icon-sm')}Back to Active</button></div>
         </div>
       </div>`}`;
 
@@ -145,6 +159,7 @@ export default {
       'configure-project': (el) => openConfigureProjectModal(el.dataset.id),
       'card-menu': (el) => { const p = state.projects.find(x => x.id === el.dataset.id); if (p) openCardMenu(el, p); },
       'clear-search': () => { ctx.local.q = ''; ctx.rerender(); },
+      'switch-view': (el) => { ctx.local.view = el.dataset.view; ctx.rerender(); },
     });
 
     // keyboard: Enter on a focused card opens it

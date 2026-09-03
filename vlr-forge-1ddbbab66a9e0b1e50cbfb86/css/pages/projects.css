@@ -73,3 +73,12 @@
 .projects-none { margin: -12px 0 36px; }
 .projects-empty-actions { justify-content: center; margin-top: 16px; }
 
+
+/* ---------- Active / Archived view tabs ---------- */
+.proj-view-tabs { display: inline-flex; gap: 4px; background: var(--surface-tint); border: 1px solid var(--border); border-radius: 8px; padding: 4px; margin-bottom: 22px; }
+.proj-view-tab { display: inline-flex; align-items: center; gap: 8px; padding: 7px 16px; border-radius: 6px; font-weight: 600; font-size: 13.5px; color: var(--text-secondary); transition: background .12s var(--ease), color .12s var(--ease); }
+.proj-view-tab:hover { color: var(--navy); }
+.proj-view-tab.on { background: var(--surface); color: var(--navy); box-shadow: var(--shadow-sm); border: 1px solid var(--border); padding: 6px 15px; }
+.proj-view-tab .icon { width: 15px; height: 15px; }
+.pvt-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--neutral-bg); color: var(--text-secondary); font-size: 11px; font-weight: 700; display: inline-grid; place-items: center; }
+.proj-view-tab.on .pvt-count { background: var(--sky-100); color: var(--navy); }
