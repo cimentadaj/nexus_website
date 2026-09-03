@@ -375,7 +375,7 @@ export default {
     ctx.topbar.innerHTML = `
       <div class="breadcrumb"><a href="#/projects">Projects</a>${icon('chevron-right', 'icon-sm')}<a href="#/projects/${esc(project.id)}">${esc(project.name)}</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">Chapters</span></div>
       <span class="grow"></span>
-      ${topbarTabs([{ key: 'overview', label: 'Overview', to: `#/projects/${project.id}` }, { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters` }, { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr` }, { key: 'history', label: 'History', to: `#/projects/${project.id}/history` }], 'chapters')}
+      ${topbarTabs([{ key: 'preprocess', label: 'Preprocessing', to: `#/projects/${project.id}/preprocessing` }, { key: 'overview', label: 'Overview', to: `#/projects/${project.id}` }, { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters` }, { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr` }, { key: 'history', label: 'History', to: `#/projects/${project.id}/history` }], 'chapters')}
       <span class="badge badge-pill ${allApproved ? 'badge-success' : 'badge-neutral'} ch-progress-pill">${icon(allApproved ? 'check-circle-2' : 'pen-line', 'icon-xs')}${stats.chaptersApproved}/${chapters.length} chapters approved</span>
       ${assembleBtn}
       ${avatarButton()}`;

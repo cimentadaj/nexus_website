@@ -401,3 +401,25 @@ export function askQuestion(text) {
 }
 export function setAskScope(scope) { update(s => { s.ask.scope = scope; }); }
 export function clearAsk() { update(s => { s.ask.messages = []; }); }
+
+/* ---------------- preprocessing (step 1: parse · translate · wiki load) ---------------- */
+export function runPreprocessing(projectId) {
+  const project = getProject(projectId);
+  if (!project) return null;
+  const docs = getProjectDocs(projectId);
+  const live = getState().tasks;
+  const inflight = (docId, steps) => live.some(t => t.inputDocId === docId && steps.includes(t.step) && ['queued', 'running'].includes(t.status));
+  const tasks = [];
+  const parseIds = {};
+  for (const d of docs) if (d.status !== 'processed' && !inflight(d.id, ['parse', 'xml_extraction'])) { const t = makeTask({ projectId, step: d.ext === 'xml' ? 'xml_extraction' : 'parse', inputDoc: d.name, inputDocId: d.id, pages: d.pages }); tasks.push(t); parseIds[d.id] = t.id; }
+  for (const d of docs) if (d.language !== 'EN' && !d.translated && !inflight(d.id, ['translate'])) { const t = makeTask({ projectId, step: 'translate', inputDoc: d.name, inputDocId: d.id, pages: d.pages, dependsOn: parseIds[d.id] ? [parseIds[d.id]] : [] }); tasks.push(t); }
+  if (!project.wikiLoaded && !live.some(t => t.projectId === projectId && t.step === 'wiki_load' && ['queued', 'running'].includes(t.status))) tasks.push(makeTask({ projectId, step: 'wiki_load', inputDoc: `SDG wiki (${project.sdgs?.length || 0} goals)` }));
+  if (!tasks.length) return null;
+  const runCount = getState().runs.filter(r => r.projectId === projectId).length + 1;
+  const run = { id: uid('run'), projectId, label: `Preprocessing run #${runCount}`, startedAt: Date.now(), finishedAt: null, status: 'running', taskIds: tasks.map(t => t.id), triggeredBy: getState().auth.user?.name || 'System', note: `${docs.length} document(s) — parse, translate and SDG wiki load.` };
+  tasks.forEach(t => { t.runId = run.id; });
+  update(s => { s.runs.unshift(run); const p = s.projects.find(x => x.id === projectId); if (p && p.status === 'provisioning') p.status = 'active'; });
+  enqueueTasks(tasks);
+  logActivity({ projectId, title: `${run.label} started (${tasks.length} tasks)`, provenance: `${projectId.slice(0, 3).toUpperCase()}-PRE-001`, status: 'running', type: 'run' });
+  return run;
+}

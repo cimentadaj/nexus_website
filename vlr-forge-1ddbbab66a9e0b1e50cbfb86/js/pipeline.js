@@ -337,6 +337,13 @@ function complete(st, t) {
       t.output = { extracted: built.length, pillar: t.step };
       break;
     }
+    case 'wiki_load': {
+      if (project) project.wikiLoaded = true;
+      const goals = project?.sdgs?.length || 5;
+      t.output = { goals, targets: goals * 9, indicators: goals * 12 };
+      outputMsg = `SDG metadata loaded from wiki: ${goals} goals, ${goals * 9} targets, ${goals * 12} indicators.`;
+      break;
+    }
     case 'validation': outputMsg = `${st.extractions.filter(e => e.projectId === t.projectId).length} records validated against Pydantic schemas — 0 violations.`; t.output = { violations: 0 }; break;
     case 'normalization': outputMsg = 'Indicator values rescaled to 0–100 (SDG Transformation Center method).'; t.output = { rescaled: st.extractions.filter(e => e.projectId === t.projectId && e.pillar === 'indicators').length }; break;
     case 'provenance': {
@@ -405,6 +412,14 @@ function complete(st, t) {
       outputMsg = `Re-extracted SDG ${e.sdg} '${e.title}' with reviewer feedback applied (confidence ${e.confidence}%).`;
       t.output = { rerunOf: e.id, sdg: e.sdg, confidence: e.confidence };
       st.activity.unshift({ id: uid('act'), projectId: t.projectId, projectName: project?.name, title: `Re-extracted after review: SDG ${e.sdg} ${e.title}`, provenance: doc?.code, ts: now, status: 'success', actor: 'Pipeline', type: 'review' });
+    }
+  }
+  // preprocessing gate: when every document is parsed+translated and the wiki is loaded, stamp the project
+  if (['parse', 'xml_extraction', 'translate', 'wiki_load'].includes(t.step) && project && project.wikiLoaded && !project.preprocessedAt) {
+    if (docs.length && docs.every(d => d.status === 'processed' && (d.language === 'EN' || d.translated))) {
+      project.preprocessedAt = now;
+      st.logs.push({ ts: now, level: 'INFO', msg: `Preprocessing complete for ${project.name} — documents parsed, translated and SDG reference loaded.`, projectId: project.id });
+      st.activity.unshift({ id: uid('act'), projectId: project.id, projectName: project.name, title: `Preprocessing complete: ${project.name}`, provenance: `${project.id.slice(0, 3).toUpperCase()}-PRE-001`, ts: now, status: 'success', actor: 'Pipeline', type: 'task' });
     }
   }
   t.logs.push({ ts: now, level: 'INFO', msg: `Completed in ${Math.round(t.durationMs / 1000)}s — cost $${t.cost.toFixed(2)}. ${outputMsg}` });

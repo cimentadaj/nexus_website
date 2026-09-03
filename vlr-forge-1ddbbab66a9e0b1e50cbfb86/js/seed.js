@@ -30,12 +30,13 @@ export const STEP_META = {
   provenance:         { label: 'Provenance Mapping',        queueLabel: 'Provenance Mapping',  tag: 'Lineage',   icon: 'git-branch',         engine: 'Lineage Graph Builder',  base: 0.12, perPage: 0,     durationMs: 3400, scope: 'project' },
   export:             { label: 'Harmonized Excel Export',   icon: 'file-spreadsheet',   engine: 'Workbook Writer',        base: 0.02, perPage: 0,     durationMs: 2800, scope: 'project' },
   report:             { label: 'Report Generation',         icon: 'file-text',          engine: 'VLR Report Composer',    base: 0.35, perPage: 0,     durationMs: 4500, scope: 'project' },
+  wiki_load:          { label: 'Wiki Loader',               queueLabel: 'Wiki Loader',         tag: 'SDG reference', icon: 'library',          engine: 'Obsidian SDG wiki',      base: 0.02, perPage: 0,     durationMs: 3200, scope: 'project' },
   compose:            { label: 'Chapter Composer',          queueLabel: 'Chapter Composer',    tag: 'Gemini 2.5 Pro', icon: 'pen-line',        engine: 'Gemini 2.5 Pro · composer', base: 3.20, perPage: 0, durationMs: 7000, scope: 'chapter' },
   edit:               { label: 'Chapter Editor',            queueLabel: 'Chapter Editor',      tag: 'Consolidation', icon: 'list-checks',       engine: 'Editor agent (dedupe · numbering · cross-refs)', base: 1.40, perPage: 0, durationMs: 5000, scope: 'project' },
   assemble:           { label: 'Book Assembly',             queueLabel: 'Book Assembly',       tag: 'Front matter',  icon: 'book-open-check',   engine: 'VLR Book Assembler',     base: 0.90, perPage: 0,     durationMs: 5200, scope: 'project' },
   render:             { label: 'DOCX Rendering',            queueLabel: 'DOCX Rendering',      tag: 'Pandoc',        icon: 'file-type',         engine: 'md → docx renderer',     base: 0.05, perPage: 0,     durationMs: 3000, scope: 'project' },
 };
-export const STEP_ORDER = ['parse', 'translate', 'xml_extraction', 'extract_indicators', 'analyse', 'documentary', 'projects', 'stakeholders', 'validation', 'normalization', 'provenance', 'export', 'report', 'compose', 'edit', 'assemble', 'render'];
+export const STEP_ORDER = ['parse', 'translate', 'xml_extraction', 'wiki_load', 'extract_indicators', 'analyse', 'documentary', 'projects', 'stakeholders', 'validation', 'normalization', 'provenance', 'export', 'report', 'compose', 'edit', 'assemble', 'render'];
 
 /* ------------------------------------------------------------------ */
 /* Generic extraction templates. `{city}` and `{year}` are substituted.  */
@@ -281,10 +282,10 @@ export function buildSeed() {
   const now = Date.now();
   const projects = [
     { id: 'madrid-2024', name: 'Madrid 2024 VLR', city: 'Madrid', country: 'Spain', jurisdiction: 'Madrid City Council', year: 2024, status: 'active',
-      sdgs: [1, 3, 4, 5, 6, 7, 8, 11, 13, 16], languages: ['ES', 'EN'], region: 'Europe', createdAt: now - 62 * DAY, node: 'EU-WEST-1',
+      sdgs: [1, 3, 4, 5, 6, 7, 8, 11, 13, 16], languages: ['ES', 'EN'], region: 'Europe', createdAt: now - 62 * DAY, node: 'EU-WEST-1', wikiLoaded: true, preprocessedAt: now - 9 * DAY,
       description: 'Voluntary Local Review of the City of Madrid for the 2024 reporting cycle, covering the 2030 Agenda localisation strategy.', lastSyncedAt: now - 14 * MIN, lead: 'Jorge Cimentada' },
     { id: 'bogota-2023', name: 'Bogotá 2023 VLR', city: 'Bogotá', country: 'Colombia', jurisdiction: 'Alcaldía de Bogotá', year: 2023, status: 'archived',
-      sdgs: [2, 11, 14, 1, 3, 4, 5, 6, 8, 10, 13, 16], languages: ['ES'], region: 'Latin America and the Caribbean', createdAt: now - 400 * DAY, node: 'US-EAST-G01', archivedAt: now - 120 * DAY,
+      sdgs: [2, 11, 14, 1, 3, 4, 5, 6, 8, 10, 13, 16], languages: ['ES'], region: 'Latin America and the Caribbean', createdAt: now - 400 * DAY, node: 'US-EAST-G01', archivedAt: now - 120 * DAY, wikiLoaded: true, preprocessedAt: now - 200 * DAY,
       description: 'Second Voluntary Local Review of Bogotá D.C. Finalised and submitted to the UN DESA VLR repository.', lastSyncedAt: now - 120 * DAY, lead: 'Alex Santana' },
     { id: 'vancouver-2024', name: 'Vancouver 2024 VLR', city: 'Vancouver', country: 'Canada', jurisdiction: 'Metro Vancouver', year: 2024, status: 'provisioning',
       sdgs: [13, 15], languages: ['EN', 'FR'], region: 'North America', createdAt: now - 3 * DAY, node: 'US-EAST-G01',
@@ -294,8 +295,8 @@ export function buildSeed() {
   /* ---- documents ---- */
   const madridDocs = [
     ['Sustainability_Report_2023.pdf', { type: 'Documentary', language: 'ES', status: 'processed', pages: 148, code: 'MDC-DOC-401' }],
-    ['Mobility_Indicators_Q3.xlsx', { type: 'Data Sheet', language: 'EN', status: 'parsing', pages: 14, code: 'MDC-DOC-402', progress: 42 }],
-    ['Climate_Policy_Brief.docx', { type: 'Policy', language: 'ES', status: 'uploaded', pages: 22, code: 'MDC-DOC-403', translated: false }],
+    ['Mobility_Indicators_Q3.xlsx', { type: 'Data Sheet', language: 'EN', status: 'processed', pages: 14, code: 'MDC-DOC-402' }],
+    ['Climate_Policy_Brief.docx', { type: 'Policy', language: 'ES', status: 'processed', pages: 22, code: 'MDC-DOC-403', translated: true }],
     ['Madrid_Mobility_Plan.pdf', { type: 'Plan', language: 'ES', status: 'processed', pages: 212, code: 'MDC-DOC-404', translated: true }],
     ['Annual_Energy_Report.xlsx', { type: 'Data Sheet', language: 'EN', status: 'processed', pages: 18, code: 'MDC-DOC-405' }],
     ['Housing_Affordability_Plan_2024.pdf', { type: 'Policy', language: 'ES', status: 'processed', pages: 96, code: 'MDC-DOC-429', translated: true, uploadedAt: now - 2 * DAY - 10 * MIN }],
@@ -368,8 +369,7 @@ export function buildSeed() {
   const bogota = projects[1];
   const bogotaExt = buildTemplateExtractions(bogota, bogotaDocs.slice(0, 12), { status: 'approved' }).map((e, i) => ({ ...e, reviewedBy: 'Alex Santana', reviewedAt: now - (150 + i) * DAY, createdAt: now - (200 + i) * DAY, updatedAt: now - (150 + i) * DAY }));
   const vancouver = projects[2];
-  const vancouverExt = buildTemplateExtractions(vancouver, [vancouverDocs[0]], { pillar: 'indicators', limit: 2 }).map((e, i) => ({ ...e, createdAt: now - 2 * HOUR + i * 5 * MIN, updatedAt: now - 2 * HOUR + i * 5 * MIN }));
-  // Vancouver's featured SDGs are 13 & 15 → tweak one indicator to SDG 13
+  const vancouverExt = [];
   const extractions = [...madridExt, ...bogotaExt, ...vancouverExt];
 
   /* ---- tasks (mirror of the Workflow Orchestration mock-up + history) ---- */
@@ -382,13 +382,6 @@ export function buildSeed() {
   tasks.push(mkTask('madrid-2024', 'validation', { inputDoc: 'master_indicators_v2.csv', status: 'success', createdAt: now - 73 * MIN, durationMs: 322_000, node: 'US-EAST-G01' }));
   tasks.push(mkTask('madrid-2024', 'normalization', { inputDoc: 'un_sdg_schema_map.yaml', status: 'success', createdAt: now - 98 * MIN, durationMs: 68_000, node: 'US-EAST-G01' }));
   tasks.push(mkTask('madrid-2024', 'xml_extraction', { inputDoc: 'legacy_data_source_3.xml', inputDocId: null, status: 'running', createdAt: now - 4 * MIN, progress: 18, node: 'US-EAST-G01' }));
-  tasks.push(mkTask('madrid-2024', 'parse', { inputDoc: 'Mobility_Indicators_Q3.xlsx', inputDocId: mDoc('Mobility_Indicators_Q3.xlsx')?.id, status: 'running', createdAt: now - 6 * MIN, progress: 42 }));
-  // queued work behind the running parsers (mock-up: Translation Engine "Pending...", Provenance Mapping "Queued")
-  const qTranslate = mkTask('madrid-2024', 'translate', { inputDoc: 'Climate_Policy_Brief.docx', inputDocId: mDoc('Climate_Policy_Brief.docx')?.id, status: 'queued', createdAt: now - 5 * MIN });
-  qTranslate.dependsOn = [tasks[tasks.length - 1].id];
-  const qProv = mkTask('madrid-2024', 'provenance', { inputDoc: 'All documents (12)', status: 'queued', createdAt: now - 4 * MIN });
-  qProv.dependsOn = [qTranslate.id];
-  tasks.push(qTranslate, qProv);
   // historical successful tasks across projects (to reach ~42)
   const histSteps = ['parse', 'translate', 'extract_indicators', 'documentary', 'projects', 'stakeholders', 'analyse', 'provenance', 'export', 'validation'];
   const histDocs = { 'madrid-2024': madridDocs, 'bogota-2023': bogotaDocs.slice(0, 12), 'vancouver-2024': vancouverDocs };
@@ -406,13 +399,15 @@ export function buildSeed() {
       }));
     }
   }
+  tasks.push(mkTask('madrid-2024', 'wiki_load', { inputDoc: 'SDG wiki (10 goals)', status: 'success', createdAt: now - 9 * DAY, durationMs: 96_000, runId: 'run_madrid_1' }));
+  tasks.push(mkTask('bogota-2023', 'wiki_load', { inputDoc: 'SDG wiki (12 goals)', status: 'success', createdAt: now - 200 * DAY, durationMs: 110_000, node: 'US-EAST-G01', runId: 'run_bogota_1' }));
   // Pipeline run record for the historical Madrid run
   const runs = [
     { id: 'run_madrid_1', projectId: 'madrid-2024', label: 'Full pipeline run #1', startedAt: now - 9 * DAY, finishedAt: now - 9 * DAY + 41 * MIN, status: 'success', taskIds: [], triggeredBy: 'Jorge Cimentada', note: 'Initial extraction over 9 source documents.' },
     { id: 'run_madrid_2', projectId: 'madrid-2024', label: 'Incremental run #2', startedAt: now - 2 * DAY, finishedAt: now - 2 * DAY + 18 * MIN, status: 'success', taskIds: [], triggeredBy: 'Jorge Cimentada', note: 'Re-extraction after uploading Housing_Affordability_Plan_2024.pdf.' },
     { id: 'run_bogota_1', projectId: 'bogota-2023', label: 'Full pipeline run #1', startedAt: now - 200 * DAY, finishedAt: now - 200 * DAY + 2 * HOUR, status: 'success', taskIds: [], triggeredBy: 'Alex Santana', note: 'Complete extraction over 45 documents.' },
     { id: 'run_bogota_2', projectId: 'bogota-2023', label: 'Final export', startedAt: now - 121 * DAY, finishedAt: now - 121 * DAY + 12 * MIN, status: 'success', taskIds: [], triggeredBy: 'Alex Santana', note: 'Harmonized workbook + final report generated.' },
-    { id: 'run_van_1', projectId: 'vancouver-2024', label: 'Metadata ingestion', startedAt: now - 2 * HOUR, finishedAt: now - 2 * HOUR + 9 * MIN, status: 'success', taskIds: [], triggeredBy: 'Jorge Cimentada', note: 'Parsed Climate_Emergency_Action_Plan.pdf and extracted first indicators.' },
+    { id: 'run_van_1', projectId: 'vancouver-2024', label: 'Metadata ingestion', startedAt: now - 2 * HOUR, finishedAt: now - 2 * HOUR + 9 * MIN, status: 'success', taskIds: [], triggeredBy: 'Jorge Cimentada', note: 'Documents uploaded and queued for preprocessing.' },
   ];
   // attach historical tasks to runs
   tasks.filter(t => t.projectId === 'madrid-2024' && t.status === 'success' && t.createdAt < now - DAY).forEach((t, i) => { t.runId = i % 2 ? 'run_madrid_2' : 'run_madrid_1'; });

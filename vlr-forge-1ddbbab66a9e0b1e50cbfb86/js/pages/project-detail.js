@@ -1,7 +1,7 @@
 /* Project detail — Overview (mock-up 02) and History view. Route #/projects/:id and #/projects/:id/history */
-import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct } from '../ui.js';
-import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, getProjectRuns, getProjectReports, getProjectActivity, projectStats, getTask, getDoc } from '../store.js';
-import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters } from '../actions.js';
+import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime } from '../ui.js';
+import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, getProjectRuns, getProjectReports, getProjectActivity, projectStats, getTask, getDoc, getLogs } from '../store.js';
+import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
 import { topbarActions, searchBox, topbarTabs, statusBarHtml } from '../shell.js';
 import { PILLARS, STEP_META, STEP_ORDER } from '../seed.js';
@@ -92,12 +92,93 @@ function applyDocFilter(docs, f) {
 
 /* ---------- top bar ---------- */
 function topbarHtml(ctx, project, active) {
+  const locked = project.preprocessedAt ? undefined : 'Finish preprocessing first — parse, translate and load the SDG reference';
   return `
     <div class="breadcrumb"><a href="#/projects">Projects</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">${esc(project.name)}</span></div>
     ${searchBox({ id: 'pd-search', placeholder: 'Search project data...', value: ctx.local.q || '' })}
     <span class="grow"></span>
-    ${topbarTabs([{ key: 'overview', label: 'Overview', to: `#/projects/${project.id}` }, { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters` }, { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr` }, { key: 'history', label: 'History', to: `#/projects/${project.id}/history` }], active)}
+    ${topbarTabs([
+      { key: 'preprocess', label: 'Preprocessing', to: `#/projects/${project.id}/preprocessing` },
+      { key: 'overview', label: 'Overview', to: `#/projects/${project.id}`, disabled: locked },
+      { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters`, disabled: locked },
+      { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr`, disabled: locked },
+      { key: 'history', label: 'History', to: `#/projects/${project.id}/history`, disabled: locked },
+    ], active)}
     ${topbarActions({ projectId: project.id, upload: false })}`;
+}
+
+/* =========================================================================
+ * Preprocessing landing (step 1: parse · translate · wiki load)
+ * ======================================================================= */
+const PP_PILL = {
+  done: (l) => `<span class="pp-pill done">${icon('check', 'icon-xs')}${l}</span>`,
+  running: (l) => `<span class="pp-pill running"><span class="pp-dot"></span>${l}</span>`,
+  pending: (l) => `<span class="pp-pill pending">${l}</span>`,
+  failed: (l, taskId) => `<span class="pp-pill failed" data-action="pp-open-task" data-task="${taskId || ''}" data-tip="Open the task log">${icon('alert-circle', 'icon-xs')}${l}</span>`,
+  na: (l) => `<span class="pp-pill na">${l}</span>`,
+};
+function ppDocState(doc, tasks) {
+  const latest = (steps) => tasks.filter(x => x.inputDocId === doc.id && steps.includes(x.step)).sort((a, b) => b.createdAt - a.createdAt)[0];
+  const parseTask = latest(['parse', 'xml_extraction']);
+  const trTask = latest(['translate']);
+  const parse = doc.status === 'processed' ? 'done' : parseTask?.status === 'failed' ? 'failed' : (doc.status === 'parsing' || ['queued', 'running'].includes(parseTask?.status)) ? 'running' : 'pending';
+  const translate = doc.language === 'EN' ? 'na' : doc.translated ? 'done' : trTask?.status === 'failed' ? 'failed' : (doc.status === 'translating' || ['queued', 'running'].includes(trTask?.status)) ? 'running' : 'pending';
+  return { parse, translate, parseTask, trTask };
+}
+function preprocessHtml(ctx, project) {
+  const docs = getProjectDocs(project.id);
+  const tasks = getProjectTasks(project.id);
+  const ppTasks = tasks.filter(t => ['parse', 'xml_extraction', 'translate', 'wiki_load'].includes(t.step));
+  const running = ppTasks.some(t => ['queued', 'running'].includes(t.status));
+  const failed = ppTasks.filter(t => t.status === 'failed').length;
+  const done = !!project.preprocessedAt;
+  const wikiTask = ppTasks.filter(t => t.step === 'wiki_load').sort((a, b) => b.createdAt - a.createdAt)[0];
+  const wikiState = project.wikiLoaded ? 'done' : wikiTask?.status === 'failed' ? 'failed' : ['queued', 'running'].includes(wikiTask?.status) ? 'running' : 'pending';
+  const goals = project.sdgs?.length || 0;
+  const pendingWork = docs.some(d => d.status !== 'processed' || (d.language !== 'EN' && !d.translated)) || !project.wikiLoaded;
+  const logs = getLogs(project.id).slice(-60).reverse();
+  const logsOpen = ctx.local.ppLogsOpen ?? false;
+  return `
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">${esc(project.city)} ${esc(project.year)}</h1>
+      <p class="page-subtitle">${icon('layers', 'icon-sm')} Step 1 — Preprocessing · parse the source documents, translate them to English and load the SDG reference. Extraction unlocks when every document is ready.</p>
+    </div>
+    <div class="row gap-6">
+      <button class="btn btn-light" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload documents</button>
+      ${running
+        ? `<span class="pp-runstate"><span class="pp-dot"></span>Preprocessing running</span><button class="btn btn-light" data-action="pp-logs-toggle">${icon('terminal', 'icon-sm')}${logsOpen ? 'Hide logs' : 'View logs'}</button>`
+        : done && !pendingWork
+          ? `<button class="btn btn-primary" data-action="pp-continue">Continue to project ${icon('arrow-right', 'icon-sm')}</button>`
+          : `<button class="btn btn-primary" data-action="run-preprocess" ${docs.length ? '' : 'disabled data-tip="Upload documents first"'}>${icon('play', 'icon-sm')}Run preprocessing</button>`}
+    </div>
+  </div>
+  ${failed ? `<div class="callout danger mb-16">${icon('alert-circle')}<span>${failed} preprocessing task${failed === 1 ? '' : 's'} failed — open the logs below or click the red pill on the document to inspect and retry.</span></div>` : ''}
+  <section class="card pp-wiki ${wikiState}">
+    <div class="card-body row-between">
+      <div class="row gap-12">${icon('library', 'icon-lg navy')}<div><div class="strong">SDG wiki reference</div><div class="xs muted">Official targets and indicator definitions for the ${goals} selected goal${goals === 1 ? '' : 's'} — loaded once per project.</div></div></div>
+      ${wikiState === 'done' ? PP_PILL.done(`Loaded · ${goals * 9} targets · ${goals * 12} indicators`) : wikiState === 'running' ? PP_PILL.running('Loading…') : wikiState === 'failed' ? PP_PILL.failed('Failed', wikiTask?.id) : PP_PILL.pending('Wiki load · pending')}
+    </div>
+  </section>
+  <section class="card">
+    <div class="card-header tinted"><div class="card-title-caps">${icon('folder-open')}Source documents (${docs.length})</div></div>
+    ${docs.length ? `<table class="table pp-table">
+      <thead><tr><th>Filename</th><th>Language</th><th>Preprocessing</th></tr></thead>
+      <tbody>${docs.map(d => { const st = ppDocState(d, tasks); return `
+        <tr class="clickable" data-action="pp-doc" data-doc="${esc(d.id)}">
+          <td><div class="row gap-12">${fileTypeIcon(d.name)}<span class="cell-title mono">${esc(d.name)}</span></div></td>
+          <td><span class="badge badge-lang">${esc(d.language)}</span></td>
+          <td><div class="row gap-6 wrap">
+            ${PP_PILL[st.parse](st.parse === 'done' ? 'Parsed' : st.parse === 'running' ? 'Parsing' : st.parse === 'failed' ? 'Parse failed' : 'Parse · pending', st.parseTask?.id)}
+            ${st.translate === 'na' ? PP_PILL.na('Translate · not needed (EN)') : PP_PILL[st.translate](st.translate === 'done' ? 'Translated' : st.translate === 'running' ? 'Translating' : st.translate === 'failed' ? 'Translation failed' : 'Translate · pending', st.trTask?.id)}
+          </div></td>
+        </tr>`; }).join('')}</tbody>
+    </table>` : `<div class="empty">${icon('file-plus-2')}<div class="empty-title">No source documents yet</div><div class="empty-sub">Upload the city's documents to begin preprocessing.</div><div class="mt-12"><button class="btn btn-primary btn-sm" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload documents</button></div></div>`}
+  </section>
+  <section class="card pp-logs">
+    <div class="card-header"><div class="card-title-caps">${icon('terminal')}Preprocessing logs</div><button class="btn btn-light btn-sm" data-action="pp-logs-toggle">${logsOpen ? 'Hide' : 'Open'}</button></div>
+    ${logsOpen ? `<div class="console pp-console">${logs.length ? logs.map(l => `<div class="log-line ${l.level.toLowerCase()}"><span class="ts">[${fmtTime(l.ts)}]</span> <span class="lvl">${esc(l.level)}:</span> ${esc(l.msg)}</div>`).join('') : '<div class="log-line debug">No log output yet — run preprocessing.</div>'}</div>` : ''}
+  </section>`;
 }
 
 /* =========================================================================
@@ -353,11 +434,12 @@ export default {
       return;
     }
     const isHistory = ctx.route.tab === 'history';
+    const isPre = ctx.route.tab === 'preprocess' || (!isHistory && !project.preprocessedAt);
     if (!ctx.local.tab) ctx.local.tab = PILLAR_KEYS.includes(ctx.query?.tab) ? ctx.query.tab : 'indicators';
     const stats = projectStats(project);
 
-    ctx.topbar.innerHTML = topbarHtml(ctx, project, isHistory ? 'history' : 'overview');
-    ctx.content.innerHTML = `<div class="pd-page">${isHistory ? historyHtml(ctx, project) : overviewHtml(ctx, project, stats)}</div>`;
+    ctx.topbar.innerHTML = topbarHtml(ctx, project, isHistory ? 'history' : isPre ? 'preprocess' : 'overview');
+    ctx.content.innerHTML = `<div class="pd-page">${isHistory ? historyHtml(ctx, project) : isPre ? preprocessHtml(ctx, project) : overviewHtml(ctx, project, stats)}</div>`;
     ctx.footer.innerHTML = statusBarHtml(project);
 
     /* search (topbar) */
@@ -382,6 +464,11 @@ export default {
     const unbindClick = bindActions(ctx.content, {
       'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.rerender(); },
       'run-pipeline': doRunPipeline,
+      'run-preprocess': () => { const run = runPreprocessing(project.id); if (!run) { toast.info('Nothing to preprocess', 'Every document is already parsed and translated.'); return; } toast.success('Preprocessing started', `${run.taskIds.length} task${run.taskIds.length === 1 ? '' : 's'} queued — open the logs to follow each document.`); },
+      'pp-logs-toggle': () => { ctx.local.ppLogsOpen = !(ctx.local.ppLogsOpen ?? false); ctx.rerender(); },
+      'pp-continue': () => navigate(`#/projects/${project.id}`),
+      'pp-doc': (el) => openDocumentDrawer(el.dataset.doc),
+      'pp-open-task': (el, ev) => { ev.stopPropagation(); if (el.dataset.task) openTaskDrawer(el.dataset.task); },
       'write-vlr': () => { const ts = composeChapters(project.id); if (!ts.length) { toast.warning('Nothing to compose', 'Approve evidence first.'); return; } toast.success('VLR composition started', `${ts.length - 1} chapter${ts.length - 1 === 1 ? '' : 's'} queued — follow them in the Task Queue.`); navigate(`#/projects/${project.id}/chapters`); },
       'run-pipeline-empty': doRunPipeline,
       'run-pillar': (el) => doRunStep(el.dataset.step),

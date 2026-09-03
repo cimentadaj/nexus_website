@@ -60,7 +60,9 @@ export function searchBox({ id = 'global-search', placeholder = 'Search...', val
 }
 
 export function topbarTabs(items, activeKey) {
-  return `<div class="topbar-tabs">${items.map(t => `<a class="topbar-tab ${t.key === activeKey ? 'active' : ''}" href="${t.to}">${esc(t.label)}</a>`).join('')}</div>`;
+  return `<div class="topbar-tabs">${items.map(t => t.disabled
+    ? `<span class="topbar-tab disabled" data-tip="${esc(t.disabled)}">${esc(t.label)}</span>`
+    : `<a class="topbar-tab ${t.key === activeKey ? 'active' : ''}" href="${t.to}">${esc(t.label)}</a>`).join('')}</div>`;
 }
 
 export function statusBarHtml(project) {

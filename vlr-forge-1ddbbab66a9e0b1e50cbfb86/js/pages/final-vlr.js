@@ -335,7 +335,7 @@ export default {
     const tasks = getProjectTasks(project.id);
     const me = currentUser()?.name || 'Reviewer';
     const isFinal = book?.status === 'final';
-    const tabs = topbarTabs([{ key: 'overview', label: 'Overview', to: `#/projects/${project.id}` }, { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters` }, { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr` }, { key: 'history', label: 'History', to: `#/projects/${project.id}/history` }], 'vlr');
+    const tabs = topbarTabs([{ key: 'preprocess', label: 'Preprocessing', to: `#/projects/${project.id}/preprocessing` }, { key: 'overview', label: 'Overview', to: `#/projects/${project.id}` }, { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters` }, { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr` }, { key: 'history', label: 'History', to: `#/projects/${project.id}/history` }], 'vlr');
 
     /* ---------- top bar ---------- */
     const sub = book
