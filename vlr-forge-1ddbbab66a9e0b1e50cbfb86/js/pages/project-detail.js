@@ -4,7 +4,7 @@ import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, get
 import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
 import { topbarActions, searchBox, topbarTabs, statusBarHtml } from '../shell.js';
-import { PILLARS, STEP_META, STEP_ORDER, DOC_TYPES } from '../seed.js';
+import { PILLARS, STEP_META, STEP_ORDER } from '../seed.js';
 import { navigate } from '../router.js';
 
 const PILLAR_KEYS = PILLARS.map(p => p.key);
@@ -227,7 +227,7 @@ function overviewHtml(ctx, project, stats) {
     </div>
     <div class="pd-table-wrap">
     <table class="table">
-      <thead><tr><th>Filename</th><th>Type</th><th>Language</th><th>Status</th><th class="th-right">Actions</th></tr></thead>
+      <thead><tr><th>Filename</th><th>Language</th><th>Status</th><th class="th-right">Actions</th></tr></thead>
       <tbody>
         ${shownDocs.length ? shownDocs.map(d => {
           const en = d.language === 'EN';
@@ -239,7 +239,6 @@ function overviewHtml(ctx, project, stats) {
           const trDisabled = noTranslate ? 'lang' : busy ? 'busy' : translateQueued ? 'queued' : '';
           return `<tr>
             <td><a class="doc-name" href="#/projects/${esc(project.id)}/documents/${esc(d.id)}">${fileTypeIcon(d.name)}<span>${esc(d.name)}</span></a></td>
-            <td>${esc(d.type)}</td>
             <td><span class="badge badge-lang">${esc(d.language)}</span></td>
             <td>${parseQueued ? statusBadge('queued', { label: 'Parse queued' }) : statusBadge(d.status)}${d.status === 'parsing' || d.status === 'translating' ? `<div class="doc-progress">${progressHtml(d.progress || 0, 'sky sm striped')}</div>` : ''}</td>
             <td class="td-right"><div class="table-actions">
@@ -408,14 +407,12 @@ export default {
         const docs = getProjectDocs(pid);
         const cur = ctx.local.docFilter || 'all';
         const set = (f) => { ctx.local.docFilter = f; ctx.local.showAllDocs = false; ctx.rerender(); };
-        const types = DOC_TYPES.filter(t => docs.some(d => d.type === t));
         openMenu(el, [
           { label: 'All documents', icon: 'files', active: cur === 'all', onClick: () => set('all') },
           { label: 'Processed', icon: 'check-circle', active: cur === 'status:processed', onClick: () => set('status:processed') },
           { label: 'Parsing', icon: 'loader-2', active: cur === 'status:parsing', onClick: () => set('status:parsing') },
           { label: 'Uploaded', icon: 'clock', active: cur === 'status:uploaded', onClick: () => set('status:uploaded') },
           { label: 'Translation pending', icon: 'languages', active: cur === 'translation', onClick: () => set('translation') },
-          ...(types.length ? ['divider', { header: 'By type' }, ...types.map(t => ({ label: t, icon: 'tag', active: cur === `type:${t}`, onClick: () => set(`type:${t}`) }))] : []),
         ], { align: 'right', minWidth: '220px' });
       },
       'clear-doc-filter': () => { ctx.local.docFilter = 'all'; ctx.local.q = ''; ctx.rerender(); },

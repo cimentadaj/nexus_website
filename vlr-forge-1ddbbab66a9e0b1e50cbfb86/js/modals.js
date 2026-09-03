@@ -4,7 +4,7 @@ import { icon, esc, openModal, openDrawer, confirmDialog, toast, refreshIcons, s
 import { getState, getProject, getProjectDocs, getDoc, getTask, getProjectTasks, getExtraction, projectStats, getProjectExtractions } from './store.js';
 import { createProject, addDocuments, startParse, generateReport, updateProject, activateProject, archiveProject, unarchiveProject, deleteProject, addManualExtraction, retryTask, cancelTask, translateDocument, deleteDocument, addComment } from './actions.js';
 import { navigate } from './router.js';
-import { STEP_META, LANGS, DOC_TYPES, PILLARS } from './seed.js';
+import { STEP_META, LANGS, PILLARS } from './seed.js';
 import { REGION_OPTIONS } from './composer.js';
 import { subscribe } from './store.js';
 import { reportContentFor } from './export.js';
@@ -44,7 +44,6 @@ function bindDropzone(el, id, files, { defaultLang = 'EN', onChange, existingNam
       <div class="file-row">
         ${fileTypeIcon(f.name)}
         <div class="grow"><div class="name">${esc(f.name)}</div><div class="meta">${fmtBytes(f.size / 1024)} · ~${f.pages} pages</div></div>
-        <select class="select select-sm" data-i="${i}" data-field="type">${DOC_TYPES.map(t => `<option ${t === f.type ? 'selected' : ''}>${t}</option>`).join('')}</select>
         <select class="select select-sm ${f.language ? '' : 'lang-missing'}" data-i="${i}" data-field="language" data-tip="Document language"><option value="" disabled ${f.language ? '' : 'selected'}>Lang…</option>${LANGS.map(l => `<option ${l === f.language ? 'selected' : ''}>${l}</option>`).join('')}</select>
         <button type="button" class="btn-icon danger" data-remove="${i}" aria-label="Remove">${icon('x', 'icon-sm')}</button>
       </div>`).join('');
@@ -425,7 +424,7 @@ export function openDocumentDrawer(docId) {
     const tasks = getProjectTasks(d.projectId).filter(t => t.inputDocId === d.id).sort((a, b) => b.createdAt - a.createdAt);
     const exts = getProjectExtractions(d.projectId).filter(e => e.source?.docId === d.id);
     api.setBody(`
-      <div class="row-between"><div class="row">${fileTypeIcon(d.name)}<strong>${esc(d.type)}</strong><span class="badge badge-lang">${esc(d.language)}</span></div>${statusBadge(d.status)}</div>
+      <div class="row-between"><div class="row">${fileTypeIcon(d.name)}<span class="badge badge-lang">${esc(d.language)}</span></div>${statusBadge(d.status)}</div>
       ${d.status === 'parsing' ? `<div>${progressHtml(d.progress || 0, 'sky striped')}<div class="xs muted mt-8">Parsing… ${d.progress || 0}%</div></div>` : ''}
       <div class="task-meta-grid">
         <div><div class="k">Pages</div><div class="v">${d.pages}</div></div>
