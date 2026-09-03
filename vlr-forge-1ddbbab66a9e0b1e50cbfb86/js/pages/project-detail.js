@@ -255,7 +255,6 @@ function overviewHtml(ctx, project, stats) {
       ${projectStepper(project, 'overview')}
       <div class="pd-actions">
         <span ${cantRun ? `data-tip="${esc(cantRun)}"` : ''}><button class="btn btn-primary" data-action="run-pipeline" ${cantRun ? 'disabled' : ''}>${icon('play', 'icon-sm')}Run Full Pipeline</button></span>
-        <button class="btn btn-light" data-action="run-step-menu">Run step${icon('chevron-down', 'icon-sm')}</button>
         <button class="btn btn-light" data-action="configure">${icon('settings', 'icon-sm')}Configure</button>
         ${unapproved ? `<button class="btn btn-light" data-action="approve-all" data-count="${unapproved}">${icon('check-check', 'icon-sm')}Approve all <span class="pd-count">${unapproved}</span></button>` : ''}
         ${(() => {
@@ -265,9 +264,7 @@ function overviewHtml(ctx, project, stats) {
           if (st.chapters) return `<a class="btn btn-outline" href="#/projects/${project.id}/chapters">${icon('pen-line', 'icon-sm')}Review chapters <span class="pd-count">${st.chaptersApproved}/${st.chapters}</span></a>`;
           const composing = tasks.some(t => t.step === 'compose' && ['queued', 'running'].includes(t.status));
           if (composing) return `<a class="btn btn-outline" href="#/projects/${project.id}/chapters">${icon('loader-2', 'icon-sm spin')}Composing chapters…</a>`;
-          const ok = st.allReviewed && project.status !== 'archived';
-          const tip = project.status === 'archived' ? 'Project is archived' : !st.extractions ? 'Run the pipeline and approve the evidence first' : !st.allReviewed ? `${st.extractions - st.approved} extraction(s) still await review` : '';
-          return `<span ${tip ? `data-tip="${esc(tip)}"` : ''}><button class="btn ${ok ? 'btn-primary' : 'btn-light'}" data-action="write-vlr" ${ok ? '' : 'disabled'}>${icon('pen-line', 'icon-sm')}Write VLR chapters</button></span>`;
+          return '';
         })()}
       </div>
   </div>
