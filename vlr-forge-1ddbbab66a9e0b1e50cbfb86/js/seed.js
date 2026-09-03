@@ -195,6 +195,21 @@ export function pickSourceDoc(pillar, docs, i = 0) {
   return pool[i % pool.length];
 }
 
+/** Deterministic stand-in for the metadata header LlamaParse extracts per document. */
+const _metaHash = (str, mod, off = 0) => { let h = 0; for (const c of String(str)) h = ((h * 31) + c.charCodeAt(0)) >>> 0; return off + (h % mod); };
+export function parsedDocMeta(doc, project) {
+  const stem = doc.name.replace(/\.[a-z0-9]+$/i, '');
+  return {
+    title: stem.replace(/[_\-]+/g, ' ').replace(/\s+/g, ' ').trim(),
+    type: doc.type || '—', ext: '.' + doc.ext,
+    year: (doc.name.match(/(20\d\d)/) || [])[1] || '—',
+    issuing: project?.jurisdiction || '—',
+    artefact: `${stem}.md`, tArtefact: `${stem}_translated.md`,
+    tables: _metaHash(doc.name, 9, 1), images: _metaHash(doc.name + 'i', 7, 0),
+    chunks: Math.max(2, Math.round((doc.pages || 10) / 2)),
+  };
+}
+
 /** Substitute {city}/{year}; keep {h:...} highlight markers (rendered by the review page). */
 export function fillTemplate(str, project) {
   return String(str).replace(/\{city\}/g, project.city).replace(/\{year\}/g, String(project.year));
