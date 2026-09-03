@@ -136,7 +136,7 @@ function ppDocDetail(doc, project, st) {
   const logs = [...(st.parseTask?.logs || []), ...(st.trTask?.logs || [])].sort((a, b) => a.ts - b.ts);
   const live = st.parse === 'running' || st.translate === 'running';
   const meta = st.parse === 'done' ? `
-    <div class="pp-meta-head">${icon('scan-text', 'icon-sm')}Metadata extracted by the parser <span class="xs muted">(from the document itself — "—" when not stated, never invented)</span></div>
+    <div class="pp-meta-head">${icon('scan-text', 'icon-sm')}Metadata extracted by the parser</div>
     <dl class="kv pp-kv">
       <dt>Document Title</dt><dd>${esc(x.title)}</dd>
       <dt>Document Type</dt><dd>${esc(x.type)}</dd>
