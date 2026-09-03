@@ -2,7 +2,7 @@
  * Add manual extraction, Task detail drawer, Document details drawer, Feedback dialog. */
 import { icon, esc, openModal, openDrawer, confirmDialog, toast, refreshIcons, sdgChip, SDG_TITLES, SDG_COLORS, fileTypeIcon, docTypeFromName, fileExt, fmtBytes, fmtCost, fmtDateTime, fmtDuration, fmtTime, statusBadge, progressHtml, download, relTime, dateTimeCell, sum } from './ui.js';
 import { getState, getProject, getProjectDocs, getDoc, getTask, getProjectTasks, getExtraction, projectStats, getProjectExtractions } from './store.js';
-import { createProject, addDocuments, startParse, runPipeline, generateReport, updateProject, activateProject, archiveProject, unarchiveProject, deleteProject, addManualExtraction, retryTask, cancelTask, translateDocument, deleteDocument, addComment } from './actions.js';
+import { createProject, addDocuments, startParse, generateReport, updateProject, activateProject, archiveProject, unarchiveProject, deleteProject, addManualExtraction, retryTask, cancelTask, translateDocument, deleteDocument, addComment } from './actions.js';
 import { navigate } from './router.js';
 import { STEP_META, LANGS, DOC_TYPES, PILLARS } from './seed.js';
 import { REGION_OPTIONS } from './composer.js';
@@ -12,14 +12,6 @@ import { reportContentFor } from './export.js';
 const SAMPLE_FILES = ['Sustainability_Strategy_2030.pdf', 'Municipal_Indicators_Dashboard.xlsx', 'Citizen_Consultation_Minutes.docx', 'Climate_Action_Plan.pdf', 'Annual_Budget_Report.xlsx', 'Housing_Policy_Framework.pdf'];
 
 const YEARS = [2022, 2023, 2024, 2025, 2026, 2027];
-
-function estimateCost(docs, sdgCount) {
-  const pages = docs.reduce((a, d) => a + (d.pages || 40), 0);
-  let c = 0;
-  for (const d of docs) { c += STEP_META.parse.base + STEP_META.parse.perPage * (d.pages || 40); c += STEP_META.extract_indicators.base + STEP_META.extract_indicators.perPage * (d.pages || 40); if ((d.language || 'EN') !== 'EN') c += STEP_META.translate.base + STEP_META.translate.perPage * (d.pages || 40); }
-  for (const s of ['analyse', 'documentary', 'projects', 'stakeholders', 'validation', 'normalization', 'provenance', 'export']) c += STEP_META[s].base + STEP_META[s].perPage * pages;
-  return c * (1 + Math.max(0, sdgCount - 6) * 0.02);
-}
 
 /* =========================================================================
  * Dropzone helper (real <input type=file>, drag & drop, sample docs)
@@ -88,7 +80,7 @@ function bindDropzone(el, id, files, { defaultLang = 'EN', onChange, existingNam
  * New VLR project wizard
  * ======================================================================= */
 export function openNewProjectModal({ initialCity = '' } = {}) {
-  const data = { name: '', city: initialCity, country: '', jurisdiction: '', year: new Date().getFullYear(), languages: ['EN'], sdgs: [], description: '', population: '', geography: '', region: '', files: [], runNow: true };
+  const data = { name: '', city: initialCity, country: '', jurisdiction: '', year: new Date().getFullYear(), languages: ['EN'], sdgs: [], description: '', population: '', geography: '', region: '', files: [] };
   let step = 1;
   const steps = ['Project details', 'Target SDGs', 'Source documents', 'Review & launch'];
   const api = openModal({ title: 'Initialize New VLR', sub: 'Create a new data governance project for your local jurisdiction.', size: 'lg', body: '', footer: '', backdropClose: false });
@@ -114,7 +106,6 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
       <div><strong class="navy">Upload the city's source documents</strong><div class="hint">All documents are dropped in one pool. The pillar extractors scan every document — a single report can feed Indicators, Documentary, Projects and Stakeholders at once.</div></div>
       ${dropzoneHtml('np')}`;
     if (step === 4) {
-      const est = estimateCost(data.files, data.sdgs.length);
       body += `
       <div class="summary-grid">
         <div><div class="k">Project</div><div class="v">${esc(data.name || `${data.city} ${data.year} VLR`)}</div></div>
@@ -128,14 +119,13 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
         <div class="span-2" style="grid-column:span 2"><div class="k">Target SDGs (${data.sdgs.length})</div><div class="v"><div class="sdg-chips">${data.sdgs.map(n => sdgChip(n)).join('') || '<span class="muted">None selected — you can configure them later.</span>'}</div></div></div>
         <div style="grid-column:span 2"><div class="k">Source documents (${data.files.length})</div><div class="v">${data.files.length ? data.files.map(f => `<span class="badge badge-neutral badge-mono" style="margin:2px 4px 2px 0">${esc(f.name)}</span>`).join('') : '<span class="muted">None yet — the project will be created in Provisioning state.</span>'}</div></div>
       </div>
-      ${data.files.length ? `<div class="est-cost"><div><div class="k caps">Estimated pipeline cost</div><div class="hint">Parse + translate + 4 pillars + validation, normalization, provenance and export.</div></div><div class="cost">${fmtCost(est)}</div></div>
-      <label class="checkbox"><input type="checkbox" id="np-run" ${data.runNow ? 'checked' : ''}> Run the full extraction pipeline immediately after creation</label>` : ''}`;
+`;
     }
     api.setBody(body);
     api.setFooter(`
       ${step > 1 ? `<button class="btn btn-light left" id="np-back">${icon('arrow-left', 'icon-sm')}Back</button>` : '<span class="left"></span>'}
       <button class="btn btn-ghost" id="np-cancel">Cancel</button>
-      ${step < 4 ? `<button class="btn btn-primary" id="np-next">Continue${icon('arrow-right', 'icon-sm')}</button>` : `<button class="btn btn-primary" id="np-create">${icon('rocket', 'icon-sm')}Create project${data.files.length && data.runNow ? ' & run pipeline' : ''}</button>`}`);
+      ${step < 4 ? `<button class="btn btn-primary" id="np-next">Continue${icon('arrow-right', 'icon-sm')}</button>` : `<button class="btn btn-primary" id="np-create">${icon('rocket', 'icon-sm')}Create project</button>`}`);
     bind();
     setTimeout(() => api.el.querySelector('[autofocus]')?.focus(), 20);
   }
@@ -143,7 +133,6 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
   function collect() {
     const q = (id) => api.el.querySelector(id);
     if (step === 1) { data.city = q('#np-city').value.trim(); data.country = q('#np-country').value.trim(); data.jurisdiction = q('#np-jur').value.trim(); data.year = Number(q('#np-year').value); data.description = q('#np-desc').value.trim(); data.population = q('#np-population').value.trim(); data.region = q('#np-region').value; }
-    if (step === 4) { const r = q('#np-run'); if (r) data.runNow = r.checked; }
   }
   function validate() {
     if (step === 1) {
@@ -166,8 +155,7 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
       const languages = [...new Set(data.files.map(f => f.language))];
       const p = createProject({ ...data, languages: languages.length ? languages : ['EN'], name: data.name || `${data.city} ${data.year} VLR`, jurisdiction: data.jurisdiction || `${data.city} City Council` });
       api.close();
-      if (data.files.length && data.runNow) { runPipeline(p.id); toast.success(`${p.name} created`, 'Full pipeline started — follow progress in the Task Queue.'); }
-      else toast.success(`${p.name} created`, data.files.length ? `${data.files.length} document(s) uploaded. Run the pipeline when ready.` : 'Upload source documents to begin extraction.');
+      toast.success(`${p.name} created`, data.files.length ? `${data.files.length} document(s) uploaded. Run the pipeline when ready.` : 'Upload source documents to begin extraction.');
       navigate(`#/projects/${p.id}`);
     });
     if (step === 1) {
