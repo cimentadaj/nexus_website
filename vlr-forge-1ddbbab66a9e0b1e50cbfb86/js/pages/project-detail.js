@@ -144,11 +144,7 @@ function overviewHtml(ctx, project, stats) {
       <h1 class="page-title">${esc(project.city)} ${esc(project.year)}</h1>
       <div class="pd-meta">${icon('map-pin', 'icon-sm')}<span>${esc(project.city)}, ${esc(project.country)}</span><span class="pd-meta-sep">|</span><span>SDG Reporting Lifecycle: ${esc(stats.phase)}</span></div>
     </div>
-    <div class="pd-stats">
-      <div class="stat-box"><div class="stat-label">Total sources</div><div class="stat-value">${stats.docs}</div></div>
-      <div class="stat-box"><div class="stat-label">Completion</div><div class="stat-value sky pd-completion"><span>${stats.completion}%</span>${progressHtml(stats.completion, 'sky sm')}</div></div>
-      <div class="stat-box"><div class="stat-label">Pipeline cost</div><div class="stat-value">${fmtCost(stats.cost)}</div><div class="stat-sub">${tasks.length} task${tasks.length === 1 ? '' : 's'} · this cycle</div></div>
-    </div>
+
     </div>
       <div class="pd-actions">
         <span ${cantRun ? `data-tip="${esc(cantRun)}"` : ''}><button class="btn btn-primary" data-action="run-pipeline" ${cantRun ? 'disabled' : ''}>${icon('play', 'icon-sm')}Run Full Pipeline</button></span>
