@@ -1,7 +1,7 @@
 /* store.js — single in-memory state persisted to localStorage, with subscriptions and selectors */
 import { buildSeed, expectedExtractions, PILLARS } from './seed.js';
 
-export const STORAGE_KEY = 'vlrforge.demo.v2';
+export const STORAGE_KEY = 'vlrforge.demo.v3';
 
 let state = load();
 const listeners = new Set();
@@ -133,7 +133,7 @@ export function projectStats(project) {
   else if (book) { queueLabel = 'Final VLR Review'; queueMeta = `${book.comments.filter(c => c.status === 'open').length} open comment${book.comments.filter(c => c.status === 'open').length === 1 ? '' : 's'}`; barPct = completion; barCls = 'sky'; }
   else if (chapters.length) { queueLabel = running || queued ? 'Composing Chapters' : 'Chapter Review'; queueMeta = `Chapters approved: ${chaptersApproved}/${chapters.length}`; barPct = completion; barCls = 'sky'; }
   else { queueLabel = running || queued ? 'Processing Queue' : allReviewed ? 'Ready to Write VLR' : 'Review Pending'; queueMeta = failed ? `Critical: ${failed}` : queued ? `Queued: ${queued}` : running ? `Running: ${running}` : allReviewed ? 'All evidence approved' : `Awaiting review: ${ext.length - approved}`; barPct = completion; barCls = ''; }
-  return { docs: docs.length, processed, processedRatio, extractions: ext.length, approved, pillarsDone, running, queued, failed, cost, completion, extractionPct, phase, queueLabel, queueMeta, barPct, barCls,
+  return { docs: docs.length, processed, processedRatio, extractions: ext.length, approved, pillarsDone, running, queued, failed, cost, completion, extractionPct, phase, queueLabel, queueMeta, barPct, barCls, preprocessed: !!p.preprocessedAt,
     chapters: chapters.length, chaptersApproved, allReviewed, hasBook: !!book, bookFinal, bookId: book?.id || null,
     lastSyncedAt: p.lastSyncedAt || p.createdAt };
 }

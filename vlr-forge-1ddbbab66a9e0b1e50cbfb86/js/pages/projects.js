@@ -31,7 +31,7 @@ const STAGES = [
 ];
 function stageState(stats) {
   const done = {
-    extraction: stats.extractions > 0 && stats.pillarsDone === 4,
+    extraction: stats.preprocessed && stats.extractions > 0 && stats.pillarsDone === 4,
     review: stats.allReviewed,
     chapters: stats.chapters > 0 && stats.chaptersApproved === stats.chapters,
     final: stats.bookFinal,

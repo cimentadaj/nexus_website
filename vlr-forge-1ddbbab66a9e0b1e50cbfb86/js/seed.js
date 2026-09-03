@@ -282,7 +282,7 @@ export function buildSeed() {
   const now = Date.now();
   const projects = [
     { id: 'madrid-2024', name: 'Madrid 2024 VLR', city: 'Madrid', country: 'Spain', jurisdiction: 'Madrid City Council', year: 2024, status: 'active',
-      sdgs: [1, 3, 4, 5, 6, 7, 8, 11, 13, 16], languages: ['ES', 'EN'], region: 'Europe', createdAt: now - 62 * DAY, node: 'EU-WEST-1', wikiLoaded: true, preprocessedAt: now - 9 * DAY,
+      sdgs: [1, 3, 4, 5, 6, 7, 8, 11, 13, 16], languages: ['ES', 'EN'], region: 'Europe', createdAt: now - 62 * DAY, node: 'EU-WEST-1',
       description: 'Voluntary Local Review of the City of Madrid for the 2024 reporting cycle, covering the 2030 Agenda localisation strategy.', lastSyncedAt: now - 14 * MIN, lead: 'Jorge Cimentada' },
     { id: 'bogota-2023', name: 'Bogotá 2023 VLR', city: 'Bogotá', country: 'Colombia', jurisdiction: 'Alcaldía de Bogotá', year: 2023, status: 'archived',
       sdgs: [2, 11, 14, 1, 3, 4, 5, 6, 8, 10, 13, 16], languages: ['ES'], region: 'Latin America and the Caribbean', createdAt: now - 400 * DAY, node: 'US-EAST-G01', archivedAt: now - 120 * DAY, wikiLoaded: true, preprocessedAt: now - 200 * DAY,
@@ -307,6 +307,8 @@ export function buildSeed() {
     ['Water_Services_Annual_Report.pdf', { type: 'Documentary', language: 'ES', status: 'processed', pages: 88, code: 'MDC-DOC-434', translated: true }],
     ['legacy_indicators_export.xml', { type: 'Legacy Data', language: 'EN', status: 'processed', pages: 30, code: 'MDC-DOC-435' }],
   ].map(([n, o], i) => mkDoc('madrid-2024', n, { uploadedAt: now - (40 - i * 2) * DAY, ...o }, i));
+  // preprocessing is demoed live: every Madrid document starts raw
+  madridDocs.forEach(d => { d.status = 'uploaded'; d.progress = 0; d.parsedAt = null; d.translated = d.language === 'EN'; });
 
   const bogotaNames = [
     'Plan_de_Desarrollo_Distrital_2020-2024.pdf', 'Informe_Calidad_de_Vida_2022.pdf', 'Encuesta_Multiproposito_2021.csv', 'Politica_Publica_Habitat_2023.pdf',
