@@ -258,3 +258,7 @@ tr.pp-open td { background: var(--sky-50); }
 .pd-doc-cat.cat-commitment { background: var(--sky-50); color: var(--navy); border-color: #cfe1f5; }
 .pd-doc-cat.cat-policy { background: var(--success-bg); color: var(--success-600); border-color: var(--success); }
 .pd-doc-table tr.row-sel td { background: rgba(124,196,248,.16); }
+
+.pd-ext-detail .kv { grid-template-columns: 128px 1fr; }
+.pd-ext-detail .kv dd { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pd-ext-detail .kv dt { white-space: nowrap; }

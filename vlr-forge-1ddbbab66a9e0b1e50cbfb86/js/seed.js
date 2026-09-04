@@ -46,6 +46,17 @@ export const STEP_ORDER = ['parse', 'translate', 'xml_extraction', 'wiki_load', 
 /* Per-indicator analyst observations (Observations field in the       */
 /* Urban data matrix). Keyed by SDG target code; 'default' as fallback. */
 /* ------------------------------------------------------------------ */
+/** Written analyst observation for a non-indicator extraction (documentary, projects, stakeholders). */
+export function defaultObservation(e, project) {
+  const src = e.source?.docName ? `${e.source.docName} (p. ${e.source.page} \u00b6${e.source.paragraph || 1})` : 'a manual entry';
+  const tail = {
+    Challenge: 'Flagged as a persisting gap for the chapter narrative; district-level disaggregation should be added where the sources allow it.',
+    Commitment: 'The commitment carries an explicit target date \u2014 delivery status should be tracked in the next reporting cycle and linked to the matching indicator series.',
+    Policy: 'The policy is in force; implementation indicators should be linked where available to evidence enforcement.',
+  }[e.categoryLabel] || 'Cross-referenced against the related indicator series and the stakeholder inputs; no follow-up required at this stage.';
+  return `Statement extracted from ${src}. It is consistent with the other documents uploaded for ${project.city} and no conflicting evidence was found in the source pool for SDG ${e.sdg}. ${tail}`;
+}
+
 export const INDICATOR_OBSERVATIONS = {
   '6.1.1': 'For {city} (the local level), the data is broadly consistent, but two source documents report different denominators for the share of population using safely managed drinking water services, so year-on-year comparisons should be treated with care. Several non-standard units appear in the source pack (m3/day supply capacity, network subscribers, liters/person/day consumption) which describe supply and capacity rather than the proportion of population served and were therefore not integrated into this series. At the national level the indicator has been stable, placing the country in the SDG Achievement category, although the trend is Stagnating; at the subnational level urban coverage is effectively universal while rural coverage lags slightly and carries the 2025/2030 catch-up targets.',
   '11.1.1': 'The informal-housing series for {city} is internally consistent (2018, 2020, 2022) and shows a steady improvement, but the 2018 census figure and the biennial-review figures use slightly different definitions of sub-standard housing, so the level shift between 2018 and 2020 partly reflects a methodology change rather than real improvement. The values remain concentrated in the outer metropolitan zones; district-level disaggregation exists only for 2022. No national comparison series was found in the uploaded documents.',

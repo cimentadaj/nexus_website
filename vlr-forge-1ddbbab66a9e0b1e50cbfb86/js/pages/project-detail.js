@@ -4,7 +4,7 @@ import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, get
 import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument, approveExtraction, unapproveExtraction, setIndicatorObservation } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
 import { topbarActions, searchBox, topbarTabs, statusBarHtml, projectStepper } from '../shell.js';
-import { PILLARS, STEP_META, STEP_ORDER, parsedDocMeta, quoteToHtml, fillTemplate, INDICATOR_OBSERVATIONS } from '../seed.js';
+import { PILLARS, STEP_META, STEP_ORDER, parsedDocMeta, quoteToHtml, fillTemplate, INDICATOR_OBSERVATIONS, defaultObservation } from '../seed.js';
 import { navigate } from '../router.js';
 
 const PILLAR_KEYS = PILLARS.map(p => p.key);
@@ -396,7 +396,7 @@ function overviewHtml(ctx, project, stats) {
         const srcDoc = e.source?.docId ? getDoc(e.source.docId) : null;
         const dm = srcDoc ? parsedDocMeta(srcDoc, project) : null;
         const obsKey = 'ext:' + e.id;
-        const obs = (project.obsNotes || {})[obsKey] ?? '';
+        const obs = (project.obsNotes || {})[obsKey] ?? defaultObservation(e, project);
         const obsVal = ctx.local.obsDraft?.key === obsKey ? ctx.local.obsDraft.text : obs;
         return `<div class="pd-ext-detail">
           <div class="row gap-8 mb-8">${sdgChip(e.goal)}<strong class="pd-rowd-title">${esc(e.title)}</strong></div>
@@ -421,7 +421,7 @@ function overviewHtml(ctx, project, stats) {
           </dl>` : ''}
           <div class="pd-rowd-obs mt-12">
             <label class="card-title-caps" for="pd-obs">${icon('notebook-pen', 'icon-sm')}Observations</label>
-            <textarea class="input pd-obs-text" id="pd-obs" data-key="${esc(obsKey)}" rows="5" spellcheck="false" placeholder="Notes on this entry — anomalies, context, caveats…">${esc(obsVal)}</textarea>
+            <textarea class="input pd-obs-text" id="pd-obs" data-key="${esc(obsKey)}" rows="5" spellcheck="false">${esc(obsVal)}</textarea>
           </div>
         </div>`;
       })()}
