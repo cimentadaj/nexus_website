@@ -216,9 +216,35 @@ const richRuns = (text) => {
 };
 const tbl = (columns, rows) => `<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="0" w:type="auto"/><w:tblBorders>${['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(s => `<w:${s} w:val="single" w:sz="4" w:space="0" w:color="CBD5E1"/>`).join('')}</w:tblBorders></w:tblPr><w:tblGrid>${columns.map(() => '<w:gridCol w:w="2400"/>').join('')}</w:tblGrid><w:tr>${columns.map(c => `<w:tc><w:tcPr><w:shd w:val="clear" w:color="auto" w:fill="E9F1FB"/></w:tcPr>${para(run(c, { b: true, size: 20 }), { spacingAfter: 40 })}</w:tc>`).join('')}</w:tr>${rows.map(r => `<w:tr>${r.map(c => `<w:tc>${para(run(c, { size: 20 }), { spacingAfter: 40 })}</w:tc>`).join('')}</w:tr>`).join('')}</w:tbl>${para('', { spacingAfter: 120 })}`;
 
-export function bookDocxBlob(book) {
+export function bookDocxBlob(book) { return docxFromOutline(bookOutline(book)); }
+
+/** One chapter as outline items (same vocabulary as bookOutline). */
+export function chapterOutline(ch) {
+  const items = [{ kind: 'h1', text: ch.title }];
+  const push = (b) => {
+    switch (b.type) {
+      case 'p': items.push({ kind: 'p', text: b.text }); break;
+      case 'box': items.push({ kind: 'box', title: b.title, items: b.items || [] }); break;
+      case 'figure': items.push({ kind: 'figure', caption: b.caption }); break;
+      case 'table': items.push({ kind: 'table', title: b.title, columns: b.columns || [], rows: b.rows || [], source: b.source }); break;
+      case 'rec': items.push({ kind: 'rec', title: b.title, responds: b.responds, objective: b.objective, lead: b.lead, partners: b.partners || [], pathway: b.pathway || [], indicators: b.indicators || [], financing: b.financing }); break;
+      default: break;
+    }
+  };
+  for (const s of ch.sections || []) {
+    items.push({ kind: 'h2', text: `${s.num} ${s.heading}` });
+    (s.blocks || []).filter(b => b.type !== 'box').forEach(push);
+    for (const ss of s.subsections || []) { items.push({ kind: 'h3', text: `${ss.num} ${ss.heading}` }); (ss.blocks || []).forEach(push); }
+    (s.blocks || []).filter(b => b.type === 'box').forEach(push);
+  }
+  if ((ch.footnotes || []).length) items.push({ kind: 'footnotes', items: [...ch.footnotes].sort((a, b) => a.n - b.n) });
+  return items;
+}
+export function chapterDocxBlob(ch) { return docxFromOutline(chapterOutline(ch)); }
+
+function docxFromOutline(outline) {
   const body = [];
-  for (const it of bookOutline(book)) {
+  for (const it of outline) {
     switch (it.kind) {
       case 'cover': body.push(para(run('VOLUNTARY LOCAL REVIEW', { size: 22 }), { align: 'center', spacingAfter: 600 }), para(run(it.title, { b: true, size: 56 }), { style: 'Title', align: 'center', spacingAfter: 200 }), para(run(it.subtitle, { i: true, size: 26 }), { align: 'center', spacingAfter: 2400 }), `<w:p><w:r><w:br w:type="page"/></w:r></w:p>`); break;
       case 'h1': body.push(para(run(it.text, { b: true }), { style: 'Heading1', spacingAfter: 200 })); break;

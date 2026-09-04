@@ -7,6 +7,7 @@ import { esc, icon, refreshIcons, sdgChip, statusBadge, progressHtml, bindAction
 import { getProject, getProjectChapters, getChapter, getProjectTasks, getExtraction, getProjectExtractions, projectStats, currentUser, getProjectBook } from '../store.js';
 import { composeChapters, recomposeChapter, sendChapterFeedback, rewriteUnit, approveChapter, reopenChapter, editChapterBlock, assembleFinalBook } from '../actions.js';
 import { openTaskDrawer } from '../modals.js';
+import { chapterDocxBlob } from '../export.js';
 import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml } from '../shell.js';
 import { STEP_META, PILLARS, quotePlain } from '../seed.js';
 import { navigate } from '../router.js';
@@ -241,7 +242,7 @@ function centreHtml(project, chapter, chapters, ctx) {
           ? `<span class="badge badge-success badge-lg">${icon('check-circle-2', 'icon-sm')}Approved ✓</span><button class="btn btn-light" data-action="reopen" data-tip="Back to in-review">${icon('undo-2', 'icon-sm')}Reopen</button>${nextUnapproved ? `<a class="btn btn-primary" href="#/projects/${esc(project.id)}/chapters/${esc(nextUnapproved.id)}">Next chapter${icon('arrow-right', 'icon-sm')}</a>` : ''}`
           : `<span ${busy ? 'data-tip="Wait for the reviewer to finish rewriting"' : ''}><button class="btn btn-primary" data-action="approve" ${busy ? 'disabled' : ''}>${icon('check-circle-2', 'icon-sm')}Approve chapter</button></span>`}
         <button class="btn btn-light" data-action="recompose" ${busy ? 'disabled' : ''}>${icon('rotate-ccw', 'icon-sm')}Recompose</button>
-        <button class="btn btn-light" data-action="download-menu">${icon('download', 'icon-sm')}Download${icon('chevron-down', 'icon-sm')}</button>
+        <button class="btn btn-light" data-action="download-docx">${icon('download', 'icon-sm')}Download</button>
       </div>
     </div>
     <div class="ch-doc" id="ch-doc">
@@ -614,19 +615,11 @@ export default {
           if (t) toast.success('Recomposition queued', `${chapter.title} · ${STEP_META.compose.engine}`);
         }
       },
-      'download-menu': (el) => {
+      'download-docx': () => {
         if (!chapter) return;
-        const base = `${project.city}_${project.year}_Chapter${chapter.number}_SDG${chapter.goal}_v${chapter.version}`.replace(/\s+/g, '_');
-        openMenu(el, [
-          { header: 'Download chapter' },
-          { label: 'Markdown (.md)', icon: 'file-text', sub: 'With footnotes and gap report', onClick: () => { download(`${base}.md`, chapterMarkdown(chapter), 'text/markdown'); toast.success('Download started', `${base}.md`); } },
-          { label: 'Printable HTML / PDF', icon: 'printer', sub: 'Opens in a new tab with the print dialog', onClick: () => {
-            const html = chapterPrintHtml(chapter, ctx);
-            const w = window.open('', '_blank');
-            if (w) { w.document.open(); w.document.write(html); w.document.close(); toast.info('Chapter opened in a new tab', 'Use the print dialog to save it as PDF.'); }
-            else { download(`${base}.html`, html, 'text/html'); toast.success('Download started', `${base}.html`); }
-          } },
-        ], { align: 'right', minWidth: '260px' });
+        const base = `${project.city}_${project.year}_Chapter${chapter.number}_SDG${chapter.goal}`.replace(/\s+/g, '_');
+        download(`${base}.docx`, chapterDocxBlob(chapter));
+        toast.success('Download started', `${base}.docx`);
       },
       'edit-block': (el, ev) => {
         if (ev.target.closest('a')) return; // footnote / source links inside the paragraph
