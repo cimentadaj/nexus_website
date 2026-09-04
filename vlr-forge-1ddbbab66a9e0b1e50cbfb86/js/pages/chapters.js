@@ -268,7 +268,7 @@ function chatPanelHtml(chapter, ctx) {
     <div class="ch-msgs" id="ch-msgs">
       ${!chapter ? `<div class="empty"><div class="empty-sub">Select a chapter to review it with the Chapter Reviewer.</div></div>` : msgs.length ? msgs.map(m => m.role === 'user'
         ? `<div class="ch-msg user"><div class="ch-msg-avatar">${avatarHtml({ name: m.by || me?.name || 'You' })}</div><div class="ch-msg-body"><div class="ch-msg-meta"><b>${esc(m.by || me?.name || 'You')}</b><span>${esc(relTime(m.at))}</span></div><div class="ch-msg-text">${esc(m.text)}</div></div></div>`
-        : `<div class="ch-msg assistant ${m.pending ? 'pending' : ''}"><div class="ch-msg-avatar ai">${icon('bot', 'icon-sm')}</div><div class="ch-msg-body"><div class="ch-msg-meta"><b>Chapter Reviewer</b>${m.version ? `<span class="ch-ver">v${Number(m.version)}</span>` : ''}<span>${esc(relTime(m.at))}</span></div>
+        : `<div class="ch-msg assistant ${m.pending ? 'pending' : ''}"><div class="ch-msg-avatar ai">${icon('bot', 'icon-sm')}</div><div class="ch-msg-body"><div class="ch-msg-meta"><b>Chapter Reviewer</b><span>${esc(relTime(m.at))}</span></div>
             ${m.pending ? `<div class="ch-typing"><span></span><span></span><span></span><em>Rewriting chapter…</em></div>` : `<div class="ch-msg-text">${chatHtml(m.text)}</div>`}
           </div></div>`).join('')
       : ''}
@@ -323,7 +323,7 @@ function chatPanelHtml(chapter, ctx) {
     </div>
     <div class="ch-compose-box">
       <textarea class="textarea" id="ch-draft" rows="2" placeholder="${u ? 'Optional instruction — e.g. lead with the 2023 figure, mention the flood plan…' : chapter ? 'Tell the reviewer what to change… (Enter to send)' : 'Select a chapter first'}" ${!chapter || busy ? 'disabled' : ''}>${esc(draft)}</textarea>
-      <div class="ch-compose-actions"><span class="xs muted">${busy ? 'The reviewer is rewriting — hang on.' : u ? 'The unit is rewritten from exactly the selected resources.' : 'Feedback is applied as a new version; changes are highlighted.'}</span><span class="grow"></span><button class="btn btn-primary btn-sm" data-action="send" ${!chapter || busy || (u ? !selected.length : !draft.trim()) ? 'disabled' : ''}>${icon(u ? 'refresh-cw' : 'send', 'icon-sm')}${u ? `Rewrite ${ctx.local.unit.type === 'sec' ? 'section' : 'paragraph'}` : 'Send'}</button></div>
+      <div class="ch-compose-actions"><span class="xs muted">${busy ? 'The reviewer is rewriting — hang on.' : ''}</span><span class="grow"></span><button class="btn btn-primary btn-sm" data-action="send" ${!chapter || busy || (u ? !selected.length : !draft.trim()) ? 'disabled' : ''}>${icon(u ? 'refresh-cw' : 'send', 'icon-sm')}${u ? `Rewrite ${ctx.local.unit.type === 'sec' ? 'section' : 'paragraph'}` : 'Send'}</button></div>
     </div>`;
     })()}
   </aside>`;
