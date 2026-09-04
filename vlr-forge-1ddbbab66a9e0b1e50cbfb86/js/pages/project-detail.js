@@ -310,7 +310,6 @@ function overviewHtml(ctx, project, stats) {
       </div>
       <div class="card-body">
         <div class="pd-ext-toolbar">
-          <span class="xs muted">${exts.length} of ${pillarTotal} shown</span>
           <span class="grow"></span>
           ${exts.some(isPending) ? `<button class="btn btn-primary btn-sm" data-action="confirm-all-shown">${icon('check-check', 'icon-sm')}Confirm all ${tab === 'indicators' ? 'SDG indicators' : esc(pillar.label.toLowerCase())}</button>` : ''}
           <button class="btn btn-light btn-sm" data-action="add-entry">${icon('plus', 'icon-sm')}Add entry</button>
