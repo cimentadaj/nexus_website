@@ -242,7 +242,7 @@ function centreHtml(project, chapter, chapters, ctx) {
           ? `<span class="badge badge-success badge-lg">${icon('check-circle-2', 'icon-sm')}Approved ✓</span><button class="btn btn-light" data-action="reopen" data-tip="Back to in-review">${icon('undo-2', 'icon-sm')}Reopen</button>${nextUnapproved ? `<a class="btn btn-primary" href="#/projects/${esc(project.id)}/chapters/${esc(nextUnapproved.id)}">Next chapter${icon('arrow-right', 'icon-sm')}</a>` : ''}`
           : `<span ${busy ? 'data-tip="Wait for the reviewer to finish rewriting"' : ''}><button class="btn btn-primary" data-action="approve" ${busy ? 'disabled' : ''}>${icon('check-circle-2', 'icon-sm')}Approve chapter</button></span>`}
         <button class="btn btn-light" data-action="recompose" ${busy ? 'disabled' : ''}>${icon('rotate-ccw', 'icon-sm')}Recompose</button>
-        <button class="btn btn-light" data-action="download-docx">${icon('download', 'icon-sm')}Download</button>
+        <button class="btn btn-light" data-action="download-menu">${icon('download', 'icon-sm')}Download${icon('chevron-down', 'icon-sm')}</button>
       </div>
     </div>
     <div class="ch-doc" id="ch-doc">
@@ -615,11 +615,12 @@ export default {
           if (t) toast.success('Recomposition queued', `${chapter.title} · ${STEP_META.compose.engine}`);
         }
       },
-      'download-docx': () => {
+      'download-menu': (el) => {
         if (!chapter) return;
         const base = `${project.city}_${project.year}_Chapter${chapter.number}_SDG${chapter.goal}`.replace(/\s+/g, '_');
-        download(`${base}.docx`, chapterDocxBlob(chapter));
-        toast.success('Download started', `${base}.docx`);
+        openMenu(el, [
+          { label: 'Word (.docx)', icon: 'file-text', onClick: () => { download(`${base}.docx`, chapterDocxBlob(chapter)); toast.success('Download started', `${base}.docx`); } },
+        ], { align: 'right', minWidth: '180px' });
       },
       'edit-block': (el, ev) => {
         if (ev.target.closest('a')) return; // footnote / source links inside the paragraph
