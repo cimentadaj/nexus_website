@@ -280,4 +280,4 @@ td.pd-proj-sdgs .sdg-chip { margin: 1px; }
 .pd-doc-tickth, .pd-doc-tick { width: 40px; text-align: center; }
 .pd-tick { color: var(--text-muted); }
 .pd-tick:hover { color: var(--success-600); }
-.pd-proj-desc { white-space: normal; font-size: 12.5px; line-height: 1.45; min-width: 260px; max-width: 420px; color: var(--text-secondary); }
+.pd-proj-desc { white-space: normal; font-size: 12.5px; line-height: 1.5; min-width: 380px; max-width: 560px; color: var(--text-secondary); }

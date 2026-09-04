@@ -97,7 +97,6 @@ function projectsTableHtml(ctx, exts) {
   return `<div class="pd-table-wrap"><table class="table pd-doc-table">
     <thead><tr>
       <th class="pd-doc-tickth" data-tip="Approve">${icon('check-check', 'icon-sm')}</th>
-      <th class="pd-mx-sortable" data-action="proj-sector-menu" data-tip="Filter by sector">${sec ? esc(sec) : 'Sector'} ${icon('chevron-down', 'icon-xs faint')}</th>
       <th>Project</th>
       <th>Description</th>
       <th>Lead department</th>
@@ -109,7 +108,6 @@ function projectsTableHtml(ctx, exts) {
         <td class="pd-doc-tick">${e.status === 'approved'
           ? `<span data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''} — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
           : `<span data-tip="Approve"><button class="btn-icon pd-tick" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-sm')}</button></span>`}</td>
-        <td class="xs">${esc(e.sector || '—')}</td>
         <td class="pd-doc-insight">${esc(e.title)}</td>
         <td class="pd-proj-desc">${esc(e.summary || '—')}</td>
         <td class="xs">${esc(e.lead || '—')}</td>
