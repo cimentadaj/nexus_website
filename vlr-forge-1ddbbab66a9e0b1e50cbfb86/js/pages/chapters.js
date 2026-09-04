@@ -285,7 +285,7 @@ function chatPanelHtml(chapter, ctx) {
       const pillarPool = pool.filter(e => e.pillar === resPillar);
       const goalList = [...new Set(pillarPool.map(e => e.goal))].sort((a, b) => a - b);
       const avail = pillarPool.filter(e => !resGoal || e.goal === resGoal);
-      const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="ch-pillar p-${esc(e.pillar)}">${PILLAR_ABBR[e.pillar] || '·'}</span><span class="mono">${esc(e.sdg)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
+      const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="mono">${esc(e.sdg)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
       return `
     <div class="ch-unit">
       ${u ? `
@@ -301,7 +301,7 @@ function chatPanelHtml(chapter, ctx) {
       </div>
       ${selected.length ? `<div class="ch-ctx-cols">${PILLARS.map(p => { const list = selected.filter(e => e.pillar === p.key); return `
         <div class="ch-ctx-col">
-          <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span>${list.length}</div>
+          <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span></div>
           ${list.map(e => mini(e, true)).join('')}
         </div>`; }).join('')}</div>` : `<div class="ch-ctx-pills"><span class="xs muted">Empty — add resources to rewrite from.</span></div>`}
       ${ctx.local.resOpen ? `
