@@ -347,6 +347,10 @@ function overviewHtml(ctx, project, stats) {
             <div class="row gap-8 mb-8"><span class="grow"></span>
               ${pend.length ? `<button class="btn btn-primary btn-xs" data-action="row-confirm-all" data-key="${esc(key)}">${icon('check-check', 'icon-xs')}Confirm all (${pend.length})</button>` : `<span class="xs success-text">${icon('check-circle', 'icon-xs')} All confirmed</span>`}
             </div>
+            <div class="pd-rowd-obs">
+              <label class="card-title-caps" for="pd-obs">${icon('notebook-pen', 'icon-sm')}Observations</label>
+              <textarea class="input pd-obs-text" id="pd-obs" data-key="${esc(key)}" rows="8" spellcheck="false">${esc(obsVal)}</textarea>
+            </div>
             <div class="pd-rowd-list">${group.map(e => { const openCard = !!(ctx.local.rowdOpen || {})[e.id]; return `
               <div class="pd-rowd-item ${e.status === 'approved' ? 'ok' : ''}">
                 <div class="pd-rowd-head clickable" data-action="rowd-toggle" data-id="${esc(e.id)}">
@@ -361,10 +365,6 @@ function overviewHtml(ctx, project, stats) {
                 </div>
                 ${openCard && e.source?.quote ? `<div class="pd-rowd-quote">${quoteToHtml(e.source.quote, esc)} <span class="pd-rowd-src">— ${esc(e.source.docName || '')}, p. ${esc(e.source.page || '—')} ¶${esc(e.source.paragraph || 1)}</span></div>` : ''}
               </div>`; }).join('')}</div>
-            <div class="pd-rowd-obs">
-              <label class="card-title-caps" for="pd-obs">${icon('notebook-pen', 'icon-sm')}Observations</label>
-              <textarea class="input pd-obs-text" id="pd-obs" data-key="${esc(key)}" rows="8" spellcheck="false">${esc(obsVal)}</textarea>
-            </div>
           </div>`;
         }
         const e = allExt.find(x => x.id === ctx.local.extSel);
