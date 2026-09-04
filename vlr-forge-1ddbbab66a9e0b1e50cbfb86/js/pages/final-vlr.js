@@ -402,7 +402,7 @@ export default {
 
     ctx.content.innerHTML = `<div class="vlr-page">
       ${activeTasks.length ? `<div class="callout vlr-banner">${icon('loader-2', 'spin')}<div class="grow"><strong>${activeTasks.some(t => t.step === 'assemble') ? 'Re-assembling the book' : 'Rendering the Word file'}</strong> — ${esc(activeTasks.map(t => `${STEP_META[t.step]?.label || t.label} ${t.status === 'running' ? Math.round(t.progress || 0) + '%' : '(queued)'}`).join(' · '))}</div></div>` : ''}
-      ${isFinal ? `<div class="callout success vlr-banner">${icon('badge-check')}<div class="grow"><strong>Approved</strong> — ${book.finalizedAt ? esc(fmtDateTime(book.finalizedAt)) : ''}${book.finalizedBy ? ` by ${esc(book.finalizedBy)}` : ''}.</div><button class="btn btn-light btn-sm" data-action="download-docx">${icon('file-type', 'icon-sm')}Word (.docx)</button></div>` : ''}
+      ${isFinal ? `<div class="callout success vlr-banner">${icon('badge-check')}<div class="grow"><strong>Approved</strong> — ${book.finalizedAt ? esc(fmtDateTime(book.finalizedAt)) : ''}${book.finalizedBy ? ` by ${esc(book.finalizedBy)}` : ''}.</div></div>` : ''}
       <div class="vlr-layout ${bookUnit(book, local.unit) ? 'has-editor' : ''}">
         ${tocHtml(book, chapters, local.tocActive || 'executive-summary', [])}
         <div class="vlr-book" id="vlr-book">
