@@ -1,7 +1,7 @@
 /* store.js — single in-memory state persisted to localStorage, with subscriptions and selectors */
 import { buildSeed, expectedExtractions, PILLARS } from './seed.js';
 
-export const STORAGE_KEY = 'vlrforge.demo.v5';
+export const STORAGE_KEY = 'vlrforge.demo.v6';
 
 let state = load();
 const listeners = new Set();

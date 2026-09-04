@@ -1,5 +1,5 @@
 /* Project detail — Overview (mock-up 02) and History view. Route #/projects/:id and #/projects/:id/history */
-import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime, sdgChip, SDG_COLORS, SDG_TITLES } from '../ui.js';
+import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime, sdgChip, sdgChips, SDG_COLORS, SDG_TITLES } from '../ui.js';
 import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, getProjectRuns, getProjectReports, getProjectActivity, projectStats, getTask, getDoc, getLogs } from '../store.js';
 import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument, approveExtraction, unapproveExtraction } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
@@ -91,21 +91,23 @@ const PROJ_STATUS_CLASS = { 'In execution': 'st-ongoing', Planned: 'st-planned',
 function projectsTableHtml(ctx, exts) {
   const sel = ctx.local.projSdg && ctx.local.projSdg !== 'all' ? Number(ctx.local.projSdg) : null;
   const st = ctx.local.projStatus && ctx.local.projStatus !== 'all' ? ctx.local.projStatus : null;
-  const shown = exts.filter(e => (!sel || e.goal === sel) && (!st || e.projectStatus === st));
+  const shown = exts.filter(e => (!sel || (e.goals || [e.goal]).includes(sel)) && (!st || e.projectStatus === st));
   return `<div class="pd-table-wrap"><table class="table pd-doc-table">
     <thead><tr>
       <th class="pd-doc-sdgth pd-mx-sortable" data-action="proj-sdg-menu" data-tip="Filter by SDG">${sel ? sdgChip(sel, { title: false }) : 'SDG'} ${icon('chevron-down', 'icon-xs faint')}</th>
       <th class="pd-doc-okth">Confirm</th>
       <th>Project</th>
+      <th>Lead department</th>
       <th>Start / End</th>
       <th class="pd-mx-sortable" data-action="proj-status-menu" data-tip="Filter by status">${st ? `<span class="badge pd-doc-cat ${PROJ_STATUS_CLASS[st] || ''}">${esc(PROJ_STATUS_LABEL[st] || st)}</span>` : 'Status'} ${icon('chevron-down', 'icon-xs faint')}</th></tr></thead>
     <tbody>${shown.map(e => `
       <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
-        <td class="pd-doc-sdgtd">${sdgChip(e.goal)}</td>
+        <td class="pd-doc-sdgtd pd-proj-sdgs">${(e.goals || [e.goal]).map(g => sdgChip(g)).join('')}</td>
         <td class="pd-doc-oktd">${e.status === 'approved'
           ? `<span data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''} — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
           : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}</td>
         <td class="pd-doc-insight">${esc(e.title)}</td>
+        <td class="xs">${esc(e.lead || '—')}</td>
         <td class="xs mono">${esc(e.period || '—')}</td>
         <td><span class="badge pd-doc-cat ${PROJ_STATUS_CLASS[e.projectStatus] || ''}">${esc(PROJ_STATUS_LABEL[e.projectStatus] || e.projectStatus || '—')}</span></td>
       </tr>`).join('')}</tbody>
@@ -425,7 +427,7 @@ function overviewHtml(ctx, project, stats) {
         const dm = srcDoc ? parsedDocMeta(srcDoc, project) : null;
         const obs = defaultObservation(e, project);
         return `<div class="pd-ext-detail">
-          <div class="row gap-8 mb-8">${sdgChip(e.goal)}<strong class="pd-rowd-title">${esc(e.title)}</strong></div>
+          <div class="row gap-8 mb-8"><span class="pd-proj-sdgs">${(e.goals || [e.goal]).map(g => sdgChip(g)).join('')}</span><strong class="pd-rowd-title">${esc(e.title)}</strong></div>
           <div class="pd-rowd-item ${e.status === 'approved' ? 'ok' : ''}">
             <div class="pd-rowd-head">
               <span class="pd-rowd-src">${esc(e.source?.docName || 'Manual entry')}${e.source?.page ? `, p. ${esc(e.source.page)} ¶${esc(e.source.paragraph || 1)}` : ''}</span>
@@ -649,7 +651,7 @@ export default {
         ev.stopPropagation();
         const setGoal = (g) => { ctx.local.projSdg = g; memo.projSdg = g; ctx.rerender(); };
         const cur = ctx.local.projSdg && ctx.local.projSdg !== 'all' ? Number(ctx.local.projSdg) : null;
-        const goals = [...new Set(getProjectExtractions(pid).filter(e => e.pillar === 'projects').map(e => e.goal))].sort((a, b) => a - b);
+        const goals = [...new Set(getProjectExtractions(pid).filter(e => e.pillar === 'projects').flatMap(e => e.goals || [e.goal]))].sort((a, b) => a - b);
         openMenu(el, [
           { label: 'All SDGs', active: !cur, onClick: () => setGoal('all') },
           'divider',

@@ -271,3 +271,7 @@ tr.pp-open td { background: var(--sky-50); }
 .pd-doc-cat.st-planned { background: #fdf3e3; color: #92600a; border-color: #f1d8a8; }
 .pd-doc-cat.st-completed { background: var(--success-bg); color: var(--success-600); border-color: var(--success); }
 .pd-ext-detail .kv dd.pd-dd-wrap { white-space: normal; }
+
+.pd-proj-sdgs { display: inline-flex; gap: 3px; flex-wrap: wrap; max-width: 130px; }
+td.pd-proj-sdgs { display: table-cell; width: 130px; }
+td.pd-proj-sdgs .sdg-chip { margin: 1px; }
