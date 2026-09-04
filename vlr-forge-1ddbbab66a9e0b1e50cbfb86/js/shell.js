@@ -3,7 +3,7 @@ import { icon, esc, avatarHtml, openMenu, refreshIcons } from './ui.js';
 import { getState, currentUser, projectStats } from './store.js';
 import { navigate, inAppNavigations } from './router.js';
 import { logout } from './actions.js';
-import { APP_VERSION } from './seed.js';
+import { APP_VERSION, PILLARS } from './seed.js';
 import { openNewReportModal, openNewProjectModal, openUploadModal } from './modals.js';
 
 export const NAV = [
@@ -82,9 +82,11 @@ export function projectStepper(project, active, { compact = false } = {}) {
     overview: project.preprocessedAt ? '' : 'Finish preprocessing first',
     chapters: !project.preprocessedAt ? 'Finish preprocessing first'
       : !stats.extractions ? 'Run the pipeline first'
+      : stats.pillarsDone < PILLARS.length ? `Run every extraction step first (${stats.pillarsDone} of ${PILLARS.length} pillars extracted)`
       : !stats.allReviewed ? 'Confirm every extraction first'
       : '',
     vlr: !project.preprocessedAt ? 'Finish preprocessing first'
+      : !stats.extractions || stats.pillarsDone < PILLARS.length ? 'Run every extraction step first'
       : !stats.allReviewed ? 'Confirm every extraction first'
       : !stats.chapters ? 'Write the chapters first'
       : stats.chaptersApproved !== stats.chapters ? 'Approve every chapter first'
@@ -107,12 +109,14 @@ export function stepLockReason(project, step) {
   if (step === 'chapters') {
     if (!project.preprocessedAt) return 'Finish preprocessing first';
     if (!stats.extractions) return 'Run the pipeline first';
+    if (stats.pillarsDone < PILLARS.length) return `Run every extraction step first (${stats.pillarsDone} of ${PILLARS.length} pillars extracted)`;
     if (!stats.allReviewed) return 'Confirm every extraction first';
     return '';
   }
   if (step === 'vlr') {
     if (!project.preprocessedAt) return 'Finish preprocessing first';
-    if (!stats.extractions || !stats.allReviewed) return 'Confirm every extraction first';
+    if (!stats.extractions || stats.pillarsDone < PILLARS.length) return 'Run every extraction step first';
+    if (!stats.allReviewed) return 'Confirm every extraction first';
     if (!stats.chapters) return 'Write the chapters first';
     if (stats.chaptersApproved !== stats.chapters) return 'Approve every chapter first';
     return '';
