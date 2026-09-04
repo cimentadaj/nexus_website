@@ -88,28 +88,32 @@ function documentaryTableHtml(ctx, exts) {
 /* Projects pillar: SDG | status | confirm | project name | period — documentary conventions */
 const PROJ_STATUS_LABEL = { 'In execution': 'Ongoing', Planned: 'Planned', Completed: 'Completed' };
 const PROJ_STATUS_CLASS = { 'In execution': 'st-ongoing', Planned: 'st-planned', Completed: 'st-completed' };
+const PROJ_SECTORS = ['Infrastructure', 'Capacity Building', 'Planning/Strategy', 'Service Delivery'];
 function projectsTableHtml(ctx, exts) {
   const sel = ctx.local.projSdg && ctx.local.projSdg !== 'all' ? Number(ctx.local.projSdg) : null;
   const st = ctx.local.projStatus && ctx.local.projStatus !== 'all' ? ctx.local.projStatus : null;
-  const shown = exts.filter(e => (!sel || (e.goals || [e.goal]).includes(sel)) && (!st || e.projectStatus === st));
+  const sec = ctx.local.projSector && ctx.local.projSector !== 'all' ? ctx.local.projSector : null;
+  const shown = exts.filter(e => (!sel || (e.goals || [e.goal]).includes(sel)) && (!st || e.projectStatus === st) && (!sec || e.sector === sec));
   return `<div class="pd-table-wrap"><table class="table pd-doc-table">
     <thead><tr>
-      <th class="pd-doc-sdgth pd-mx-sortable" data-action="proj-sdg-menu" data-tip="Filter by SDG">${sel ? sdgChip(sel, { title: false }) : 'SDG'} ${icon('chevron-down', 'icon-xs faint')}</th>
       <th class="pd-doc-okth">Confirm</th>
+      <th class="pd-mx-sortable" data-action="proj-sector-menu" data-tip="Filter by sector">${sec ? esc(sec) : 'Sector'} ${icon('chevron-down', 'icon-xs faint')}</th>
       <th>Project</th>
       <th>Lead department</th>
       <th>Start / End</th>
-      <th class="pd-mx-sortable" data-action="proj-status-menu" data-tip="Filter by status">${st ? `<span class="badge pd-doc-cat ${PROJ_STATUS_CLASS[st] || ''}">${esc(PROJ_STATUS_LABEL[st] || st)}</span>` : 'Status'} ${icon('chevron-down', 'icon-xs faint')}</th></tr></thead>
+      <th class="pd-mx-sortable" data-action="proj-status-menu" data-tip="Filter by status">${st ? `<span class="badge pd-doc-cat ${PROJ_STATUS_CLASS[st] || ''}">${esc(PROJ_STATUS_LABEL[st] || st)}</span>` : 'Status'} ${icon('chevron-down', 'icon-xs faint')}</th>
+      <th class="pd-mx-sortable" data-action="proj-sdg-menu" data-tip="Filter by SDG">${sel ? sdgChip(sel, { title: false }) : 'SDG'} ${icon('chevron-down', 'icon-xs faint')}</th></tr></thead>
     <tbody>${shown.map(e => `
       <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
-        <td class="pd-doc-sdgtd pd-proj-sdgs">${(e.goals || [e.goal]).map(g => sdgChip(g)).join('')}</td>
         <td class="pd-doc-oktd">${e.status === 'approved'
           ? `<span data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''} — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
           : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}</td>
+        <td class="xs">${esc(e.sector || '—')}</td>
         <td class="pd-doc-insight">${esc(e.title)}</td>
         <td class="xs">${esc(e.lead || '—')}</td>
         <td class="xs mono">${esc(e.period || '—')}</td>
         <td><span class="badge pd-doc-cat ${PROJ_STATUS_CLASS[e.projectStatus] || ''}">${esc(PROJ_STATUS_LABEL[e.projectStatus] || e.projectStatus || '—')}</span></td>
+        <td class="pd-proj-sdgrow">${(e.goals || [e.goal]).map(g => sdgChip(g)).join('')}</td>
       </tr>`).join('')}</tbody>
   </table></div>
   ${!shown.length ? `<div class="empty"><div class="empty-sub">No projects match the current filters.</div></div>` : ''}`;
@@ -576,6 +580,7 @@ export default {
       if (memo.docSdg) ctx.local.docSdg = memo.docSdg;
       if (memo.projSdg) ctx.local.projSdg = memo.projSdg;
       if (memo.projStatus) ctx.local.projStatus = memo.projStatus;
+      if (memo.projSector) ctx.local.projSector = memo.projSector;
       if (memo.docCat) ctx.local.docCat = memo.docCat;
       if (memo.mxSort) ctx.local.mxSort = memo.mxSort;
     }
@@ -657,6 +662,16 @@ export default {
           'divider',
           ...goals.map(g => ({ labelHtml: `${sdgChip(g, { title: false })} <span style="margin-left:6px">SDG ${g} — ${esc(SDG_TITLES[g])}</span>`, active: cur === g, onClick: () => setGoal(String(g)) })),
         ], { align: 'left', minWidth: '280px' });
+      },
+      'proj-sector-menu': (el, ev) => {
+        ev.stopPropagation();
+        const setSec = (c) => { ctx.local.projSector = c; memo.projSector = c; ctx.rerender(); };
+        const cur = ctx.local.projSector && ctx.local.projSector !== 'all' ? ctx.local.projSector : null;
+        openMenu(el, [
+          { label: 'All sectors', active: !cur, onClick: () => setSec('all') },
+          'divider',
+          ...PROJ_SECTORS.map(c => ({ label: c, active: cur === c, onClick: () => setSec(c) })),
+        ], { align: 'left', minWidth: '220px' });
       },
       'proj-status-menu': (el, ev) => {
         ev.stopPropagation();

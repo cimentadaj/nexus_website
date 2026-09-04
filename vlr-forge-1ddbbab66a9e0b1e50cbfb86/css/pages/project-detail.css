@@ -275,3 +275,6 @@ tr.pp-open td { background: var(--sky-50); }
 .pd-proj-sdgs { display: inline-flex; gap: 3px; flex-wrap: wrap; max-width: 130px; }
 td.pd-proj-sdgs { display: table-cell; width: 130px; }
 td.pd-proj-sdgs .sdg-chip { margin: 1px; }
+
+.pd-proj-sdgrow { white-space: nowrap; }
+.pd-proj-sdgrow .sdg-chip { margin-right: 3px; }
