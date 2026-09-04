@@ -3,7 +3,7 @@
  * continuous paper sheets, with highlight-and-comment on any passage, a comments panel, VLR Editor revisions,
  * finalize / reopen and real DOCX / PDF / Markdown exports. All UI state lives in ctx.local (re-renders are frequent).
  */
-import { esc, icon, relTime, fmtDateTime, sdgChips, SDG_TITLES, SDG_COLORS, progressHtml, bindActions, toast, confirmDialog, openMenu, download, refreshIcons } from '../ui.js';
+import { esc, icon, relTime, fmtDateTime, sdgChips, SDG_TITLES, SDG_COLORS, avatarHtml, progressHtml, bindActions, toast, confirmDialog, openMenu, download, refreshIcons } from '../ui.js';
 import { getProject, getProjectBook, getProjectChapters, getProjectTasks, getProjectExtractions, getExtraction, projectStats, currentUser } from '../store.js';
 import { assembleFinalBook, rewriteUnit, finalizeBook, reopenBook } from '../actions.js';
 import { bookOutline, bookExport } from '../export.js';
@@ -110,7 +110,7 @@ function pBlockHtml(it, { unit }) {
 function blockHtml(it, data) {
   switch (it.kind) {
     case 'cover': return '';
-    case 'h1': return `<h1 class="vlr-h1" data-anchor="${esc(it.key)}">${esc(it.text)}</h1>`;
+    case 'h1': return `<h1 class="vlr-h1" data-anchor="${esc(it.key)}" data-action="unit-clear">${esc(it.text)}</h1>`;
     case 'h2': return `<h2 class="vlr-h2 vlr-h-sel ${data.unit?.type === 'sec' && data.unit.id === it.key ? 'is-sel' : ''}" data-anchor="${esc(it.key)}" data-action="sel-sec" data-sec="${esc(it.key)}">${esc(it.text)}</h2>`;
     case 'h3': return `<h3 class="vlr-h3" data-anchor="${esc(it.key)}">${esc(it.text)}</h3>`;
     case 'p': return pBlockHtml(it, data);
@@ -231,21 +231,33 @@ function bookUnit(book, unit) {
 
 function editorPanelHtml(book, project, chapters, local) {
   const u = bookUnit(book, local.unit);
+  if (!u) return '';
   const ctxSel = local.ctxSel || {};
   const all = getProjectExtractions(project.id).filter(e => e.status === 'approved');
   const selected = Object.keys(ctxSel).filter(k => ctxSel[k]).map(id => all.find(e => e.id === id) || getExtraction(id)).filter(Boolean);
-  const targetChapter = u?.chapterId ? chapters.find(c => c.id === u.chapterId) : null;
+  const targetChapter = u.chapterId ? chapters.find(c => c.id === u.chapterId) : null;
   const busy = !!targetChapter?.reviewing;
+  const me = currentUser();
+  const msgs = targetChapter ? (targetChapter.chat || []) : [];
   const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="mono">${esc(e.sdg)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
   const miniSeries = (g, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-ids="${esc(g.map(x => x.id).join(','))}"><span class="mono">${esc(g[0].sdg)}</span>${g.length > 1 ? `<span class="ch-yrs">×${g.length}</span>` : ''}${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
-  const groupInd = (list) => { const m = new Map(); for (const e of list.filter(x => x.pillar === 'indicators')) { const k = e.sdg + '|' + e.title; if (!m.has(k)) m.set(k, []); m.get(k).push(e); } return [...m.values()].map(g => [...g].sort((a, b) => (a.year || 0) - (b.year || 0))); };
-  return `<aside class="vlr-panel card vlr-editor" data-vlr-keep>
-    <div class="card-header tinted">
+  const groupInd = (list) => { const m = new Map(); for (const e of list.filter(x => x.pillar === 'indicators')) { const k = e.sdg + '|' + e.title; if (!m.has(k)) m.set(k, []); m.get(k).push(e); } return [...m.values()].map(g => [...g].sort((x, y) => (x.year || 0) - (y.year || 0))); };
+  return `<aside class="ch-chat card vlr-editor" data-vlr-keep>
+    <div class="card-header tinted ch-chat-head">
       <div class="card-title-caps">${icon('bot')}VLR Editor</div>
-      ${busy ? `<span class="ch-live"><span class="ch-live-dot busy"></span>Rewriting</span>` : ''}
+      <div class="row gap-6">
+        ${busy ? `<span class="ch-live"><span class="ch-live-dot busy"></span>Rewriting</span>` : ''}
+        <button class="btn-icon" data-action="unit-clear" data-tip="Close" aria-label="Close">${icon('x', 'icon-sm')}</button>
+      </div>
     </div>
-    <div class="ch-unit vlr-editor-body">
-      ${u ? `
+    <div class="ch-msgs" id="ch-msgs">
+      ${msgs.length ? msgs.map(m => m.role === 'user'
+        ? `<div class="ch-msg user"><div class="ch-msg-avatar">${avatarHtml({ name: m.by || me?.name || 'You' })}</div><div class="ch-msg-body"><div class="ch-msg-meta"><b>${esc(m.by || me?.name || 'You')}</b><span>${esc(relTime(m.at))}</span></div><div class="ch-msg-text">${esc(m.text)}</div></div></div>`
+        : `<div class="ch-msg assistant ${m.pending ? 'pending' : ''}"><div class="ch-msg-avatar ai">${icon('bot', 'icon-sm')}</div><div class="ch-msg-body"><div class="ch-msg-meta"><b>VLR Editor</b><span>${esc(relTime(m.at))}</span></div>
+            ${m.pending ? `<div class="ch-typing"><span></span><span></span><span></span><em>Rewriting…</em></div>` : `<div class="ch-msg-text">${esc(m.text)}</div>`}
+          </div></div>`).join('') : ''}
+    </div>
+    <div class="ch-unit">
       <div class="ch-unit-head">
         <span class="ch-unit-tag">${icon('text-select', 'icon-xs')}${esc(u.short)} — ${esc(u.heading)}</span>
         <span class="grow"></span>
@@ -277,12 +289,12 @@ function editorPanelHtml(book, project, chapters, local) {
           </div>
         </div>
       </div>`;
-      })() : ''}` : ''}
+      })() : ''}
     </div>
     <div class="ch-compose-box">
-      <textarea class="textarea" id="vlr-instr" rows="2" placeholder="${u ? 'Optional instruction — e.g. lead with the 2023 figure…' : 'Click a paragraph, a heading or a contents entry first'}" ${!u || busy ? 'disabled' : ''}>${esc(local.instr || '')}</textarea>
+      <textarea class="textarea" id="vlr-instr" rows="2" placeholder="Optional instruction — e.g. lead with the 2023 figure…" ${busy ? 'disabled' : ''}>${esc(local.instr || '')}</textarea>
       <div class="ch-compose-actions"><span class="xs muted">${busy ? 'The editor is rewriting — hang on.' : ''}</span><span class="grow"></span>
-        <span ${u && !u.chapterId ? 'data-tip="Front and back matter are maintained by the VLR team — select a chapter passage"' : ''}><button class="btn btn-primary btn-sm" data-action="editor-rewrite" ${!u || busy || !u.chapterId || !selected.length ? 'disabled' : ''}>${icon('refresh-cw', 'icon-sm')}Rewrite ${u?.short === 'Section' ? 'section' : 'paragraph'}</button></span>
+        <span ${!u.chapterId ? 'data-tip="Front matter is maintained by the VLR team — select a chapter passage"' : ''}><button class="btn btn-primary btn-sm" data-action="editor-rewrite" ${busy || !u.chapterId || !selected.length ? 'disabled' : ''}>${icon('refresh-cw', 'icon-sm')}Rewrite ${u.short === 'Section' ? 'section' : 'paragraph'}</button></span>
       </div>
     </div>
   </aside>`;
@@ -441,6 +453,7 @@ export default {
         local.tocActive = key;
         local.scrollKey = key;
         if (el.dataset.sub) { selectUnit({ type: 'sec', id: key }); return; }
+        local.unit = null; local.ctxSel = null; local.resPillar = null;
         ctx.rerender();
       },
       'sel-unit': (el, ev) => { if (ev.target.closest('a, sup')) return; selectUnit({ type: 'block', id: el.dataset.block }); },
