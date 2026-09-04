@@ -322,6 +322,7 @@ sup.ch-fn a:hover { background: var(--sky-100); }
 /* context grouped in four pillar columns */
 .ch-ctx-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .ch-ctx-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.ch-ctx-col-h { display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: var(--text-muted); font-family: var(--mono); padding-bottom: 2px; border-bottom: 1px solid var(--border); }
-.ch-ctx-col .ch-ctx-mini { width: 100%; justify-content: flex-start; }
-.ch-ctx-col .ch-ctx-mini .icon-xs { margin-left: auto; }
+.ch-ctx-col-h { padding-bottom: 2px; }
+.ch-ctx-col-h .ch-pillar { display: block; width: 100%; text-align: center; }
+.ch-ctx-col { align-items: center; }
+.ch-ctx-col .ch-ctx-mini { width: auto; }
