@@ -8,7 +8,7 @@ import { getProject, getProjectChapters, getChapter, getProjectTasks, getExtract
 import { composeChapters, recomposeChapter, sendChapterFeedback, rewriteUnit, approveChapter, reopenChapter, editChapterBlock, assembleFinalBook } from '../actions.js';
 import { openTaskDrawer } from '../modals.js';
 import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml } from '../shell.js';
-import { STEP_META } from '../seed.js';
+import { STEP_META, quotePlain } from '../seed.js';
 import { navigate } from '../router.js';
 
 const PILLAR_LABEL = { indicators: 'Urban Data', documentary: 'Documentary', projects: 'Projects', stakeholders: 'Stakeholder' };
@@ -75,11 +75,11 @@ function findUnit(chapter, unit) {
   const units = chapterUnits(chapter);
   if (unit.type === 'sec') {
     const u = units.find(x => x.key === unit.id);
-    return u ? { blocks: u.blocks.filter(b => b.type === 'p'), label: `section ${u.num} ${u.heading}`, short: `Section ${u.num}`, heading: u.heading } : null;
+    return u ? { blocks: u.blocks.filter(b => b.type === 'p'), allBlocks: u.blocks, label: `section ${u.num} ${u.heading}`, short: `Section ${u.num}`, heading: u.heading } : null;
   }
   for (const u of units) {
     const b = (u.blocks || []).find(x => x.id === unit.id && x.type === 'p');
-    if (b) return { blocks: [b], label: `a paragraph in ${u.num} ${u.heading}`, short: `Paragraph · ${u.num}`, heading: u.heading };
+    if (b) return { blocks: [b], allBlocks: [b], label: `a paragraph in ${u.num} ${u.heading}`, short: `Paragraph · ${u.num}`, heading: u.heading };
   }
   return null;
 }
@@ -87,6 +87,7 @@ function lineageIds(chapter, blocks) {
   const ids = new Set();
   for (const b of blocks) {
     if (b.extractionId) ids.add(b.extractionId);
+    if (b.basedOn) ids.add(b.basedOn);
     (b.extractionIds || []).forEach(id => ids.add(id));
     (chapter.provenance || []).filter(p => p.blockId === b.id && p.extractionId).forEach(p => ids.add(p.extractionId));
   }
@@ -280,7 +281,7 @@ function chatPanelHtml(chapter, ctx) {
       const selected = Object.keys(ctxSel).filter(k => ctxSel[k]).map(id => all.find(e => e.id === id) || getExtraction(id)).filter(Boolean);
       const q = (ctx.local.resQ || '').trim().toLowerCase();
       const avail = all.filter(e => !ctxSel[e.id] && (!q || `${e.title} ${e.sdg} ${e.pillar} ${e.value || ''}`.toLowerCase().includes(q))).slice(0, 24);
-      const pill = (e, on) => `<button class="ch-ctx-pill ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}" data-tip="${on ? 'Remove from the rewrite context' : 'Add to the rewrite context'}"><span class="ch-pillar p-${esc(e.pillar)}">${PILLAR_ABBR[e.pillar] || '·'}</span><span class="ch-ctx-t">SDG ${esc(e.sdg)} · ${esc(e.title)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
+      const pill = (e, on) => `<button class="ch-ctx-pill ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="ch-pillar p-${esc(e.pillar)}">${PILLAR_ABBR[e.pillar] || '·'}</span><span class="ch-ctx-t">SDG ${esc(e.sdg)} · ${esc(e.title)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
       return `
     <div class="ch-unit">
       ${u ? `
@@ -474,6 +475,37 @@ export default {
       draftEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDraft(); } });
     }
     ctx.content.querySelector('#ch-res-q')?.addEventListener('input', (e) => { ctx.local.resQ = e.target.value; ctx.rerender(); });
+    /* hovering a resource pill shows the full evidence inline — value, quote, source — no page change */
+    const hideCard = () => document.getElementById('ch-hovercard')?.remove();
+    const showCard = (pillEl) => {
+      hideCard();
+      const e = getExtraction(pillEl.dataset.id);
+      if (!e) return;
+      const PA = { indicators: 'Urban data · indicator', documentary: 'Documentary evidence', projects: 'Project', stakeholders: 'Stakeholder voice' };
+      const fact = e.pillar === 'indicators' ? `<b>${esc(e.value)}</b>${/%/.test(e.unit || '') ? '%' : e.unit ? ` ${esc(e.unit)}` : ''}${e.year ? ` · ${esc(e.year)}` : ''}`
+        : e.pillar === 'documentary' ? `${esc(e.categoryLabel || e.category || '')}`
+        : e.pillar === 'projects' ? `${esc(e.projectStatus || '')}${e.period ? ` · ${esc(e.period)}` : ''}`
+        : `${esc(e.group || '')}${e.category ? ` · ${esc(e.category)}` : ''}`;
+      const card = document.createElement('div');
+      card.id = 'ch-hovercard';
+      card.innerHTML = `
+        <div class="hv-top"><span class="ch-pillar p-${esc(e.pillar)}">${esc(PA[e.pillar] || e.pillar)}</span><span class="badge badge-sdg">SDG ${esc(e.sdg)}</span></div>
+        <div class="hv-title">${esc(e.title)}</div>
+        ${fact ? `<div class="hv-fact">${fact}</div>` : ''}
+        ${e.summary && e.pillar !== 'indicators' ? `<div class="hv-sum">${esc(e.summary)}</div>` : ''}
+        ${e.source?.quote ? `<div class="hv-quote">${esc(quotePlain(e.source.quote))}</div>` : ''}
+        <div class="hv-src">${esc(e.source?.docName || 'Manual entry')}${e.source?.page != null ? ` · p. ${esc(e.source.page)} ¶${esc(e.source.paragraph || 1)}` : ''}</div>`;
+      document.body.appendChild(card);
+      const r = pillEl.getBoundingClientRect();
+      const w = card.offsetWidth, h = card.offsetHeight;
+      let x = r.left - w - 10;
+      if (x < 8) x = Math.min(window.innerWidth - w - 8, r.right + 10);
+      let y = Math.max(8, Math.min(r.top + r.height / 2 - h / 2, window.innerHeight - h - 8));
+      card.style.left = `${x}px`; card.style.top = `${y}px`;
+    };
+    ctx.content.addEventListener('mouseover', (e) => { const p = e.target.closest('.ch-ctx-pill'); if (p) showCard(p); });
+    ctx.content.addEventListener('mouseout', (e) => { const p = e.target.closest('.ch-ctx-pill'); if (p && !p.contains(e.relatedTarget)) hideCard(); });
+    ctx.content.addEventListener('click', (e) => { if (e.target.closest('.ch-ctx-pill')) hideCard(); });
     const editTa = ctx.local.editing ? document.getElementById(`ch-edit-${ctx.local.editing.blockId}`) : null;
     if (editTa) {
       editTa.addEventListener('input', (e) => { ctx.local.editing.text = e.target.value; });
@@ -588,7 +620,7 @@ export default {
         if (ctx.local.unit?.type === 'block' && ctx.local.unit.id === unit.id) { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.rerender(); return; }
         ctx.local.unit = unit;
         const u = findUnit(chapter, unit);
-        ctx.local.ctxSel = Object.fromEntries(lineageIds(chapter, u?.blocks || []).map(id => [id, true]));
+        ctx.local.ctxSel = Object.fromEntries(lineageIds(chapter, u?.allBlocks || u?.blocks || []).map(id => [id, true]));
         ctx.local.resQ = '';
         ctx.rerender();
       },
@@ -598,7 +630,7 @@ export default {
         if (ctx.local.unit?.type === 'sec' && ctx.local.unit.id === unit.id) { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.rerender(); return; }
         ctx.local.unit = unit;
         const u = findUnit(chapter, unit);
-        ctx.local.ctxSel = Object.fromEntries(lineageIds(chapter, u?.blocks || []).map(id => [id, true]));
+        ctx.local.ctxSel = Object.fromEntries(lineageIds(chapter, u?.allBlocks || u?.blocks || []).map(id => [id, true]));
         ctx.local.resQ = '';
         ctx.rerender();
       },
@@ -607,6 +639,6 @@ export default {
       'send': sendDraft,
     });
 
-    return () => { unbindTop(); unbindContent(); offs.forEach(f => f()); };
+    return () => { unbindTop(); unbindContent(); offs.forEach(f => f()); document.getElementById('ch-hovercard')?.remove(); };
   },
 };
