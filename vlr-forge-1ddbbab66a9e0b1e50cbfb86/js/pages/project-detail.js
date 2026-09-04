@@ -35,7 +35,14 @@ function extValueLine(e) {
  * number is its own extraction, inspectable and confirmable on its own */
 function indicatorsMatrixHtml(ctx, exts) {
   const yMax = new Date().getFullYear();
-  const years = []; for (let y = 2000; y <= yMax; y++) years.push(y);
+  // 2000-2010 annually, then 5-year steps up to the current year; years that
+  // actually hold a number are merged in so no extraction ever disappears
+  const yset = new Set();
+  for (let y = 2000; y <= 2010; y++) yset.add(y);
+  for (let y = 2015; y < yMax; y += 5) yset.add(y);
+  yset.add(yMax);
+  exts.forEach(e => { if (e.year) yset.add(Number(e.year)); });
+  const years = [...yset].sort((a, b) => a - b);
   const rows = []; const byKey = new Map();
   for (const e of exts) {
     const k = e.sdg + '|' + e.title;
