@@ -139,12 +139,6 @@ export const cancelTask = _cancelTask;
 export const executeAllTasks = _executeAll;
 
 /* ---------------- extractions / review ---------------- */
-export function setChapterSpine(projectId, goal, text) {
-  update(s => { const p = s.projects.find(x => x.id === projectId); if (p) (p.spines ||= {})[goal] = text; }, { silent: true });
-}
-export function resetChapterSpine(projectId, goal) {
-  update(s => { const p = s.projects.find(x => x.id === projectId); if (p?.spines) delete p.spines[goal]; }, { silent: true });
-}
 export function setIndicatorObservation(projectId, key, text) {
   update(s => { const p = s.projects.find(x => x.id === projectId); if (p) (p.obsNotes ||= {})[key] = text; }, { silent: true });
 }
