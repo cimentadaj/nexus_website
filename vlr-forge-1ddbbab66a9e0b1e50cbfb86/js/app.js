@@ -94,8 +94,23 @@ function renderPage() {
   document.title = `${r.page.title ? r.page.title(c) + ' · ' : ''}VLR Forge`;
 }
 
+/* A re-render between mousedown and click replaces the element under the cursor,
+ * swallowing the click (everything then needs two clicks). Hold renders while the
+ * pointer is down and flush right after the click has been dispatched. */
+let pointerHeld = false;
+let renderAfterPointer = false;
+const releasePointer = () => {
+  if (!pointerHeld) return;
+  pointerHeld = false;
+  if (renderAfterPointer) { renderAfterPointer = false; setTimeout(() => scheduleRender(), 0); }
+};
+document.addEventListener('pointerdown', () => { pointerHeld = true; }, true);
+document.addEventListener('pointerup', releasePointer, true);
+document.addEventListener('pointercancel', releasePointer, true);
+
 let deferredRender = false;
 function scheduleRender(force = false) {
+  if (!force && pointerHeld) { renderAfterPointer = true; return; }
   const a = document.activeElement;
   // Don't tear down an open native <select> popup mid-interaction: defer until it blurs/changes (safety timeout 4s).
   if (!force && a && a.tagName === 'SELECT' && app.contains(a)) {
