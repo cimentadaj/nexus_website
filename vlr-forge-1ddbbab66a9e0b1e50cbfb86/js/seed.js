@@ -199,17 +199,17 @@ export const PROJECT_TEMPLATES = [
 ];
 
 export const STAKEHOLDER_TEMPLATES = [
-  { sdg: '11.1', goal: 11, category: 'Challenge', title: 'Rising rents forcing young families out of central neighbourhoods', group: 'Neighbourhood associations', engagement: 'Citizen assembly', confidence: 88, page: 6, paragraph: 3,
+  { sdg: '11.1', goal: 11, category: 'Challenge', title: 'Rising rents forcing young families out of central neighbourhoods', group: 'Neighbourhood associations', engagement: 'Citizen assembly', dataSource: 'Residents report rents doubling over ten years and displacement of young families from central neighbourhoods. (Page 6)', confidence: 88, page: 6, paragraph: 3,
     quote: 'Our children cannot afford to live in the neighbourhood where they grew up. {h:Rents have doubled in ten years} and the council has to act now.' },
-  { sdg: '11.7', goal: 11, category: 'Priority', title: 'More shaded green space in dense southern districts', group: 'Youth council', engagement: 'Participatory workshop', confidence: 84, page: 9, paragraph: 1,
+  { sdg: '11.7', goal: 11, category: 'Priority', title: 'More shaded green space in dense southern districts', group: 'Youth council', engagement: 'Participatory workshop', dataSource: 'Request for shaded green space over further paving in the dense southern districts, raised by youth participants. (Page 9)', confidence: 84, page: 9, paragraph: 1,
     quote: 'In summer the squares are unusable. We need {h:trees and shade, not more concrete} — green space should be a priority in the southern districts.' },
-  { sdg: '11.2', goal: 11, category: 'Recommendation', title: 'Extend night bus services to peripheral districts', group: 'Shift workers collective', engagement: 'Public consultation', confidence: 86, page: 14, paragraph: 2,
+  { sdg: '11.2', goal: 11, category: 'Recommendation', title: 'Extend night bus services to peripheral districts', group: 'Shift workers collective', engagement: 'Public consultation', dataSource: 'Proposal to extend the night bus network to the outer districts for late-shift workers' safety and affordability. (Page 14)', confidence: 86, page: 14, paragraph: 2,
     quote: 'Many of us finish work after midnight. {h:Extending the night bus network} to the outer districts would make a real difference to our safety and our wallets.' },
-  { sdg: '16.7', goal: 16, category: 'Correction', title: 'Participation figures for the 2023 budget process overstated', group: 'Civic transparency observatory', engagement: 'Written submission', confidence: 79, page: 2, paragraph: 4,
+  { sdg: '16.7', goal: 16, category: 'Recommendation', title: 'Participation figures for the 2023 budget process overstated', group: 'Civic transparency observatory', engagement: 'Written submission', dataSource: 'Written submission contrasting the draft report's participation figure with the official platform's verified count. (Page 2)', confidence: 79, page: 2, paragraph: 4,
     quote: 'The draft report cites 42,000 participants in the participatory budget; the official platform records {h:31,600 verified participants}. We request the figure be corrected.' },
-  { sdg: '13.1', goal: 13, category: 'Priority', title: 'Flood protection for low-lying neighbourhoods', group: 'Riverside residents platform', engagement: 'Citizen assembly', confidence: 85, page: 11, paragraph: 2,
+  { sdg: '13.1', goal: 13, category: 'Priority', title: 'Flood protection for low-lying neighbourhoods', group: 'Riverside residents platform', engagement: 'Citizen assembly', dataSource: 'Riverside residents identify seasonal flooding of low-lying streets as their first climate-adaptation priority. (Page 11)', confidence: 85, page: 11, paragraph: 2,
     quote: 'Every autumn we watch the water rise. {h:Flood protection is not a climate slogan for us — it is our homes.} The plan must start with the riverside streets.' },
-  { sdg: '8.6', goal: 8, category: 'Recommendation', title: 'Paid apprenticeships linked to municipal contracts', group: 'Youth employment forum', engagement: 'Participatory workshop', confidence: 82, page: 17, paragraph: 1,
+  { sdg: '8.6', goal: 8, category: 'Recommendation', title: 'Paid apprenticeships linked to municipal contracts', group: 'Youth employment forum', engagement: 'Participatory workshop', dataSource: 'Proposal to attach paid apprenticeships for local young people to every municipal contract award. (Page 17)', confidence: 82, page: 17, paragraph: 1,
     quote: 'If the city spends millions on contracts, {h:every contract should carry paid apprenticeships} for young people from the neighbourhood.' },
 ];
 

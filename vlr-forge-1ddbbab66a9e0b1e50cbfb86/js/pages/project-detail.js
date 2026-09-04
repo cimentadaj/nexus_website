@@ -125,6 +125,33 @@ function projectsTableHtml(ctx, exts) {
   ${!shown.length ? `<div class="empty"><div class="empty-sub">No projects match the current filters.</div></div>` : ''}`;
 }
 
+/* Stakeholders pillar: SDG | confirm | insight | category | stakeholder group */
+const STK_CAT_CLASS = { Challenge: 'cat-challenge', Priority: 'cat-priority', Recommendation: 'cat-commitment' };
+function stakeholdersTableHtml(ctx, exts) {
+  const sel = ctx.local.stkSdg && ctx.local.stkSdg !== 'all' ? Number(ctx.local.stkSdg) : null;
+  const cat = ctx.local.stkCat && ctx.local.stkCat !== 'all' ? ctx.local.stkCat : null;
+  const shown = exts.filter(e => (!sel || e.goal === sel) && (!cat || e.category === cat));
+  return `<div class="pd-table-wrap"><table class="table pd-doc-table">
+    <thead><tr>
+      <th class="pd-doc-sdgth pd-mx-sortable" data-action="stk-sdg-menu" data-tip="Filter by SDG">${sel ? sdgChip(sel, { title: false }) : 'SDG'} ${icon('chevron-down', 'icon-xs faint')}</th>
+      <th class="pd-doc-tickth" data-tip="Approve">${icon('check-check', 'icon-sm')}</th>
+      <th>Insight</th>
+      <th class="pd-mx-sortable" data-action="stk-cat-menu" data-tip="Filter by category">${cat ? `<span class="badge pd-doc-cat ${STK_CAT_CLASS[cat] || ''}">${esc(cat)}</span>` : 'Category'} ${icon('chevron-down', 'icon-xs faint')}</th>
+      <th>Stakeholder group</th></tr></thead>
+    <tbody>${shown.map(e => `
+      <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
+        <td class="pd-doc-sdgtd">${sdgChip(e.goal)}</td>
+        <td class="pd-doc-tick">${e.status === 'approved'
+          ? `<span data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''} — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
+          : `<span data-tip="Approve"><button class="btn-icon pd-tick" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-sm')}</button></span>`}</td>
+        <td class="pd-doc-insight">${esc(e.title)}</td>
+        <td><span class="badge pd-doc-cat ${STK_CAT_CLASS[e.category] || ''}">${esc(e.category || '—')}</span></td>
+        <td class="xs">${esc(e.group || '—')}</td>
+      </tr>`).join('')}</tbody>
+  </table></div>
+  ${!shown.length ? `<div class="empty"><div class="empty-sub">No entries match the current filters.</div></div>` : ''}`;
+}
+
 /* per-project UI memory: active pillar tab, selected extraction, filter — survives
  * navigating away (e.g. into the document viewer) and back */
 const uiMemo = {};
@@ -377,7 +404,7 @@ function overviewHtml(ctx, project, stats) {
         <button class="btn btn-light btn-sm" data-action="add-entry">${icon('plus', 'icon-sm')}Add entry</button>
       </div>
       <div class="card-body">
-        ${exts.length ? tab === 'indicators' ? indicatorsMatrixHtml(ctx, exts) : tab === 'documentary' ? documentaryTableHtml(ctx, exts) : tab === 'projects' ? projectsTableHtml(ctx, exts) : `<div class="pd-table-wrap"><table class="table pd-ext-table">
+        ${exts.length ? tab === 'indicators' ? indicatorsMatrixHtml(ctx, exts) : tab === 'documentary' ? documentaryTableHtml(ctx, exts) : tab === 'projects' ? projectsTableHtml(ctx, exts) : tab === 'stakeholders' ? stakeholdersTableHtml(ctx, exts) : `<div class="pd-table-wrap"><table class="table pd-ext-table">
           <thead><tr><th>SDG</th><th>Extraction</th><th>Value</th><th>Unit</th><th>Source</th><th></th></tr></thead>
           <tbody>${exts.map(e => { const [val, unit] = extCells(e); return `
             <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
@@ -438,6 +465,12 @@ function overviewHtml(ctx, project, stats) {
         const obs = defaultObservation(e, project);
         return `<div class="pd-ext-detail">
           <div class="row gap-8 mb-8"><span class="pd-proj-sdgs">${(e.goals || [e.goal]).map(g => sdgChip(g)).join('')}</span><strong class="pd-rowd-title">${esc(e.title)}</strong></div>
+          ${e.pillar === 'stakeholders' ? `<dl class="kv mt-12">
+            <dt>Stakeholder group</dt><dd>${esc(e.group || '—')}</dd>
+            <dt>Engagement type</dt><dd>${esc(e.engagement || '—')}</dd>
+            <dt>Category</dt><dd>${esc(e.category || '—')}</dd>
+            <dt>Data source</dt><dd class="pd-dd-wrap">${esc(e.dataSource || '—')}</dd>
+          </dl>` : ''}
           ${e.pillar === 'projects' ? `<dl class="kv mt-12">
             <dt>Description</dt><dd class="pd-dd-wrap">${esc(e.summary || '—')}</dd>
             <dt>Lead department</dt><dd>${esc(e.lead || '—')}</dd>
@@ -588,6 +621,8 @@ export default {
       if (memo.projStatus) ctx.local.projStatus = memo.projStatus;
       if (memo.projSector) ctx.local.projSector = memo.projSector;
       if (memo.projSort) ctx.local.projSort = memo.projSort;
+      if (memo.stkSdg) ctx.local.stkSdg = memo.stkSdg;
+      if (memo.stkCat) ctx.local.stkCat = memo.stkCat;
       if (memo.docCat) ctx.local.docCat = memo.docCat;
       if (memo.mxSort) ctx.local.mxSort = memo.mxSort;
     }
@@ -669,6 +704,27 @@ export default {
           'divider',
           ...goals.map(g => ({ labelHtml: `${sdgChip(g, { title: false })} <span style="margin-left:6px">SDG ${g} — ${esc(SDG_TITLES[g])}</span>`, active: cur === g, onClick: () => setGoal(String(g)) })),
         ], { align: 'left', minWidth: '280px' });
+      },
+      'stk-sdg-menu': (el, ev) => {
+        ev.stopPropagation();
+        const setGoal = (g) => { ctx.local.stkSdg = g; memo.stkSdg = g; ctx.rerender(); };
+        const cur = ctx.local.stkSdg && ctx.local.stkSdg !== 'all' ? Number(ctx.local.stkSdg) : null;
+        const goals = [...new Set(getProjectExtractions(pid).filter(e => e.pillar === 'stakeholders').map(e => e.goal))].sort((a, b) => a - b);
+        openMenu(el, [
+          { label: 'All SDGs', active: !cur, onClick: () => setGoal('all') },
+          'divider',
+          ...goals.map(g => ({ labelHtml: `${sdgChip(g, { title: false })} <span style="margin-left:6px">SDG ${g} — ${esc(SDG_TITLES[g])}</span>`, active: cur === g, onClick: () => setGoal(String(g)) })),
+        ], { align: 'left', minWidth: '280px' });
+      },
+      'stk-cat-menu': (el, ev) => {
+        ev.stopPropagation();
+        const setCat = (c) => { ctx.local.stkCat = c; memo.stkCat = c; ctx.rerender(); };
+        const cur = ctx.local.stkCat && ctx.local.stkCat !== 'all' ? ctx.local.stkCat : null;
+        openMenu(el, [
+          { label: 'All categories', active: !cur, onClick: () => setCat('all') },
+          'divider',
+          ...['Challenge', 'Priority', 'Recommendation'].map(c => ({ label: c, active: cur === c, onClick: () => setCat(c) })),
+        ], { align: 'left', minWidth: '200px' });
       },
       'proj-sort': (el, ev) => {
         ev.stopPropagation();

@@ -283,3 +283,5 @@ td.pd-proj-sdgs .sdg-chip { margin: 1px; }
 .pd-proj-desc { white-space: normal; font-size: 12.5px; line-height: 1.5; min-width: 380px; max-width: 560px; color: var(--text-secondary); }
 
 .pd-yr-th, .pd-yr-td { width: 62px; white-space: nowrap; text-align: center; }
+
+.pd-doc-cat.cat-priority { background: #fdf3e3; color: #92600a; border-color: #f1d8a8; }
