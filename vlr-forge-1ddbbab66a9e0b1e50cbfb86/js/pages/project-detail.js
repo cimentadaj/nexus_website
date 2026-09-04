@@ -1,10 +1,10 @@
 /* Project detail — Overview (mock-up 02) and History view. Route #/projects/:id and #/projects/:id/history */
 import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime, sdgChip, SDG_COLORS, SDG_TITLES } from '../ui.js';
 import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, getProjectRuns, getProjectReports, getProjectActivity, projectStats, getTask, getDoc, getLogs } from '../store.js';
-import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument, approveExtraction, unapproveExtraction } from '../actions.js';
+import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument, approveExtraction, unapproveExtraction, setIndicatorObservation } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
 import { topbarActions, searchBox, topbarTabs, statusBarHtml, projectStepper } from '../shell.js';
-import { PILLARS, STEP_META, STEP_ORDER, parsedDocMeta } from '../seed.js';
+import { PILLARS, STEP_META, STEP_ORDER, parsedDocMeta, quoteToHtml, fillTemplate, INDICATOR_OBSERVATIONS } from '../seed.js';
 import { navigate } from '../router.js';
 
 const PILLAR_KEYS = PILLARS.map(p => p.key);
@@ -54,12 +54,12 @@ function indicatorsMatrixHtml(ctx, exts) {
   </div>
   <div class="pd-mx-wrap"><table class="table pd-mx-table">
     <thead><tr><th class="pd-mx-sdgcol">SDG</th><th class="pd-mx-sticky pd-mx-sortable" data-action="mx-sort" data-tip="Sort by indicator name">Indicator ${dir ? icon(dir === 'az' ? 'arrow-down-a-z' : 'arrow-up-a-z', 'icon-xs') : icon('arrow-up-down', 'icon-xs faint')}</th>${years.map(y => `<th class="pd-mx-year">${y}</th>`).join('')}</tr></thead>
-    <tbody>${rows.map(r => `<tr>
+    <tbody>${rows.map(r => { const key = r.sdg + '|' + r.title; return `<tr class="clickable ${ctx.local.extRow === key ? 'row-sel' : ''}" data-action="ext-row" data-key="${esc(key)}">
       <td class="pd-mx-sdgcol">${sdgChip(r.goal)}</td>
       <td class="pd-mx-sticky" style="border-left:3px solid ${SDG_COLORS[r.goal]}"><span class="pd-mx-code mono" style="color:${SDG_COLORS[r.goal]}">${esc(r.sdg)}</span> <span class="cell-title">${esc(r.title)}</span></td>
       ${years.map(y => { const e = r.cells[y];
-        return `<td class="pd-mx-td">${e ? `<button class="pd-mx-cell st-${esc(e.status)} ${ctx.local.extSel === e.id ? 'sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}" data-tip="${esc(r.title)} · ${y} — click to inspect and confirm">${esc(e.value)}</button>` : ''}</td>`; }).join('')}
-    </tr>`).join('')}</tbody>
+        return `<td class="pd-mx-td">${e ? `<span class="pd-mx-cell st-${esc(e.status)}">${esc(e.value)}</span>` : ''}</td>`; }).join('')}
+    </tr>`; }).join('')}</tbody>
   </table></div>`;
 }
 
@@ -345,6 +345,38 @@ function overviewHtml(ctx, project, stats) {
     <aside class="card pd-queue">
       <div class="card-header tinted"><div class="card-title-caps">${icon('scan-search')}Extraction details</div></div>
       ${(() => {
+        if (tab === 'indicators') {
+          const key = ctx.local.extRow;
+          const group = key ? allExt.filter(e => e.pillar === 'indicators' && e.sdg + '|' + e.title === key).sort((a, b) => (a.year || 0) - (b.year || 0)) : [];
+          if (!group.length) return `<div class="empty tq-empty">${icon('mouse-pointer-click')}<div class="empty-title">Nothing selected</div><div class="empty-sub">Click an indicator row to review all of its numbers.</div></div>`;
+          const first = group[0];
+          const pend = group.filter(isPending);
+          const obs = (project.obsNotes || {})[key] ?? fillTemplate(INDICATOR_OBSERVATIONS[first.sdg] || INDICATOR_OBSERVATIONS.default, project);
+          const obsVal = ctx.local.obsDraft?.key === key ? ctx.local.obsDraft.text : obs;
+          return `<div class="pd-ext-detail">
+            <div class="row gap-8 mb-8">${sdgChip(first.goal)}<strong class="pd-rowd-title">${esc(first.title)}</strong></div>
+            <div class="row gap-8 mb-8"><span class="xs muted">${esc(first.unit || '')}</span><span class="grow"></span>
+              ${pend.length ? `<button class="btn btn-primary btn-xs" data-action="row-confirm-all" data-key="${esc(key)}">${icon('check-check', 'icon-xs')}Confirm all (${pend.length})</button>` : `<span class="xs success-text">${icon('check-circle', 'icon-xs')} All confirmed</span>`}
+            </div>
+            <div class="pd-rowd-list">${group.map(e => `
+              <div class="pd-rowd-item ${e.status === 'approved' ? 'ok' : ''}">
+                <div class="pd-rowd-head">
+                  <strong class="mono">${esc(e.year || '—')}</strong>
+                  <span class="pd-rowd-val mono">${esc(e.value)}</span>
+                  <span class="grow"></span>
+                  ${e.source?.docId ? `<a class="btn-icon" href="#/projects/${esc(project.id)}/documents/${esc(e.source.docId)}?page=${esc(e.source.page || 1)}&hl=${esc(e.id)}" data-tip="See in document (p. ${esc(e.source.page)})" onclick="event.stopPropagation()">${icon('eye', 'icon-sm')}</a>` : ''}
+                  ${e.status === 'approved'
+                    ? `<span data-tip="Confirmed — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
+                    : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}
+                </div>
+                ${e.source?.quote ? `<div class="pd-rowd-quote">${quoteToHtml(e.source.quote, esc)} <span class="pd-rowd-src">— ${esc(e.source.docName || '')}, p. ${esc(e.source.page || '—')} ¶${esc(e.source.paragraph || 1)}</span></div>` : ''}
+              </div>`).join('')}</div>
+            <div class="pd-rowd-obs">
+              <label class="card-title-caps" for="pd-obs">${icon('notebook-pen', 'icon-sm')}Observations</label>
+              <textarea class="input pd-obs-text" id="pd-obs" data-key="${esc(key)}" rows="8" spellcheck="false">${esc(obsVal)}</textarea>
+            </div>
+          </div>`;
+        }
         const e = allExt.find(x => x.id === ctx.local.extSel);
         if (!e) return `<div class="empty tq-empty">${icon('mouse-pointer-click')}<div class="empty-title">Nothing selected</div><div class="empty-sub">Click a row in the table to inspect the extraction.</div></div>`;
         const [val, unit] = extCells(e);
@@ -476,6 +508,7 @@ export default {
       ctx.local.tab = PILLAR_KEYS.includes(ctx.query?.tab) ? ctx.query.tab : (memo.tab || 'indicators');
       if (memo.extSel !== undefined) ctx.local.extSel = memo.extSel;
       if (memo.filter) ctx.local.filter = memo.filter;
+      if (memo.extRow) ctx.local.extRow = memo.extRow;
       if (memo.mxSdg) ctx.local.mxSdg = memo.mxSdg;
       if (memo.mxSort) ctx.local.mxSort = memo.mxSort;
     }
@@ -504,18 +537,30 @@ export default {
       else toast.warning('Nothing to run', `No documents need "${meta.label}" right now.`);
     };
 
+    const obsEl = ctx.content.querySelector('#pd-obs');
+    if (obsEl) {
+      obsEl.addEventListener('input', () => { ctx.local.obsDraft = { key: obsEl.dataset.key, text: obsEl.value }; });
+      obsEl.addEventListener('change', () => { setIndicatorObservation(pid, obsEl.dataset.key, obsEl.value); ctx.local.obsDraft = null; });
+    }
     const mw = ctx.content.querySelector('.pd-mx-wrap');
     if (mw) {
       mw.scrollLeft = ctx.local.mxScroll ?? mw.scrollWidth;
       mw.addEventListener('scroll', () => { ctx.local.mxScroll = mw.scrollLeft; }, { passive: true });
     }
     const unbindClick = bindActions(ctx.content, {
-      'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.local.extSel = null; Object.assign(memo, { tab: el.dataset.tab, filter: 'all', extSel: null }); ctx.rerender(); },
+      'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.local.extSel = null; ctx.local.extRow = null; Object.assign(memo, { tab: el.dataset.tab, filter: 'all', extSel: null, extRow: null }); ctx.rerender(); },
       'confirm-all-shown': () => {
         const sel = ctx.local.mxSdg && ctx.local.mxSdg !== 'all' ? Number(ctx.local.mxSdg) : null;
         const list = getProjectExtractions(pid).filter(e => e.pillar === ctx.local.tab && isPending(e) && (!sel || ctx.local.tab !== 'indicators' || e.goal === sel));
         list.forEach(e => approveExtraction(e.id));
         toast.success('Confirmed', `${list.length} extraction${list.length === 1 ? '' : 's'} approved.`);
+        ctx.rerender();
+      },
+      'ext-row': (el, ev) => { if (ev.target.closest('a, button, textarea')) return; ctx.local.extRow = ctx.local.extRow === el.dataset.key ? null : el.dataset.key; memo.extRow = ctx.local.extRow; ctx.rerender(); },
+      'row-confirm-all': (el) => {
+        const list = getProjectExtractions(pid).filter(e => e.pillar === 'indicators' && e.sdg + '|' + e.title === el.dataset.key && isPending(e));
+        list.forEach(e => approveExtraction(e.id));
+        toast.success('Confirmed', `${list.length} number${list.length === 1 ? '' : 's'} approved.`);
         ctx.rerender();
       },
       'mx-sdg': (el) => { ctx.local.mxSdg = el.dataset.goal; memo.mxSdg = el.dataset.goal; ctx.rerender(); },

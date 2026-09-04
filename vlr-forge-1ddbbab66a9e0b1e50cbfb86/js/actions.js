@@ -139,6 +139,10 @@ export const cancelTask = _cancelTask;
 export const executeAllTasks = _executeAll;
 
 /* ---------------- extractions / review ---------------- */
+export function setIndicatorObservation(projectId, key, text) {
+  update(s => { const p = s.projects.find(x => x.id === projectId); if (p) (p.obsNotes ||= {})[key] = text; }, { silent: true });
+}
+
 export function updateExtraction(id, patch) {
   update(s => { const e = s.extractions.find(x => x.id === id); if (e) { Object.assign(e, patch, { updatedAt: Date.now(), editedBy: s.auth.user?.name }); } });
   const e = getExtraction(id);

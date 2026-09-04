@@ -215,3 +215,19 @@ tr.pp-open td { background: var(--sky-50); }
 .pd-mx-cell:hover { border-color: var(--sky-600); background: var(--sky-50); }
 .pd-mx-cell.st-approved { background: var(--success-bg); border-color: var(--success); color: var(--success-600); }
 .pd-mx-cell.sel { outline: 2px solid var(--navy); outline-offset: 1px; }
+
+/* row detail panel: all numbers of one indicator */
+.pd-mx-table tr.clickable { cursor: pointer; }
+.pd-mx-table tr.row-sel td { background: rgba(124,196,248,.16); }
+.pd-mx-cell { cursor: inherit; }
+.pd-rowd-title { font-size: 14px; color: var(--navy); line-height: 1.25; }
+.pd-rowd-list { display: flex; flex-direction: column; gap: 8px; max-height: 46vh; overflow-y: auto; }
+.pd-rowd-item { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--surface); }
+.pd-rowd-item.ok { border-color: var(--success); background: var(--success-bg); }
+.pd-rowd-head { display: flex; align-items: center; gap: 8px; }
+.pd-rowd-val { font-weight: 700; color: var(--navy); }
+.pd-rowd-quote { margin-top: 6px; font-size: 12px; color: var(--text-secondary); font-style: italic; line-height: 1.45; }
+.pd-rowd-quote mark.hl { background: #93c5fd; color: var(--navy); font-style: normal; font-weight: 600; padding: 0 3px; border-radius: 2px; }
+.pd-rowd-src { font-style: normal; color: var(--text-muted); font-size: 11px; white-space: nowrap; }
+.pd-rowd-obs { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+.pd-obs-text { width: 100%; font-size: 12.5px; line-height: 1.5; resize: vertical; min-height: 120px; }
