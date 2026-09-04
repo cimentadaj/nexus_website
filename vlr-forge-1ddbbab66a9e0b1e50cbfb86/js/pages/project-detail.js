@@ -85,6 +85,34 @@ function documentaryTableHtml(ctx, exts) {
   ${!shown.length ? `<div class="empty"><div class="empty-sub">No entries match the current filters.</div></div>` : ''}`;
 }
 
+/* Projects pillar: SDG | status | confirm | project name | period — documentary conventions */
+const PROJ_STATUS_LABEL = { 'In execution': 'Ongoing', Planned: 'Planned', Completed: 'Completed' };
+const PROJ_STATUS_CLASS = { 'In execution': 'st-ongoing', Planned: 'st-planned', Completed: 'st-completed' };
+function projectsTableHtml(ctx, exts) {
+  const sel = ctx.local.projSdg && ctx.local.projSdg !== 'all' ? Number(ctx.local.projSdg) : null;
+  const st = ctx.local.projStatus && ctx.local.projStatus !== 'all' ? ctx.local.projStatus : null;
+  const shown = exts.filter(e => (!sel || e.goal === sel) && (!st || e.projectStatus === st));
+  return `<div class="pd-table-wrap"><table class="table pd-doc-table">
+    <thead><tr>
+      <th class="pd-doc-sdgth pd-mx-sortable" data-action="proj-sdg-menu" data-tip="Filter by SDG">${sel ? sdgChip(sel, { title: false }) : 'SDG'} ${icon('chevron-down', 'icon-xs faint')}</th>
+      <th class="pd-mx-sortable" data-action="proj-status-menu" data-tip="Filter by status">${st ? `<span class="badge pd-doc-cat ${PROJ_STATUS_CLASS[st] || ''}">${esc(PROJ_STATUS_LABEL[st] || st)}</span>` : 'Status'} ${icon('chevron-down', 'icon-xs faint')}</th>
+      <th class="pd-doc-okth">Confirm</th>
+      <th>Project</th>
+      <th>Start / End</th></tr></thead>
+    <tbody>${shown.map(e => `
+      <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
+        <td class="pd-doc-sdgtd">${sdgChip(e.goal)}</td>
+        <td><span class="badge pd-doc-cat ${PROJ_STATUS_CLASS[e.projectStatus] || ''}">${esc(PROJ_STATUS_LABEL[e.projectStatus] || e.projectStatus || '—')}</span></td>
+        <td class="pd-doc-oktd">${e.status === 'approved'
+          ? `<span data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''} — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
+          : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}</td>
+        <td class="pd-doc-insight">${esc(e.title)}</td>
+        <td class="xs mono">${esc(e.period || '—')}</td>
+      </tr>`).join('')}</tbody>
+  </table></div>
+  ${!shown.length ? `<div class="empty"><div class="empty-sub">No projects match the current filters.</div></div>` : ''}`;
+}
+
 /* per-project UI memory: active pillar tab, selected extraction, filter — survives
  * navigating away (e.g. into the document viewer) and back */
 const uiMemo = {};
@@ -337,7 +365,7 @@ function overviewHtml(ctx, project, stats) {
         <button class="btn btn-light btn-sm" data-action="add-entry">${icon('plus', 'icon-sm')}Add entry</button>
       </div>
       <div class="card-body">
-        ${exts.length ? tab === 'indicators' ? indicatorsMatrixHtml(ctx, exts) : tab === 'documentary' ? documentaryTableHtml(ctx, exts) : `<div class="pd-table-wrap"><table class="table pd-ext-table">
+        ${exts.length ? tab === 'indicators' ? indicatorsMatrixHtml(ctx, exts) : tab === 'documentary' ? documentaryTableHtml(ctx, exts) : tab === 'projects' ? projectsTableHtml(ctx, exts) : `<div class="pd-table-wrap"><table class="table pd-ext-table">
           <thead><tr><th>SDG</th><th>Extraction</th><th>Value</th><th>Unit</th><th>Source</th><th></th></tr></thead>
           <tbody>${exts.map(e => { const [val, unit] = extCells(e); return `
             <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
@@ -409,6 +437,15 @@ function overviewHtml(ctx, project, stats) {
             </div>
             ${e.source?.quote ? `<div class="pd-rowd-quote">${esc(quotePlain(e.source.quote))}</div>` : ''}
           </div>
+          ${e.pillar === 'projects' ? `<dl class="kv mt-12">
+            <dt>Description</dt><dd class="pd-dd-wrap">${esc(e.summary || '—')}</dd>
+            <dt>Lead department</dt><dd>${esc(e.lead || '—')}</dd>
+            <dt>External partner</dt><dd>${esc(e.partner || '—')}</dd>
+            <dt>Sector</dt><dd>${esc(e.sector || '—')}</dd>
+            <dt>Status</dt><dd>${esc(PROJ_STATUS_LABEL[e.projectStatus] || e.projectStatus || '—')}</dd>
+            <dt>Start / End</dt><dd>${esc(e.period || '—')}</dd>
+            <dt>Data source</dt><dd>${esc(e.dataSource || '—')}</dd>
+          </dl>` : ''}
           ${dm ? `<dl class="kv mt-12">
             <dt>Source document</dt><dd class="mono xs">${esc(srcDoc.name)}</dd>
             <dt>Document title</dt><dd>${esc(dm.title)}</dd>
@@ -535,6 +572,8 @@ export default {
       if (memo.extRow) ctx.local.extRow = memo.extRow;
       if (memo.mxSdg) ctx.local.mxSdg = memo.mxSdg;
       if (memo.docSdg) ctx.local.docSdg = memo.docSdg;
+      if (memo.projSdg) ctx.local.projSdg = memo.projSdg;
+      if (memo.projStatus) ctx.local.projStatus = memo.projStatus;
       if (memo.docCat) ctx.local.docCat = memo.docCat;
       if (memo.mxSort) ctx.local.mxSort = memo.mxSort;
     }
@@ -604,6 +643,27 @@ export default {
           { label: 'All categories', active: !cur, onClick: () => setCat('all') },
           'divider',
           ...['Challenge', 'Commitment', 'Policy'].map(c => ({ label: c, active: cur === c, onClick: () => setCat(c) })),
+        ], { align: 'left', minWidth: '200px' });
+      },
+      'proj-sdg-menu': (el, ev) => {
+        ev.stopPropagation();
+        const setGoal = (g) => { ctx.local.projSdg = g; memo.projSdg = g; ctx.rerender(); };
+        const cur = ctx.local.projSdg && ctx.local.projSdg !== 'all' ? Number(ctx.local.projSdg) : null;
+        const goals = [...new Set(getProjectExtractions(pid).filter(e => e.pillar === 'projects').map(e => e.goal))].sort((a, b) => a - b);
+        openMenu(el, [
+          { label: 'All SDGs', active: !cur, onClick: () => setGoal('all') },
+          'divider',
+          ...goals.map(g => ({ labelHtml: `${sdgChip(g, { title: false })} <span style="margin-left:6px">SDG ${g} — ${esc(SDG_TITLES[g])}</span>`, active: cur === g, onClick: () => setGoal(String(g)) })),
+        ], { align: 'left', minWidth: '280px' });
+      },
+      'proj-status-menu': (el, ev) => {
+        ev.stopPropagation();
+        const setSt = (c) => { ctx.local.projStatus = c; memo.projStatus = c; ctx.rerender(); };
+        const cur = ctx.local.projStatus && ctx.local.projStatus !== 'all' ? ctx.local.projStatus : null;
+        openMenu(el, [
+          { label: 'All statuses', active: !cur, onClick: () => setSt('all') },
+          'divider',
+          ...['In execution', 'Planned', 'Completed'].map(c => ({ label: PROJ_STATUS_LABEL[c] || c, active: cur === c, onClick: () => setSt(c) })),
         ], { align: 'left', minWidth: '200px' });
       },
       'mx-sdg-menu': (el, ev) => {

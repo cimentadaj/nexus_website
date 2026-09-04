@@ -266,3 +266,8 @@ tr.pp-open td { background: var(--sky-50); }
 .pd-obs-static { font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); background: var(--surface-tint); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; max-height: 220px; overflow-y: auto; }
 
 .pd-doc-okth, .pd-doc-oktd { width: 96px; white-space: nowrap; }
+
+.pd-doc-cat.st-ongoing { background: var(--sky-50); color: var(--navy); border-color: #cfe1f5; }
+.pd-doc-cat.st-planned { background: #fdf3e3; color: #92600a; border-color: #f1d8a8; }
+.pd-doc-cat.st-completed { background: var(--success-bg); color: var(--success-600); border-color: var(--success); }
+.pd-ext-detail .kv dd.pd-dd-wrap { white-space: normal; }
