@@ -269,7 +269,7 @@ function chatPanelHtml(chapter, ctx) {
       ${!chapter ? `<div class="empty"><div class="empty-sub">Select a chapter to review it with the Chapter Reviewer.</div></div>` : msgs.length ? msgs.map(m => m.role === 'user'
         ? `<div class="ch-msg user"><div class="ch-msg-avatar">${avatarHtml({ name: m.by || me?.name || 'You' })}</div><div class="ch-msg-body"><div class="ch-msg-meta"><b>${esc(m.by || me?.name || 'You')}</b><span>${esc(relTime(m.at))}</span></div><div class="ch-msg-text">${esc(m.text)}</div></div></div>`
         : `<div class="ch-msg assistant ${m.pending ? 'pending' : ''}"><div class="ch-msg-avatar ai">${icon('bot', 'icon-sm')}</div><div class="ch-msg-body"><div class="ch-msg-meta"><b>Chapter Reviewer</b>${m.version ? `<span class="ch-ver">v${Number(m.version)}</span>` : ''}<span>${esc(relTime(m.at))}</span></div>
-            ${m.pending ? `<div class="ch-typing"><span></span><span></span><span></span><em>Rewriting chapter…</em></div>` : `<div class="ch-msg-text">${chatHtml(m.text)}</div>${(m.changedBlockIds || []).length ? `<button class="ch-msg-jump" data-action="goto-block" data-block="${esc(m.changedBlockIds[0])}">${icon('locate', 'icon-xs')}Show ${m.changedBlockIds.length} changed passage${m.changedBlockIds.length === 1 ? '' : 's'}</button>` : ''}`}
+            ${m.pending ? `<div class="ch-typing"><span></span><span></span><span></span><em>Rewriting chapter…</em></div>` : `<div class="ch-msg-text">${chatHtml(m.text)}</div>`}
           </div></div>`).join('')
       : ''}
     </div>
