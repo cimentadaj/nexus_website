@@ -176,7 +176,7 @@ function listHtml(project, chapters, active, tasks, stats, ctx) {
     <a class="ch-row ${c.id === active?.id ? 'active' : ''}" href="#/projects/${esc(project.id)}/chapters/${esc(c.id)}">
       ${sdgChip(c.goal, { title: false })}
       <div class="ch-row-main">
-        <div class="ch-row-top"><span class="ch-row-n">Chapter ${Number(c.number)}</span>${(c.changedBlocks || []).length ? `<span class="ch-dot" data-tip="${(c.changedBlocks || []).length} passage(s) changed in v${c.version}"></span>` : ''}${c.reviewing ? `<span class="ch-row-spin">${icon('loader-2', 'icon-xs spin')}</span>` : ''}</div>
+        <div class="ch-row-top"><span class="ch-row-n">Chapter ${Number(c.number)}</span>${c.reviewing ? `<span class="ch-row-spin">${icon('loader-2', 'icon-xs spin')}</span>` : ''}</div>
         <div class="ch-row-title">${esc(SDG_TITLES[c.goal] || c.title)}</div>
         <div class="ch-row-meta">${chapterStatusBadge(c)}</div>
 
