@@ -247,3 +247,5 @@ tr.pp-open td { background: var(--sky-50); }
 
 .pd-tabs-actions { align-items: center; padding-right: 12px; gap: 8px; }
 .pd-tabs-actions .grow { flex: 1; }
+
+.pd-rowd-head.clickable { cursor: pointer; }

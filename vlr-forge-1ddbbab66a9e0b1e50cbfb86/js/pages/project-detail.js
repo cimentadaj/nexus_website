@@ -347,9 +347,10 @@ function overviewHtml(ctx, project, stats) {
             <div class="row gap-8 mb-8"><span class="grow"></span>
               ${pend.length ? `<button class="btn btn-primary btn-xs" data-action="row-confirm-all" data-key="${esc(key)}">${icon('check-check', 'icon-xs')}Confirm all (${pend.length})</button>` : `<span class="xs success-text">${icon('check-circle', 'icon-xs')} All confirmed</span>`}
             </div>
-            <div class="pd-rowd-list">${group.map(e => `
+            <div class="pd-rowd-list">${group.map(e => { const openCard = !!(ctx.local.rowdOpen || {})[e.id]; return `
               <div class="pd-rowd-item ${e.status === 'approved' ? 'ok' : ''}">
-                <div class="pd-rowd-head">
+                <div class="pd-rowd-head clickable" data-action="rowd-toggle" data-id="${esc(e.id)}">
+                  ${icon(openCard ? 'chevron-down' : 'chevron-right', 'icon-xs faint')}
                   <strong class="mono">${esc(e.year || '—')}</strong>
                   <span class="pd-rowd-val mono">${esc(e.value)}</span><span class="pd-rowd-unit">${esc(e.unit || '')}</span>
                   <span class="grow"></span>
@@ -358,8 +359,8 @@ function overviewHtml(ctx, project, stats) {
                     ? `<span data-tip="Confirmed — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
                     : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}
                 </div>
-                ${e.source?.quote ? `<div class="pd-rowd-quote">${quoteToHtml(e.source.quote, esc)} <span class="pd-rowd-src">— ${esc(e.source.docName || '')}, p. ${esc(e.source.page || '—')} ¶${esc(e.source.paragraph || 1)}</span></div>` : ''}
-              </div>`).join('')}</div>
+                ${openCard && e.source?.quote ? `<div class="pd-rowd-quote">${quoteToHtml(e.source.quote, esc)} <span class="pd-rowd-src">— ${esc(e.source.docName || '')}, p. ${esc(e.source.page || '—')} ¶${esc(e.source.paragraph || 1)}</span></div>` : ''}
+              </div>`; }).join('')}</div>
             <div class="pd-rowd-obs">
               <label class="card-title-caps" for="pd-obs">${icon('notebook-pen', 'icon-sm')}Observations</label>
               <textarea class="input pd-obs-text" id="pd-obs" data-key="${esc(key)}" rows="8" spellcheck="false">${esc(obsVal)}</textarea>
@@ -545,6 +546,7 @@ export default {
         toast.success('Confirmed', `${list.length} extraction${list.length === 1 ? '' : 's'} approved.`);
         ctx.rerender();
       },
+      'rowd-toggle': (el) => { (ctx.local.rowdOpen ||= {})[el.dataset.id] = !(ctx.local.rowdOpen[el.dataset.id]); ctx.rerender(); },
       'ext-row': (el, ev) => { if (ev.target.closest('a, button, textarea')) return; ctx.local.extRow = ctx.local.extRow === el.dataset.key ? null : el.dataset.key; memo.extRow = ctx.local.extRow; ctx.rerender(); },
       'row-confirm-all': (el) => {
         const list = getProjectExtractions(pid).filter(e => e.pillar === 'indicators' && e.sdg + '|' + e.title === el.dataset.key && isPending(e));
