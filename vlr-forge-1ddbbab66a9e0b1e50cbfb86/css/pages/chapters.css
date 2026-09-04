@@ -248,3 +248,23 @@ sup.ch-fn a:hover { background: var(--sky-100); }
 .ch-row-write:hover { color: var(--navy); }
 .ch-row { position: relative; }
 
+
+/* ---------- plain rendered-markdown look for the chapter sheet ---------- */
+.ch-sheet { font-family: var(--font); font-size: 14.5px; line-height: 1.65; color: #24292f; }
+.ch-sheet .ch-sheet-eyebrow { display: none; }
+.ch-sheet .ch-h1 { color: #1f2328; font-size: 26px; border-bottom: 1px solid #d8dee4; padding-bottom: 8px; margin-bottom: 8px; }
+.ch-sheet .ch-sheet-sub { color: #656d76; border-bottom: 0; margin-bottom: 22px; padding-bottom: 0; }
+.ch-sheet .ch-h2 { color: #1f2328; font-size: 20px; border-bottom: 1px solid #d8dee4; padding-bottom: 5px; }
+.ch-sheet .ch-h3 { color: #1f2328; font-size: 16px; }
+.ch-sheet .ch-num { color: #656d76; }
+.ch-sheet .ch-pillar { color: #656d76; background: #f6f8fa; border-color: #d8dee4; }
+.ch-sheet .ch-changed-mark { color: #656d76; background: #f6f8fa; border-color: #d8dee4; }
+.ch-sheet .ch-box .ch-box-inner { background: #f6f8fa; border: 1px solid #d8dee4; border-left: 3px solid #d0d7de; color: #24292f; }
+.ch-sheet .ch-box-title { color: #1f2328; }
+.ch-sheet .ch-box-title .icon, .ch-sheet .ch-box-nexus { color: #656d76; }
+.ch-sheet .ch-figure figcaption, .ch-sheet .ch-table figcaption { color: #24292f; }
+.ch-sheet .ch-table th { background: #f6f8fa; color: #1f2328; text-transform: none; letter-spacing: 0; font-size: 12.5px; }
+.ch-sheet .ch-figure-ph { background: #f6f8fa; border: 1px dashed #d0d7de; }
+.ch-sheet .ch-h2-notes { color: #1f2328; }
+.ch-sheet .ch-note-n { color: #656d76; }
+.ch-sheet mark { background: #fff8c5; color: inherit; }
