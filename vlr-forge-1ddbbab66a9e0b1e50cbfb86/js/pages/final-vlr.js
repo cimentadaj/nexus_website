@@ -536,11 +536,8 @@ export default {
 
     const unbindTop = bindActions(ctx.topbar, {
       'download-menu': (el) => openMenu(el, [
-        { header: `${book.title} · v${book.version}` },
-        { label: 'Word (.docx)', icon: 'file-type', sub: 'Opens in Microsoft Word / Google Docs', onClick: () => doDownload('docx') },
-        { label: 'PDF (print)', icon: 'printer', sub: 'Printable layout in a new tab', onClick: () => doDownload('pdf') },
-        { label: 'Markdown', icon: 'file-text', sub: 'Plain-text source with footnotes', onClick: () => doDownload('md') },
-      ], { align: 'right', minWidth: '280px' }),
+        { label: 'Word (.docx)', icon: 'file-text', onClick: () => doDownload('docx') },
+      ], { align: 'right', minWidth: '180px' }),
       'finalize': async () => {
         const b = getProjectBook(project.id); if (!b) return;
         const open = (b.comments || []).filter(c => c.status === 'open').length;
