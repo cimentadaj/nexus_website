@@ -676,6 +676,8 @@ export default {
       'res-goal': (el) => { const g = Number(el.dataset.goal); ctx.local.resGoal = ctx.local.resGoal === g ? null : g; ctx.rerender(); },
       'ctx-toggle': (el, ev) => {
         ev.stopPropagation();
+        // a selected chip only leaves the context via its ✕ — clicking the body does nothing
+        if (el.classList.contains('on') && !ev.target.closest('svg, i')) return;
         const ids = el.dataset.ids ? el.dataset.ids.split(',') : [el.dataset.id];
         const on = ids.some(id => (ctx.local.ctxSel || {})[id]);
         ids.forEach(id => { (ctx.local.ctxSel ||= {})[id] = !on; });
