@@ -324,8 +324,8 @@ sup.ch-fn a:hover { background: var(--sky-100); }
 .ch-ctx-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .ch-ctx-col-h { padding-bottom: 2px; width: 100%; }
 .ch-ctx-col-h .ch-pillar { display: block; width: 100%; text-align: center; }
-.ch-ctx-col { align-items: center; }
-.ch-ctx-col .ch-ctx-mini { width: auto; }
+.ch-ctx-col .ch-ctx-mini { width: 100%; justify-content: center; position: relative; }
+.ch-ctx-col .ch-ctx-mini .icon-xs { position: absolute; right: 6px; }
 
 /* chips tinted per pillar column */
 .ch-ctx-col.col-indicators .ch-ctx-mini { color: #1d6fb8; background: #e6f0fb; border-color: #cfe1f5; }
