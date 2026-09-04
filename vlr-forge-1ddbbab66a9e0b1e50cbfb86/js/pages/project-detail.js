@@ -53,11 +53,10 @@ function indicatorsMatrixHtml(ctx, exts) {
     ${goals.map(g => `<button class="pd-mx-goal ${sel === g ? 'on' : ''}" style="background:${SDG_COLORS[g]}" data-action="mx-sdg" data-goal="${g}" data-tip="SDG ${g}: ${esc(SDG_TITLES[g])}">${g}</button>`).join('')}
   </div>
   <div class="pd-mx-wrap"><table class="table pd-mx-table">
-    <thead><tr><th class="pd-mx-sdgcol">SDG</th><th class="pd-mx-sticky pd-mx-sortable" data-action="mx-sort" data-tip="Sort by indicator name">Indicator ${dir ? icon(dir === 'az' ? 'arrow-down-a-z' : 'arrow-up-a-z', 'icon-xs') : icon('arrow-up-down', 'icon-xs faint')}</th><th>Unit</th>${years.map(y => `<th class="pd-mx-year">${y}</th>`).join('')}</tr></thead>
+    <thead><tr><th class="pd-mx-sdgcol">SDG</th><th class="pd-mx-sticky pd-mx-sortable" data-action="mx-sort" data-tip="Sort by indicator name">Indicator ${dir ? icon(dir === 'az' ? 'arrow-down-a-z' : 'arrow-up-a-z', 'icon-xs') : icon('arrow-up-down', 'icon-xs faint')}</th>${years.map(y => `<th class="pd-mx-year">${y}</th>`).join('')}</tr></thead>
     <tbody>${rows.map(r => `<tr>
       <td class="pd-mx-sdgcol">${sdgChip(r.goal)}</td>
       <td class="pd-mx-sticky" style="border-left:3px solid ${SDG_COLORS[r.goal]}"><span class="pd-mx-code mono" style="color:${SDG_COLORS[r.goal]}">${esc(r.sdg)}</span> <span class="cell-title">${esc(r.title)}</span></td>
-      <td class="xs muted pd-mx-unit">${esc(r.unit || '—')}</td>
       ${years.map(y => { const e = r.cells[y];
         return `<td class="pd-mx-td">${e ? `<button class="pd-mx-cell st-${esc(e.status)} ${ctx.local.extSel === e.id ? 'sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}" data-tip="${esc(r.title)} · ${y} — click to inspect and confirm">${esc(e.value)}</button>` : ''}</td>`; }).join('')}
     </tr>`).join('')}</tbody>
