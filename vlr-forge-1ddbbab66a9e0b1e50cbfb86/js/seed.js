@@ -43,6 +43,24 @@ export const STEP_ORDER = ['parse', 'translate', 'xml_extraction', 'wiki_load', 
 /* Sources are assigned round-robin over the project's documents.        */
 /* ------------------------------------------------------------------ */
 export const INDICATOR_TEMPLATES = [
+  /* --- multi-year series: same indicator, one confirmable number per year --- */
+  { sdg: '11.1.1', goal: 11, title: 'Urban Informal Housing %', indicator: 'Proportion of urban population living in slums, informal settlements or inadequate housing.', value: '14.8', unit: 'Percentage (%)', year: 2018, confidence: 90, page: 43, paragraph: 2, topic: 'HOUSING ACCESSIBILITY',
+    quote: 'The 2018 housing census recorded {h:14.8%} of the urban population of {city} living in {h:informal or sub-standard housing}, concentrated in the outer metropolitan zones.', direction: 'lower-better' },
+  { sdg: '11.1.1', goal: 11, title: 'Urban Informal Housing %', indicator: 'Proportion of urban population living in slums, informal settlements or inadequate housing.', value: '13.1', unit: 'Percentage (%)', year: 2020, confidence: 92, page: 44, paragraph: 1, topic: 'HOUSING ACCESSIBILITY',
+    quote: 'By 2020 the biennial review reported {h:13.1%} of residents in {h:informal housing units}, a 1.7-point improvement on the 2018 census figure.', direction: 'lower-better' },
+  { sdg: '11.2.1', goal: 11, title: 'Public Transport Accessibility', indicator: 'Proportion of population that has convenient access to public transport, by sex, age and persons with disabilities.', value: '76.1', unit: 'Percentage (%)', year: 2019, confidence: 88, page: 38, paragraph: 3, topic: 'SUSTAINABLE TRANSPORT',
+    quote: 'At the 2019 baseline, {h:76.1%} of the population lived {h:within 500 metres of a public transport stop} meeting the frequency standard.', direction: 'higher-better' },
+  { sdg: '11.2.1', goal: 11, title: 'Public Transport Accessibility', indicator: 'Proportion of population that has convenient access to public transport, by sex, age and persons with disabilities.', value: '79.6', unit: 'Percentage (%)', year: 2021, confidence: 90, page: 38, paragraph: 5, topic: 'SUSTAINABLE TRANSPORT',
+    quote: 'The mid-term mobility review measured {h:79.6%} coverage in 2021 after the first {h:high-frequency bus corridor} entered service.', direction: 'higher-better' },
+  { sdg: '7.2.1', goal: 7, title: 'Renewable Energy Share', indicator: 'Renewable energy share in the total final energy consumption.', value: '11.2', unit: 'Percentage (%)', year: 2019, confidence: 85, page: 15, paragraph: 2, topic: 'CLEAN ENERGY',
+    quote: 'Renewables supplied {h:11.2%} of final energy consumption in 2019, before the {h:rooftop photovoltaic programme} began.', direction: 'higher-better' },
+  { sdg: '7.2.1', goal: 7, title: 'Renewable Energy Share', indicator: 'Renewable energy share in the total final energy consumption.', value: '14.9', unit: 'Percentage (%)', year: 2021, confidence: 87, page: 15, paragraph: 4, topic: 'CLEAN ENERGY',
+    quote: 'The 2021 energy balance put the renewable share at {h:14.9%}, driven by the first phase of the {h:district heating conversion}.', direction: 'higher-better' },
+  { sdg: '5.5.1', goal: 5, title: 'Women in Local Government', indicator: 'Proportion of seats held by women in local governments.', value: '40.7', unit: 'Percentage (%)', year: 2015, confidence: 96, page: 3, paragraph: 5, topic: 'GENDER EQUALITY',
+    quote: 'After the 2015 local elections women held {h:40.7%} of seats in the {city} municipal council.', direction: 'higher-better' },
+  { sdg: '5.5.1', goal: 5, title: 'Women in Local Government', indicator: 'Proportion of seats held by women in local governments.', value: '44.4', unit: 'Percentage (%)', year: 2019, confidence: 97, page: 4, paragraph: 1, topic: 'GENDER EQUALITY',
+    quote: 'The 2019 term saw the share of council seats held by women rise to {h:44.4%}, {h:above the national average} for the first time.', direction: 'higher-better' },
+
   { sdg: '11.1.1', goal: 11, title: 'Urban Informal Housing %', indicator: 'Proportion of urban population living in slums, informal settlements or inadequate housing.', value: '12.4', unit: 'Percentage (%)', year: 2022, confidence: 94, page: 42, paragraph: 3, topic: 'HOUSING ACCESSIBILITY',
     quote: 'Analysis of the 2022 municipal housing survey indicates that approximately {h:12.4%} of residents in the outer metropolitan zones are currently categorized as residing in {h:informal or sub-standard housing units}, a marginal decrease from the 13.1% reported in the previous biennial review cycle.',
     trend: [{ year: 2018, value: 14.8 }, { year: 2020, value: 13.1 }, { year: 2022, value: 12.4 }], direction: 'lower-better' },
@@ -233,11 +251,11 @@ export function buildTemplateExtractions(project, docs, { pillar, limit, status 
   let counter = 0;
   for (const pk of pillars) {
     const tpl = templatePlan(project, pk);
-    const have = new Set(existing.filter(e => e.pillar === pk).map(e => e.sdg + '|' + e.title));
+    const have = new Set(existing.filter(e => e.pillar === pk).map(e => e.sdg + '|' + e.title + (pk === 'indicators' ? '|' + (e.year || '') : '')));
     const items = limit ? tpl.slice(0, limit) : tpl;
     for (const t of items) {
       const title = fillTemplate(t.title, project);
-      if (have.has(t.sdg + '|' + title)) continue;
+      if (have.has(t.sdg + '|' + title + (pk === 'indicators' ? '|' + (t.year || '') : ''))) continue;
       const src = docId ? sources.find(d => d.id === docId) || sources[0] : pickSourceDoc(pk, sources, counter);
       counter++;
       out.push({
@@ -365,7 +383,7 @@ export function buildSeed() {
     for (const t of list) {
       const srcName = pillar === 'stakeholders' ? 'Citizen_Assembly_Minutes_Mar2024.docx' : (madridSources[t.sdg] || 'Sustainability_Report_2023.pdf');
       const doc = byName('madrid-2024', srcName) || madridDocs[0];
-      const built = buildTemplateExtractions({ ...madrid, sdgs: [] }, [doc], { pillar, status, existing: [] }).find(x => x.sdg === t.sdg && x.title === fillTemplate(t.title, madrid));
+      const built = buildTemplateExtractions({ ...madrid, sdgs: [] }, [doc], { pillar, status, existing: [] }).find(x => x.sdg === t.sdg && x.title === fillTemplate(t.title, madrid) && (pillar !== 'indicators' || x.year === t.year));
       if (!built) continue;
       built.createdAt = now - (9 * DAY) + madridExt.length * 3 * HOUR; built.updatedAt = built.createdAt;
       madridExt.push(built);

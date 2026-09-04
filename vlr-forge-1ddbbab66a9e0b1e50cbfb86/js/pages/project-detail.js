@@ -31,6 +31,28 @@ function extValueLine(e) {
   return `<span class="ext-k">Group:</span> <span class="ext-v">${esc(e.group || '—')}</span>${e.engagement ? ` <span class="ext-sep">·</span> <span class="ext-k">${esc(e.engagement)}</span>` : ''}`;
 }
 
+/* Indicators pillar: wide year-matrix — one column per year (2000..today), each
+ * number is its own extraction, inspectable and confirmable on its own */
+function indicatorsMatrixHtml(ctx, exts) {
+  const yMax = new Date().getFullYear();
+  const years = []; for (let y = 2000; y <= yMax; y++) years.push(y);
+  const rows = []; const byKey = new Map();
+  for (const e of exts) {
+    const k = e.sdg + '|' + e.title;
+    if (!byKey.has(k)) { byKey.set(k, { sdg: e.sdg, title: e.title, unit: e.unit, cells: {} }); rows.push(byKey.get(k)); }
+    if (e.year) byKey.get(k).cells[e.year] = e;
+  }
+  return `<div class="pd-mx-wrap"><table class="table pd-mx-table">
+    <thead><tr><th class="pd-mx-sticky">Indicator</th><th>Unit</th>${years.map(y => `<th class="pd-mx-year">${y}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r => `<tr>
+      <td class="pd-mx-sticky"><span class="badge badge-sdg">SDG ${esc(r.sdg)}</span> <span class="cell-title">${esc(r.title)}</span></td>
+      <td class="xs muted pd-mx-unit">${esc(r.unit || '—')}</td>
+      ${years.map(y => { const e = r.cells[y];
+        return `<td class="pd-mx-td">${e ? `<button class="pd-mx-cell st-${esc(e.status)} ${ctx.local.extSel === e.id ? 'sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}" data-tip="${esc(r.title)} · ${y} — click to inspect and confirm">${esc(e.value)}</button>` : ''}</td>`; }).join('')}
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
 /* per-project UI memory: active pillar tab, selected extraction, filter — survives
  * navigating away (e.g. into the document viewer) and back */
 const uiMemo = {};
@@ -290,7 +312,7 @@ function overviewHtml(ctx, project, stats) {
           <span class="grow"></span>
           <button class="btn btn-light btn-sm" data-action="add-entry">${icon('plus', 'icon-sm')}Add entry</button>
         </div>
-        ${exts.length ? `<div class="pd-table-wrap"><table class="table pd-ext-table">
+        ${exts.length ? tab === 'indicators' ? indicatorsMatrixHtml(ctx, exts) : `<div class="pd-table-wrap"><table class="table pd-ext-table">
           <thead><tr><th>SDG</th><th>Extraction</th><th>Value</th><th>Unit</th><th>Source</th><th></th></tr></thead>
           <tbody>${exts.map(e => { const [val, unit] = extCells(e); return `
             <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
@@ -321,11 +343,17 @@ function overviewHtml(ctx, project, stats) {
             <dt>Extraction</dt><dd>${esc(e.title)}</dd>
             <dt>Value</dt><dd>${esc(val)}</dd>
             <dt>Unit</dt><dd>${esc(unit)}</dd>
+            <dt>Year</dt><dd>${e.year ? esc(e.year) : '—'}</dd>
             <dt>Page</dt><dd>${e.source?.page ? esc(e.source.page) : '—'}</dd>
             <dt>Paragraph</dt><dd>${e.source?.paragraph ? esc(e.source.paragraph) : '—'}</dd>
           </dl>
           ${e.source?.quote ? `<blockquote class="pd-ext-quote">${icon('quote', 'icon-xs')}${esc(e.source.quote)}</blockquote>` : ''}
-          ${e.source?.docId ? `<a class="btn btn-light btn-sm mt-12" href="#/projects/${esc(project.id)}/documents/${esc(e.source.docId)}?page=${esc(e.source.page || 1)}&hl=${esc(e.id)}">${icon('eye', 'icon-sm')}See in document</a>` : ''}
+          <div class="row gap-6 mt-12">
+            ${e.status === 'approved'
+              ? `<button class="btn btn-light btn-sm" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('undo-2', 'icon-sm')}Undo confirmation</button>`
+              : `<button class="btn btn-primary btn-sm" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-sm')}Confirm number</button>`}
+            ${e.source?.docId ? `<a class="btn btn-light btn-sm" href="#/projects/${esc(project.id)}/documents/${esc(e.source.docId)}?page=${esc(e.source.page || 1)}&hl=${esc(e.id)}">${icon('eye', 'icon-sm')}See in document</a>` : ''}
+          </div>
         </div>`;
       })()}
     </aside>
@@ -459,6 +487,11 @@ export default {
       else toast.warning('Nothing to run', `No documents need "${meta.label}" right now.`);
     };
 
+    const mw = ctx.content.querySelector('.pd-mx-wrap');
+    if (mw) {
+      mw.scrollLeft = ctx.local.mxScroll ?? mw.scrollWidth;
+      mw.addEventListener('scroll', () => { ctx.local.mxScroll = mw.scrollLeft; }, { passive: true });
+    }
     const unbindClick = bindActions(ctx.content, {
       'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.local.extSel = null; Object.assign(memo, { tab: el.dataset.tab, filter: 'all', extSel: null }); ctx.rerender(); },
       'ext-sel': (el) => { ctx.local.extSel = ctx.local.extSel === el.dataset.id ? null : el.dataset.id; memo.extSel = ctx.local.extSel; ctx.rerender(); },

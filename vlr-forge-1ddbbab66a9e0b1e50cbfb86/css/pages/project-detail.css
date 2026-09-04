@@ -191,3 +191,17 @@ tr.pp-open td { background: var(--sky-50); }
 .pd-ext-detail .kv dt { color: var(--text-muted); font-weight: 600; }
 .pd-ext-detail .kv dd { color: var(--text); }
 .pd-ext-quote { margin: 14px 0 0; padding: 10px 12px; background: var(--surface-tint); border-left: 3px solid var(--sky-600); border-radius: 6px; font-size: 13px; font-style: italic; color: var(--text-secondary); display: flex; gap: 8px; align-items: flex-start; }
+
+/* Indicators year matrix */
+.pd-mx-wrap { overflow-x: auto; }
+.pd-mx-table { min-width: max-content; }
+.pd-mx-table th, .pd-mx-table td { white-space: nowrap; }
+.pd-mx-year { font-variant-numeric: tabular-nums; text-align: center; padding: 8px 6px; font-size: 12px; }
+.pd-mx-td { text-align: center; padding: 4px 3px; }
+.pd-mx-unit { max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+.pd-mx-sticky { position: sticky; left: 0; background: var(--surface); z-index: 2; box-shadow: 2px 0 0 var(--border); max-width: 320px; }
+.pd-mx-table thead th { background: var(--surface); }
+.pd-mx-cell { font-family: var(--mono); font-size: 12.5px; font-weight: 600; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-tint); color: var(--text); cursor: pointer; transition: background .12s, border-color .12s; }
+.pd-mx-cell:hover { border-color: var(--sky-600); background: var(--sky-50); }
+.pd-mx-cell.st-approved { background: var(--success-bg); border-color: var(--success); color: var(--success-600); }
+.pd-mx-cell.sel { outline: 2px solid var(--navy); outline-offset: 1px; }
