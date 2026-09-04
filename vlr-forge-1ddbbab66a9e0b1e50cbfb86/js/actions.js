@@ -307,7 +307,8 @@ export function rewriteUnit(chapterId, { blockIds = [], extractionIds = [], inst
   const c = getChapter(chapterId);
   if (!c || !blockIds.length) return null;
   const exts = extractionIds.map(getExtraction).filter(Boolean);
-  const askText = `Rewrite ${unitLabel} using ${exts.length} resource${exts.length === 1 ? '' : 's'}: ${exts.map(e => e.title).join('; ')}${instruction ? ` — ${instruction}` : ''}`;
+  const resourceNames = [...new Set(exts.map(e => e.title))];
+  const askText = `Rewrite ${unitLabel} using ${resourceNames.length} resource${resourceNames.length === 1 ? '' : 's'}: ${resourceNames.join('; ')}${instruction ? ` — ${instruction}` : ''}`;
   const userMsg = { id: uid('msg'), role: 'user', at: Date.now(), text: askText, by: getState().auth.user?.name };
   const pendingId = uid('msg');
   update(s => { const x = s.chapters.find(q => q.id === chapterId); x.chat.push(userMsg, { id: pendingId, role: 'assistant', at: Date.now(), text: '', pending: true }); x.reviewing = true; });
@@ -317,29 +318,46 @@ export function rewriteUnit(chapterId, { blockIds = [], extractionIds = [], inst
       const x = s.chapters.find(q => q.id === chapterId);
       if (!x) return;
       let nextN = Math.max(0, ...(x.footnotes || []).map(f => f.n)) + 1;
-      const weave = (e) => {
+      const weave = (r) => {
+        const e = r.items ? r.items[r.items.length - 1] : r;
         const n = nextN++;
         (x.footnotes ||= []).push({ n, text: `${e.source?.docName || 'Manual entry'}${e.source?.page != null ? `, p. ${e.source.page}` : ''}.` });
         const fn = `[^${n}]`;
-        if (e.pillar === 'indicators') { const u = /%/.test(e.unit || '') ? '%' : (e.unit ? ` ${e.unit}` : ''); return { n, text: `${e.title} stood at **${e.value}${u}** in ${e.year || 'the latest reporting year'}${fn}.` }; }
+        const u = /%/.test(e.unit || '') ? '%' : (e.unit ? ` ${e.unit}` : '');
+        if (r.items && r.items.length > 1) {
+          const a = r.items[0];
+          return { n, text: `${e.title} moved from **${a.value}${u}** in ${a.year} to **${e.value}${u}** in ${e.year}${fn}.` };
+        }
+        if (e.pillar === 'indicators') return { n, text: `${e.title} stood at **${e.value}${u}** in ${e.year || 'the latest reporting year'}${fn}.` };
         if (e.pillar === 'documentary') return { n, text: `${String(e.summary || e.title).replace(/\.$/, '')}${fn}.` };
         if (e.pillar === 'projects') return { n, text: `The ${e.title}${e.period ? ` (${e.period})` : ''} is addressing this directly${fn}.` };
         return { n, text: `Consultations with ${e.group || 'local stakeholders'} raised this as a ${String(e.category || 'priority').toLowerCase()}${fn}.` };
       };
+      // an indicator resource is the whole time series, not a single year
+      const seriesMap = new Map(); const resources = [];
+      for (const e of exts) {
+        if (e.pillar === 'indicators') {
+          const k = e.sdg + '|' + e.title;
+          if (!seriesMap.has(k)) { seriesMap.set(k, { items: [] }); resources.push(seriesMap.get(k)); }
+          seriesMap.get(k).items.push(e);
+        } else resources.push(e);
+      }
+      resources.forEach(r => { if (r.items) r.items.sort((a, b) => (a.year || 0) - (b.year || 0)); });
       const targets = [];
       const visit = (blocks) => blocks.forEach(b => { if (b.type === 'p' && blockIds.includes(b.id)) targets.push(b); });
       (x.sections || []).forEach(sec => { visit(sec.blocks || []); (sec.subsections || []).forEach(ss => visit(ss.blocks || [])); });
       const changed = [];
       targets.forEach((b, i) => {
-        const mine = exts.filter((_, k) => k % targets.length === i);
+        const mine = resources.filter((_, k) => k % targets.length === i);
         if (!mine.length && !instruction) return;
         const woven = mine.map(weave);
+        const flat = mine.flatMap(r => r.items || [r]);
         b.text = [firstSentence(b.text), ...woven.map(w => w.text)].join(' ');
-        b.extractionIds = mine.map(e => e.id); delete b.extractionId;
-        b.pillars = [...new Set(mine.map(e => e.pillar))];
+        b.extractionIds = flat.map(e => e.id); delete b.extractionId;
+        b.pillars = [...new Set(flat.map(e => e.pillar))];
         changed.push(b.id);
         x.provenance = (x.provenance || []).filter(p => p.blockId !== b.id)
-          .concat(mine.map(e => ({ blockId: b.id, extractionId: e.id, doc: e.source?.docName, page: e.source?.page })));
+          .concat(flat.map(e => ({ blockId: b.id, extractionId: e.id, doc: e.source?.docName, page: e.source?.page })));
       });
       let words = 0; const wc = (t) => String(t || '').split(/\s+/).filter(Boolean).length;
       (x.sections || []).forEach(sec => { (sec.blocks || []).forEach(b => { words += wc(b.text); (b.items || []).forEach(i => { words += wc(i.text); }); }); (sec.subsections || []).forEach(ss => (ss.blocks || []).forEach(b => { words += wc(b.text); })); });

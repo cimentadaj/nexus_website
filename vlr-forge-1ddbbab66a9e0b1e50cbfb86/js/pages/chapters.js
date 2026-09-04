@@ -286,6 +286,8 @@ function chatPanelHtml(chapter, ctx) {
       const goalList = [...new Set(pillarPool.map(e => e.goal))].sort((a, b) => a - b);
       const avail = pillarPool.filter(e => !resGoal || e.goal === resGoal);
       const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="mono">${esc(e.sdg)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
+      const miniSeries = (g, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-ids="${esc(g.map(x => x.id).join(','))}"><span class="mono">${esc(g[0].sdg)}</span>${g.length > 1 ? `<span class="ch-yrs">×${g.length}</span>` : ''}${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
+      const groupInd = (list) => { const m = new Map(); for (const e of list.filter(x => x.pillar === 'indicators')) { const k = e.sdg + '|' + e.title; if (!m.has(k)) m.set(k, []); m.get(k).push(e); } return [...m.values()].map(g => [...g].sort((a, b) => (a.year || 0) - (b.year || 0))); };
       return `
     <div class="ch-unit">
       ${u ? `
@@ -302,12 +304,14 @@ function chatPanelHtml(chapter, ctx) {
       ${selected.length ? `<div class="ch-ctx-cols">${PILLARS.map(p => { const list = selected.filter(e => e.pillar === p.key); return `
         <div class="ch-ctx-col col-${esc(p.key)}">
           <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span></div>
-          ${list.map(e => mini(e, true)).join('')}
+          ${p.key === 'indicators' ? groupInd(list).map(g => miniSeries(g, true)).join('') : list.map(e => mini(e, true)).join('')}
         </div>`; }).join('')}</div>` : `<div class="ch-ctx-pills"><span class="xs muted">Empty — add resources to rewrite from.</span></div>`}
       ${ctx.local.resOpen ? `
       <div class="ch-res-pillars">${PILLARS.map(p => `<button class="ch-res-pillar ${p.key === resPillar ? 'on' : ''}" data-action="res-pillar" data-pillar="${esc(p.key)}">${icon(p.icon, 'icon-xs')}${esc(p.label)}<span class="ch-res-n">${pool.filter(e => e.pillar === p.key).length}</span></button>`).join('')}</div>
       ${goalList.length > 1 ? `<div class="ch-res-goals">${goalList.map(g => `<button class="ch-res-goal ${resGoal === g ? 'on' : ''}" style="background:${resGoal && resGoal !== g ? '#cbd5e1' : SDG_COLORS[g]}" data-action="res-goal" data-goal="${g}" data-tip="SDG ${g}: ${esc(SDG_TITLES[g])}">${g}</button>`).join('')}</div>` : ''}
-      <div class="ch-ctx-avail">${avail.length ? avail.map(e => `<button class="ch-ctx-mini" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="ch-pillar p-${esc(e.pillar)}">${PILLAR_ABBR[e.pillar] || '·'}</span><span class="mono">${esc(e.sdg)}</span><span class="ch-res-t">${esc(e.title)}</span>${icon('plus', 'icon-xs')}</button>`).join('') : `<span class="xs muted">Everything here is already in context.</span>`}</div>` : ''}`
+      <div class="ch-ctx-avail">${resPillar === 'indicators'
+        ? (groupInd(avail).length ? groupInd(avail).map(g => `<button class="ch-ctx-mini" data-action="ctx-toggle" data-ids="${esc(g.map(x => x.id).join(','))}"><span class="ch-pillar p-indicators">${PILLAR_ABBR.indicators}</span><span class="mono">${esc(g[0].sdg)}</span><span class="ch-res-t">${esc(g[0].title)}</span>${g.length > 1 ? `<span class="ch-yrs">${g.length} yrs</span>` : ''}${icon('plus', 'icon-xs')}</button>`).join('') : `<span class="xs muted">Everything here is already in context.</span>`)
+        : avail.length ? avail.map(e => `<button class="ch-ctx-mini" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="ch-pillar p-${esc(e.pillar)}">${PILLAR_ABBR[e.pillar] || '·'}</span><span class="mono">${esc(e.sdg)}</span><span class="ch-res-t">${esc(e.title)}</span>${icon('plus', 'icon-xs')}</button>`).join('') : `<span class="xs muted">Everything here is already in context.</span>`}</div>` : ''}`
       : ''}
     </div>
     <div class="ch-compose-box">
@@ -491,6 +495,28 @@ export default {
     const hideCard = () => document.getElementById('ch-hovercard')?.remove();
     const showCard = (pillEl) => {
       hideCard();
+      if (pillEl.dataset.ids) {
+        const items = pillEl.dataset.ids.split(',').map(getExtraction).filter(Boolean).sort((a, b) => (a.year || 0) - (b.year || 0));
+        if (!items.length) return;
+        const f = items[0];
+        const u = (e) => /%/.test(e.unit || '') ? '%' : e.unit ? ` ${e.unit}` : '';
+        const card = document.createElement('div');
+        card.id = 'ch-hovercard';
+        card.innerHTML = `
+          <div class="hv-top"><span class="ch-pillar p-indicators">Urban data · indicator series</span><span class="badge badge-sdg">SDG ${esc(f.sdg)}</span></div>
+          <div class="hv-title">${esc(f.title)}</div>
+          ${f.indicator ? `<div class="hv-sum">${esc(f.indicator)}</div>` : ''}
+          <div class="hv-series">${items.map(e => `<div class="hv-yr"><b>${esc(e.year || '—')}</b><span class="mono">${esc(e.value)}${esc(u(e))}</span><span class="hv-yr-src">p. ${esc(e.source?.page ?? '—')}</span></div>`).join('')}</div>
+          <div class="hv-src">${esc(f.source?.docName || 'Manual entry')}</div>`;
+        document.body.appendChild(card);
+        const r = pillEl.getBoundingClientRect();
+        const w = card.offsetWidth, h = card.offsetHeight;
+        let x = r.left - w - 10;
+        if (x < 8) x = Math.min(window.innerWidth - w - 8, r.right + 10);
+        card.style.left = `${x}px`;
+        card.style.top = `${Math.max(8, Math.min(r.top + r.height / 2 - h / 2, window.innerHeight - h - 8))}px`;
+        return;
+      }
       const e = getExtraction(pillEl.dataset.id);
       if (!e) return;
       const PA = { indicators: 'Urban data · indicator', documentary: 'Documentary evidence', projects: 'Project', stakeholders: 'Stakeholder voice' };
@@ -648,7 +674,13 @@ export default {
       'res-toggle': () => { ctx.local.resOpen = !ctx.local.resOpen; ctx.rerender(); },
       'res-pillar': (el) => { ctx.local.resPillar = el.dataset.pillar; ctx.local.resGoal = null; ctx.rerender(); },
       'res-goal': (el) => { const g = Number(el.dataset.goal); ctx.local.resGoal = ctx.local.resGoal === g ? null : g; ctx.rerender(); },
-      'ctx-toggle': (el, ev) => { ev.stopPropagation(); (ctx.local.ctxSel ||= {})[el.dataset.id] = !ctx.local.ctxSel[el.dataset.id]; ctx.rerender(); },
+      'ctx-toggle': (el, ev) => {
+        ev.stopPropagation();
+        const ids = el.dataset.ids ? el.dataset.ids.split(',') : [el.dataset.id];
+        const on = ids.some(id => (ctx.local.ctxSel || {})[id]);
+        ids.forEach(id => { (ctx.local.ctxSel ||= {})[id] = !on; });
+        ctx.rerender();
+      },
       'send': sendDraft,
     });
 
