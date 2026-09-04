@@ -249,3 +249,12 @@ tr.pp-open td { background: var(--sky-50); }
 .pd-tabs-actions .grow { flex: 1; }
 
 .pd-rowd-head.clickable { cursor: pointer; }
+
+/* Documentary key-insight table */
+.pd-doc-sdgth, .pd-doc-sdgtd { width: 52px; text-align: center; }
+.pd-doc-insight { white-space: normal; font-size: 13px; line-height: 1.45; max-width: 640px; }
+.pd-doc-cat { text-transform: none; font-size: 11.5px; }
+.pd-doc-cat.cat-challenge { background: #fdecec; color: #b3261e; border-color: #f5c6c2; }
+.pd-doc-cat.cat-commitment { background: var(--sky-50); color: var(--navy); border-color: #cfe1f5; }
+.pd-doc-cat.cat-policy { background: var(--success-bg); color: var(--success-600); border-color: var(--success); }
+.pd-doc-table tr.row-sel td { background: rgba(124,196,248,.16); }

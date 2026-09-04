@@ -60,6 +60,23 @@ function indicatorsMatrixHtml(ctx, exts) {
   </table></div>`;
 }
 
+/* Documentary pillar: key-insight table — SDG chip, one-two sentence insight, category */
+const DOC_CAT_CLASS = { Challenge: 'cat-challenge', Commitment: 'cat-commitment', Policy: 'cat-policy' };
+function documentaryTableHtml(ctx, exts) {
+  return `<div class="pd-table-wrap"><table class="table pd-doc-table">
+    <thead><tr><th class="pd-doc-sdgth">SDG</th><th>Key insight</th><th>Category</th><th class="th-right"></th></tr></thead>
+    <tbody>${exts.map(e => `
+      <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
+        <td class="pd-doc-sdgtd">${sdgChip(e.goal)}</td>
+        <td class="pd-doc-insight">${esc(e.summary || e.title)}</td>
+        <td><span class="badge pd-doc-cat ${DOC_CAT_CLASS[e.categoryLabel] || ''}">${esc(e.categoryLabel || '—')}</span></td>
+        <td class="td-right"><div class="table-actions">${e.status === 'approved'
+          ? `<span data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''} — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle')}</button></span>`
+          : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}</div></td>
+      </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
 /* per-project UI memory: active pillar tab, selected extraction, filter — survives
  * navigating away (e.g. into the document viewer) and back */
 const uiMemo = {};
@@ -312,7 +329,7 @@ function overviewHtml(ctx, project, stats) {
         <button class="btn btn-light btn-sm" data-action="add-entry">${icon('plus', 'icon-sm')}Add entry</button>
       </div>
       <div class="card-body">
-        ${exts.length ? tab === 'indicators' ? indicatorsMatrixHtml(ctx, exts) : `<div class="pd-table-wrap"><table class="table pd-ext-table">
+        ${exts.length ? tab === 'indicators' ? indicatorsMatrixHtml(ctx, exts) : tab === 'documentary' ? documentaryTableHtml(ctx, exts) : `<div class="pd-table-wrap"><table class="table pd-ext-table">
           <thead><tr><th>SDG</th><th>Extraction</th><th>Value</th><th>Unit</th><th>Source</th><th></th></tr></thead>
           <tbody>${exts.map(e => { const [val, unit] = extCells(e); return `
             <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
