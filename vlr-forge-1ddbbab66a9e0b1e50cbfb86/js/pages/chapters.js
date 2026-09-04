@@ -255,6 +255,7 @@ function centreHtml(project, chapter, chapters, ctx) {
 /* Right — Chapter Reviewer chat + revision history                     */
 /* ------------------------------------------------------------------ */
 function chatPanelHtml(chapter, ctx) {
+  if (ctx.local.chatHidden) return `<aside class="ch-chat-collapsed"><button class="ch-chat-open" data-action="chat-show" data-tip="Show the Chapter Reviewer" aria-label="Show the Chapter Reviewer">${icon('panel-right-open', 'icon-sm')}</button></aside>`;
   const me = currentUser();
   const msgs = chapter ? (chapter.chat || []) : [];
   const busy = !!chapter?.reviewing;
@@ -263,7 +264,10 @@ function chatPanelHtml(chapter, ctx) {
   <aside class="ch-chat card" id="ch-chat">
     <div class="card-header tinted ch-chat-head">
       <div class="card-title-caps">${icon('bot')}Chapter Reviewer</div>
-      ${busy ? `<span class="ch-live"><span class="ch-live-dot busy"></span>Rewriting</span>` : ''}
+      <div class="row gap-6">
+        ${busy ? `<span class="ch-live"><span class="ch-live-dot busy"></span>Rewriting</span>` : ''}
+        <button class="btn-icon" data-action="chat-hide" data-tip="Hide the reviewer" aria-label="Hide the reviewer">${icon('panel-right-close', 'icon-sm')}</button>
+      </div>
     </div>
     <div class="ch-msgs" id="ch-msgs">
       ${!chapter ? `<div class="empty"><div class="empty-sub">Select a chapter to review it with the Chapter Reviewer.</div></div>` : msgs.length ? msgs.map(m => m.role === 'user'
@@ -431,7 +435,7 @@ export default {
       ${avatarButton()}`;
 
     /* ---- content ---- */
-    ctx.content.innerHTML = `<div class="ch-page">${listHtml(project, chapters, chapter, tasks, stats, ctx)}${centreHtml(project, chapter, chapters, ctx)}${chatPanelHtml(chapter, ctx)}</div>`;
+    ctx.content.innerHTML = `<div class="ch-page ${ctx.local.chatHidden ? 'chat-min' : ''}">${listHtml(project, chapters, chapter, tasks, stats, ctx)}${centreHtml(project, chapter, chapters, ctx)}${chatPanelHtml(chapter, ctx)}</div>`;
     ctx.footer.innerHTML = statusBarHtml(project);
 
     /* ---- restore scroll positions + auto-scroll behaviours ---- */
@@ -669,6 +673,8 @@ export default {
         ctx.local.resQ = '';
         ctx.rerender();
       },
+      'chat-hide': () => { ctx.local.chatHidden = true; ctx.rerender(); },
+      'chat-show': () => { ctx.local.chatHidden = false; ctx.rerender(); },
       'unit-clear': () => { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.local.resPillar = null; ctx.rerender(); },
       'res-open': (el, ev) => { ev.stopPropagation(); ctx.local.resPillar = ctx.local.resPillar === el.dataset.pillar ? null : el.dataset.pillar; ctx.local.resGoal = null; ctx.rerender(); },
       'res-close': () => { ctx.local.resPillar = null; ctx.local.resGoal = null; ctx.rerender(); },

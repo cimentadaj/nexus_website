@@ -140,6 +140,7 @@ export function topbarTabs(items, activeKey) {
 }
 
 export function statusBarHtml(project) {
+  return '';
   const s = getState();
   const node = project?.node || s.meta?.node || 'EU-WEST-1';
   const latency = 18 + Math.floor((Date.now() / 10000) % 14);

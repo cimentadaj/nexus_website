@@ -359,3 +359,9 @@ sup.ch-fn a:hover { background: var(--sky-100); }
 .ch-brw-item .icon-xs { margin-left: auto; }
 
 .ch-strip-words { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-left: 8px; white-space: nowrap; }
+
+/* collapsible reviewer column */
+.ch-page.chat-min { grid-template-columns: 280px minmax(0, 1fr) 40px; }
+.ch-chat-collapsed { display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; }
+.ch-chat-open { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); display: grid; place-items: center; color: var(--text-muted); cursor: pointer; }
+.ch-chat-open:hover { color: var(--navy); border-color: var(--sky-600); }
