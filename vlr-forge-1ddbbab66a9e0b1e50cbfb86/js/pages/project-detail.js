@@ -357,14 +357,14 @@ function overviewHtml(ctx, project, stats) {
           const obsVal = ctx.local.obsDraft?.key === key ? ctx.local.obsDraft.text : obs;
           return `<div class="pd-ext-detail">
             <div class="row gap-8 mb-8">${sdgChip(first.goal)}<strong class="pd-rowd-title">${esc(first.indicator || first.title)}</strong></div>
-            <div class="row gap-8 mb-8"><span class="xs muted">${esc(first.unit || '')}</span><span class="grow"></span>
+            <div class="row gap-8 mb-8"><span class="grow"></span>
               ${pend.length ? `<button class="btn btn-primary btn-xs" data-action="row-confirm-all" data-key="${esc(key)}">${icon('check-check', 'icon-xs')}Confirm all (${pend.length})</button>` : `<span class="xs success-text">${icon('check-circle', 'icon-xs')} All confirmed</span>`}
             </div>
             <div class="pd-rowd-list">${group.map(e => `
               <div class="pd-rowd-item ${e.status === 'approved' ? 'ok' : ''}">
                 <div class="pd-rowd-head">
                   <strong class="mono">${esc(e.year || '—')}</strong>
-                  <span class="pd-rowd-val mono">${esc(e.value)}</span>
+                  <span class="pd-rowd-val mono">${esc(e.value)}</span><span class="pd-rowd-unit">${esc(e.unit || '')}</span>
                   <span class="grow"></span>
                   ${e.source?.docId ? `<a class="btn-icon" href="#/projects/${esc(project.id)}/documents/${esc(e.source.docId)}?page=${esc(e.source.page || 1)}&hl=${esc(e.id)}" data-tip="See in document (p. ${esc(e.source.page)})" onclick="event.stopPropagation()">${icon('eye', 'icon-sm')}</a>` : ''}
                   ${e.status === 'approved'
