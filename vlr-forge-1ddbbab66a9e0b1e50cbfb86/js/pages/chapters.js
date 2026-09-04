@@ -161,7 +161,11 @@ function listHtml(project, chapters, active, tasks, stats) {
   const editing = composing.find(t => t.step === 'edit');
   const ok = stats.allReviewed && project.status !== 'archived';
   const tip = project.status === 'archived' ? 'Project is archived' : !stats.extractions ? 'Run the pipeline and approve the evidence first' : !stats.allReviewed ? `${stats.extractions - stats.approved} extraction(s) still await review` : '';
-  const rows = chapters.map(c => `
+  const goals = [...new Set([...(project.sdgs || []), ...chapters.map(c => c.goal), ...goalsPending])].sort((a, b) => a - b);
+  const writeBtn = (g, c) => `<span data-tip="${c ? 'Rewrite this chapter from the approved evidence' : 'Write this chapter'}"><button class="btn-icon ch-row-write" data-action="write-goal" data-goal="${Number(g)}" ${c ? `data-chapter="${esc(c.id)}"` : ''}>${icon('pen-line', 'icon-sm')}</button></span>`;
+  const rows = goals.map(g => {
+    const c = chapters.find(x => x.goal === g);
+    if (c) return `
     <a class="ch-row ${c.id === active?.id ? 'active' : ''}" href="#/projects/${esc(project.id)}/chapters/${esc(c.id)}">
       ${sdgChip(c.goal, { title: false })}
       <div class="ch-row-main">
@@ -170,8 +174,9 @@ function listHtml(project, chapters, active, tasks, stats) {
         <div class="ch-row-meta">${chapterStatusBadge(c)}${tierBadge(c.tier)}</div>
         <div class="ch-row-sub">v${Number(c.version)} · ${Number(c.wordCount || 0).toLocaleString('en-US')} words</div>
       </div>
-    </a>`).join('');
-  const skeletons = goalsPending.map(g => `
+      ${writeBtn(g, c)}
+    </a>`;
+    if (goalsPending.includes(g)) return `
     <div class="ch-row ch-row-skel">
       ${sdgChip(g, { title: false, muted: true })}
       <div class="ch-row-main">
@@ -179,7 +184,19 @@ function listHtml(project, chapters, active, tasks, stats) {
         <div class="ch-row-title muted">Composing…</div>
         <div class="skeleton" style="width:70%;margin-top:6px"></div><div class="skeleton" style="width:45%;margin-top:6px"></div>
       </div>
-    </div>`).join('');
+    </div>`;
+    return `
+    <div class="ch-row ch-row-todo">
+      ${sdgChip(g, { title: false, muted: true })}
+      <div class="ch-row-main">
+        <div class="ch-row-top"><span class="ch-row-n">SDG ${Number(g)}</span></div>
+        <div class="ch-row-title">${esc(SDG_TITLES[g] || `Goal ${g}`)}</div>
+        <div class="ch-row-sub muted">Not written yet</div>
+      </div>
+      ${writeBtn(g, null)}
+    </div>`;
+  }).join('');
+  const skeletons = '';
   const taskList = composing.length ? `
     <div class="ch-compose">
       <div class="ch-compose-head">${icon('loader-2', 'icon-sm spin')}<span>Composition in progress</span><span class="badge badge-sky">${composing.length} active</span></div>
@@ -191,22 +208,7 @@ function listHtml(project, chapters, active, tasks, stats) {
       ${editing && editing.status === 'queued' ? `<div class="xs muted ch-compose-note">The Chapter Editor consolidates numbering and cross-references once every chapter is written.</div>` : ''}
     </div>` : '';
   const empty = !chapters.length && !composing.length ? `
-    <div class="ch-empty">
-      ${icon('pen-line')}
-      <div class="empty-title">No chapters yet</div>
-      <div class="empty-sub">One Chapter Composer task per reported SDG writes a chapter along the canonical spine, then the Chapter Editor consolidates numbering and cross-references.</div>
-      <span ${tip ? `data-tip="${esc(tip)}"` : ''}><button class="btn btn-primary btn-sm mt-12" data-action="write-vlr" ${ok ? '' : 'disabled'}>${icon('pen-line', 'icon-sm')}Write VLR chapters</button></span>
-      <div class="ch-spine">
-        <div class="ch-spine-title">The spine every chapter follows</div>
-        <ol>
-          <li><b>N.1 Introduction</b> — why the goal was selected → global → regional → national → city; national-initiatives box; regional figure</li>
-          <li><b>N.2 Overview</b> — what local evidence exists and what it lacks</li>
-          <li><b>N.3 Progress by Target</b> — one subsection per evidenced target, “Theme (Target n.n)”, pillar-tagged evidence, time-series tables</li>
-          <li><b>N.4 National–Local Alignment</b></li>
-          <li><b>N.5 Policy recommendations</b> and means of implementation</li>
-        </ol>
-      </div>
-    </div>` : '';
+    <div class="ch-list-foot"><span ${tip ? `data-tip="${esc(tip)}"` : ''}><button class="btn btn-primary btn-sm" data-action="write-vlr" ${ok ? '' : 'disabled'}>${icon('pen-line', 'icon-sm')}Write all chapters</button></span></div>` : '';
   return `
   <aside class="ch-list card" id="ch-list">
     <div class="card-header tinted"><div class="card-title-caps">${icon('book-open')}Chapters</div><span class="xs muted">${chapters.length ? `${stats.chaptersApproved}/${chapters.length} approved` : goalsPending.length ? `${goalsPending.length} composing` : '—'}</span></div>
@@ -464,6 +466,18 @@ export default {
       },
     });
     const unbindContent = bindActions(ctx.content, {
+      'write-goal': (el, ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        const g = Number(el.dataset.goal);
+        if (el.dataset.chapter) {
+          const t = recomposeChapter(el.dataset.chapter);
+          if (t) toast.info('Recomposition queued', `Chapter for SDG ${g} is being rewritten.`);
+          return;
+        }
+        const ts = composeChapters(project.id, { goals: [g] });
+        if (!ts.length) { toast.warning('Nothing to compose', `No approved evidence for SDG ${g} yet.`); return; }
+        toast.success('Composition started', `Writing the SDG ${g} chapter from the approved evidence.`);
+      },
       'write-vlr': () => {
         if (project.status === 'archived') { toast.warning('Project is archived', 'Restore it before composing chapters.'); return; }
         const st = projectStats(project);

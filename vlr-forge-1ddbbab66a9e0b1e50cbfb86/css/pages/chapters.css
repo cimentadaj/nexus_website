@@ -240,3 +240,10 @@ sup.ch-fn a:hover { background: var(--sky-100); }
 .ch-src.is-static:hover { color: var(--text-muted); border-color: var(--border); }
 /* compact table variant used by the provenance map */
 .table.table-compact th, .table.table-compact td { padding: 8px 12px; font-size: 12px; }
+
+/* SDG sidebar: unwritten rows + write icon */
+.ch-row-todo { opacity: .82; }
+.ch-row-todo .ch-row-title { color: var(--text-secondary); }
+.ch-row-write { flex-shrink: 0; align-self: center; color: var(--text-muted); }
+.ch-row-write:hover { color: var(--navy); }
+.ch-row { position: relative; }
