@@ -178,7 +178,7 @@ function listHtml(project, chapters, active, tasks, stats) {
     </a>`;
     if (goalsPending.includes(g)) return `
     <div class="ch-row ch-row-skel">
-      ${sdgChip(g, { title: false, muted: true })}
+      ${sdgChip(g, { title: false })}
       <div class="ch-row-main">
         <div class="ch-row-top"><span class="ch-row-n">SDG ${Number(g)}</span><span class="ch-row-spin">${icon('loader-2', 'icon-xs spin')}</span></div>
         <div class="ch-row-title muted">Composing…</div>
@@ -187,7 +187,7 @@ function listHtml(project, chapters, active, tasks, stats) {
     </div>`;
     return `
     <div class="ch-row ch-row-todo">
-      ${sdgChip(g, { title: false, muted: true })}
+      ${sdgChip(g, { title: false })}
       <div class="ch-row-main">
         <div class="ch-row-top"><span class="ch-row-n">SDG ${Number(g)}</span></div>
         <div class="ch-row-title">${esc(SDG_TITLES[g] || `Goal ${g}`)}</div>
