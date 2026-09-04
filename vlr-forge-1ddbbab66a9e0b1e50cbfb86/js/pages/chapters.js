@@ -300,7 +300,7 @@ function chatPanelHtml(chapter, ctx) {
         <button class="btn btn-light btn-xs ${ctx.local.resOpen ? 'is-active' : ''}" data-action="res-toggle">${icon(ctx.local.resOpen ? 'minus' : 'plus', 'icon-xs')}Add</button>
       </div>
       ${selected.length ? `<div class="ch-ctx-cols">${PILLARS.map(p => { const list = selected.filter(e => e.pillar === p.key); return `
-        <div class="ch-ctx-col">
+        <div class="ch-ctx-col col-${esc(p.key)}">
           <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span></div>
           ${list.map(e => mini(e, true)).join('')}
         </div>`; }).join('')}</div>` : `<div class="ch-ctx-pills"><span class="xs muted">Empty — add resources to rewrite from.</span></div>`}
