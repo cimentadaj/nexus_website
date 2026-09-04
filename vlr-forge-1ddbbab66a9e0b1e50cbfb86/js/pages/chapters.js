@@ -4,12 +4,11 @@
  * re-render while tasks run never loses typing or scroll.
  */
 import { esc, icon, refreshIcons, sdgChip, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, relTime, download, avatarHtml, SDG_TITLES } from '../ui.js';
-import { getProject, getProjectChapters, getChapter, getProjectTasks, getExtraction, projectStats, currentUser, getProjectBook } from '../store.js';
-import { composeChapters, recomposeChapter, sendChapterFeedback, approveChapter, reopenChapter, editChapterBlock, assembleFinalBook } from '../actions.js';
+import { getProject, getProjectChapters, getChapter, getProjectTasks, getExtraction, getProjectExtractions, projectStats, currentUser, getProjectBook } from '../store.js';
+import { composeChapters, recomposeChapter, sendChapterFeedback, rewriteUnit, approveChapter, reopenChapter, editChapterBlock, assembleFinalBook } from '../actions.js';
 import { openTaskDrawer } from '../modals.js';
 import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml } from '../shell.js';
 import { STEP_META } from '../seed.js';
-import { REVIEW_CHIPS } from '../reviewer.js';
 import { navigate } from '../router.js';
 
 const PILLAR_LABEL = { indicators: 'Urban Data', documentary: 'Documentary', projects: 'Projects', stakeholders: 'Stakeholder' };
@@ -61,6 +60,39 @@ const isBookTask = (t) => BOOK_STEPS.includes(t.step) && (t.status === 'queued' 
 /* ------------------------------------------------------------------ */
 /* Block renderers (the paper sheet)                                    */
 /* ------------------------------------------------------------------ */
+const PILLAR_ABBR = { indicators: 'IND', documentary: 'DOC', projects: 'PRJ', stakeholders: 'STK' };
+/* Hierarchical unit lookup: sections and subsections with their DIRECT paragraph blocks */
+function chapterUnits(chapter) {
+  const out = [];
+  for (const s of chapter.sections || []) {
+    for (const ss of s.subsections || []) out.push({ key: ss.key, num: ss.num, heading: ss.heading, blocks: ss.blocks || [] });
+    out.push({ key: s.key, num: s.num, heading: s.heading, blocks: [...(s.blocks || []), ...(s.subsections || []).flatMap(ss => ss.blocks || [])] });
+  }
+  return out;
+}
+function findUnit(chapter, unit) {
+  if (!chapter || !unit) return null;
+  const units = chapterUnits(chapter);
+  if (unit.type === 'sec') {
+    const u = units.find(x => x.key === unit.id);
+    return u ? { blocks: u.blocks.filter(b => b.type === 'p'), label: `section ${u.num} ${u.heading}`, short: `Section ${u.num}`, heading: u.heading } : null;
+  }
+  for (const u of units) {
+    const b = (u.blocks || []).find(x => x.id === unit.id && x.type === 'p');
+    if (b) return { blocks: [b], label: `a paragraph in ${u.num} ${u.heading}`, short: `Paragraph · ${u.num}`, heading: u.heading };
+  }
+  return null;
+}
+function lineageIds(chapter, blocks) {
+  const ids = new Set();
+  for (const b of blocks) {
+    if (b.extractionId) ids.add(b.extractionId);
+    (b.extractionIds || []).forEach(id => ids.add(id));
+    (chapter.provenance || []).filter(p => p.blockId === b.id && p.extractionId).forEach(p => ids.add(p.extractionId));
+  }
+  return [...ids].filter(id => getExtraction(id));
+}
+
 function blockHtml(b, chapter, ctx) {
   const changed = (chapter.changedBlocks || []).includes(b.id);
   const marker = changed ? `<span class="ch-changed-mark">${icon('sparkles', 'icon-xs')}changed in v${chapter.version}</span>` : '';
@@ -82,7 +114,8 @@ function blockHtml(b, chapter, ctx) {
           <div class="ch-edit-actions"><span class="xs muted">Editing paragraph · saves as a new version</span><span class="grow"></span><button class="btn btn-light btn-sm" data-action="edit-cancel">Cancel</button><button class="btn btn-primary btn-sm" data-action="edit-save" data-block="${esc(b.id)}">${icon('check', 'icon-sm')}Save</button></div>
         </div>`, 'is-editing');
       }
-      return wrap(`<p class="ch-text" data-action="edit-block" data-block="${esc(b.id)}" data-tip="Click to edit this paragraph">${rich(b.text)}</p>${meta}`);
+      const sel = ctx.local.unit?.type === 'block' && ctx.local.unit.id === b.id;
+      return wrap(`<p class="ch-text" data-action="sel-unit" data-block="${esc(b.id)}" data-tip="Click to see the evidence this paragraph was written from">${rich(b.text)}</p>${meta}`, sel ? 'is-sel' : '');
     }
     case 'box':
       return wrap(`<div class="ch-box-inner"><div class="ch-box-title">${icon('bookmark', 'icon-sm')}${esc(b.title)}</div><ul>${(b.items || []).map(i => `<li>${rich(i.text)}${i.fn ? `<sup class="ch-fn"><a href="#" data-action="goto-fn" data-fn="${Number(i.fn)}">${Number(i.fn)}</a></sup>` : ''}</li>`).join('')}</ul>${b.nexus ? `<div class="ch-box-nexus">${icon('git-merge', 'icon-xs')}Cross-reference: SDG ${Number(b.nexus)} — ${esc(SDG_TITLES[b.nexus] || '')}</div>` : ''}</div>`);
@@ -118,11 +151,11 @@ function sheetHtml(chapter, ctx) {
     <div class="ch-sheet-sub">${esc(chapter.subject ? chapter.subject[0].toUpperCase() + chapter.subject.slice(1) : '')} · ${Number(chapter.wordCount || 0).toLocaleString('en-US')} words</div>
     ${(chapter.sections || []).map(s => `
       <section class="ch-section" id="sec-${esc(s.key)}">
-        <h2 class="ch-h2"><span class="ch-num">${esc(s.num)}</span>${esc(s.heading)}</h2>
+        <h2 class="ch-h2 ch-h-sel ${ctx.local.unit?.type === 'sec' && ctx.local.unit.id === s.key ? 'is-sel' : ''}" data-action="sel-sec" data-sec="${esc(s.key)}" data-tip="Click to see the evidence this section was written from"><span class="ch-num">${esc(s.num)}</span>${esc(s.heading)}</h2>
         ${(s.blocks || []).filter(b => b.type !== 'box').map(b => blockHtml(b, chapter, ctx)).join('')}
         ${(s.subsections || []).map(ss => `
           <div class="ch-subsection" id="sec-${esc(ss.key)}">
-            <h3 class="ch-h3"><span class="ch-num">${esc(ss.num)}</span>${esc(ss.heading)}</h3>
+            <h3 class="ch-h3 ch-h-sel ${ctx.local.unit?.type === 'sec' && ctx.local.unit.id === ss.key ? 'is-sel' : ''}" data-action="sel-sec" data-sec="${esc(ss.key)}" data-tip="Click to see the evidence this subsection was written from"><span class="ch-num">${esc(ss.num)}</span>${esc(ss.heading)}</h3>
             ${(ss.blocks || []).map(b => blockHtml(b, chapter, ctx)).join('')}
           </div>`).join('')}
         ${(s.blocks || []).filter(b => b.type === 'box').map(b => blockHtml(b, chapter, ctx)).join('')}
@@ -249,11 +282,35 @@ function chatPanelHtml(chapter, ctx) {
           </div></div>`).join('')
       : `<div class="empty"><div class="empty-sub">No messages yet.</div></div>`}
     </div>
-    <div class="ch-chips">${REVIEW_CHIPS.map((c, i) => `<button class="ch-chip" data-action="chip" data-i="${i}" ${!chapter || busy ? 'disabled' : ''} data-tip="${esc(c.text)}">${esc(c.label)}</button>`).join('')}</div>
-    <div class="ch-compose-box">
-      <textarea class="textarea" id="ch-draft" rows="3" placeholder="${chapter ? 'Tell the reviewer what to change… (Enter to send, Shift+Enter for a new line)' : 'Select a chapter first'}" ${!chapter || busy ? 'disabled' : ''}>${esc(draft)}</textarea>
-      <div class="ch-compose-actions"><span class="xs muted">${busy ? 'The reviewer is rewriting — hang on.' : 'Feedback is applied as a new version; changes are highlighted.'}</span><span class="grow"></span><button class="btn btn-primary btn-sm" data-action="send" ${!chapter || busy || !draft.trim() ? 'disabled' : ''}>${icon('send', 'icon-sm')}Send</button></div>
+    ${(() => {
+      if (!chapter) return '';
+      const u = findUnit(chapter, ctx.local.unit);
+      const ctxSel = ctx.local.ctxSel || {};
+      const all = getProjectExtractions(chapter.projectId).filter(e => e.status === 'approved');
+      const selected = Object.keys(ctxSel).filter(k => ctxSel[k]).map(id => all.find(e => e.id === id) || getExtraction(id)).filter(Boolean);
+      const q = (ctx.local.resQ || '').trim().toLowerCase();
+      const avail = all.filter(e => !ctxSel[e.id] && (!q || `${e.title} ${e.sdg} ${e.pillar} ${e.value || ''}`.toLowerCase().includes(q))).slice(0, 24);
+      const pill = (e, on) => `<button class="ch-ctx-pill ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}" data-tip="${on ? 'Remove from the rewrite context' : 'Add to the rewrite context'}"><span class="ch-pillar p-${esc(e.pillar)}">${PILLAR_ABBR[e.pillar] || '·'}</span><span class="ch-ctx-t">SDG ${esc(e.sdg)} · ${esc(e.title)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
+      return `
+    <div class="ch-unit">
+      ${u ? `
+      <div class="ch-unit-head">
+        <span class="ch-unit-tag">${icon('text-select', 'icon-xs')}${esc(u.short)} — ${esc(u.heading)}</span>
+        <span class="grow"></span>
+        <button class="btn-icon" data-action="unit-clear" data-tip="Clear selection" aria-label="Clear selection">${icon('x', 'icon-sm')}</button>
+      </div>
+      <div class="ch-unit-lbl">Context for the rewrite — the resources this ${ctx.local.unit.type === 'sec' ? 'section' : 'paragraph'} draws on</div>
+      <div class="ch-ctx-pills">${selected.length ? selected.map(e => pill(e, true)).join('') : `<span class="xs muted">No resources selected — add some below.</span>`}</div>
+      <div class="ch-unit-lbl">Add from the urban data</div>
+      <input class="input input-sm" id="ch-res-q" type="search" placeholder="Search indicators, documentary, projects, stakeholders…" value="${esc(ctx.local.resQ || '')}">
+      <div class="ch-ctx-avail">${avail.length ? avail.map(e => pill(e, false)).join('') : `<span class="xs muted">${q ? 'No matches.' : 'Everything is already in context.'}</span>`}</div>`
+      : `<div class="ch-unit-hint">${icon('mouse-pointer-click', 'icon-sm')}<span>Click a <b>paragraph</b> or a <b>section heading</b> in the chapter to see the urban-data resources it was written from — then adjust them and ask for a rewrite.</span></div>`}
     </div>
+    <div class="ch-compose-box">
+      <textarea class="textarea" id="ch-draft" rows="2" placeholder="${u ? 'Optional instruction — e.g. lead with the 2023 figure, mention the flood plan…' : chapter ? 'Tell the reviewer what to change… (Enter to send)' : 'Select a chapter first'}" ${!chapter || busy ? 'disabled' : ''}>${esc(draft)}</textarea>
+      <div class="ch-compose-actions"><span class="xs muted">${busy ? 'The reviewer is rewriting — hang on.' : u ? 'The unit is rewritten from exactly the selected resources.' : 'Feedback is applied as a new version; changes are highlighted.'}</span><span class="grow"></span><button class="btn btn-primary btn-sm" data-action="send" ${!chapter || busy || (u ? !selected.length : !draft.trim()) ? 'disabled' : ''}>${icon(u ? 'refresh-cw' : 'send', 'icon-sm')}${u ? `Rewrite ${ctx.local.unit.type === 'sec' ? 'section' : 'paragraph'}` : 'Send'}</button></div>
+    </div>`;
+    })()}
     <div class="ch-history">
       <div class="ch-history-head">${icon('history', 'icon-sm')}Revision history</div>
       ${revisions.length ? `<ul class="ch-history-list">${revisions.map(r => `<li><span class="ch-ver">v${Number(r.version)}</span><div class="grow"><div class="ch-history-by">${esc(r.by || 'System')} <span class="muted">· ${esc(relTime(r.at))}</span></div><div class="ch-history-sum">${esc(r.summary || '')}</div>${r.feedback ? `<div class="ch-history-fb">“${esc(r.feedback)}”</div>` : ''}</div></li>`).join('')}</ul>` : `<div class="xs muted" style="padding:6px 0">No revisions yet.</div>`}
@@ -405,6 +462,16 @@ export default {
     const sendDraft = () => {
       if (!chapter || chapter.reviewing) return;
       const text = (ctx.local.draft || '').trim();
+      const u = findUnit(chapter, ctx.local.unit);
+      if (u) {
+        const ids = Object.keys(ctx.local.ctxSel || {}).filter(k => ctx.local.ctxSel[k]);
+        if (!ids.length) { toast.warning('No context selected', 'Pick at least one resource to rewrite from.'); return; }
+        rewriteUnit(chapter.id, { blockIds: u.blocks.map(b => b.id), extractionIds: ids, instruction: text, unitLabel: u.label });
+        ctx.local.draft = '';
+        toast.info('Rewrite queued', `The reviewer is rewriting ${u.label} from ${ids.length} resource${ids.length === 1 ? '' : 's'}.`);
+        ctx.rerender();
+        return;
+      }
       if (!text) return;
       sendChapterFeedback(chapter.id, text);
       ctx.local.draft = '';
@@ -420,6 +487,7 @@ export default {
       });
       draftEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDraft(); } });
     }
+    ctx.content.querySelector('#ch-res-q')?.addEventListener('input', (e) => { ctx.local.resQ = e.target.value; ctx.rerender(); });
     const editTa = ctx.local.editing ? document.getElementById(`ch-edit-${ctx.local.editing.blockId}`) : null;
     if (editTa) {
       editTa.addEventListener('input', (e) => { ctx.local.editing.text = e.target.value; });
@@ -528,14 +596,28 @@ export default {
         const b = document.getElementById(`blk-${el.dataset.block}`);
         if (b) { scrollDocTo(b); flashBlock(b); } else toast.info('Passage not found', 'It may have been rewritten in a later version.');
       },
-      'chip': (el) => {
-        if (!chapter || chapter.reviewing) return;
-        const c = REVIEW_CHIPS[Number(el.dataset.i)];
-        if (!c) return;
-        sendChapterFeedback(chapter.id, c.text);
-        ctx.local.draft = '';
-        toast.info(`“${c.label}” sent`, 'The Chapter Reviewer is rewriting the chapter.');
+      'sel-unit': (el, ev) => {
+        if (ev.target.closest('a, sup, button')) return;
+        const unit = { type: 'block', id: el.dataset.block };
+        if (ctx.local.unit?.type === 'block' && ctx.local.unit.id === unit.id) { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.rerender(); return; }
+        ctx.local.unit = unit;
+        const u = findUnit(chapter, unit);
+        ctx.local.ctxSel = Object.fromEntries(lineageIds(chapter, u?.blocks || []).map(id => [id, true]));
+        ctx.local.resQ = '';
+        ctx.rerender();
       },
+      'sel-sec': (el, ev) => {
+        if (ev.target.closest('a, sup, button')) return;
+        const unit = { type: 'sec', id: el.dataset.sec };
+        if (ctx.local.unit?.type === 'sec' && ctx.local.unit.id === unit.id) { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.rerender(); return; }
+        ctx.local.unit = unit;
+        const u = findUnit(chapter, unit);
+        ctx.local.ctxSel = Object.fromEntries(lineageIds(chapter, u?.blocks || []).map(id => [id, true]));
+        ctx.local.resQ = '';
+        ctx.rerender();
+      },
+      'unit-clear': () => { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.rerender(); },
+      'ctx-toggle': (el, ev) => { ev.stopPropagation(); (ctx.local.ctxSel ||= {})[el.dataset.id] = !ctx.local.ctxSel[el.dataset.id]; ctx.rerender(); },
       'send': sendDraft,
     });
 

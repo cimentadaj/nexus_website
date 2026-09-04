@@ -301,6 +301,62 @@ export function sendChapterFeedback(chapterId, text) {
   }, delay);
   return pendingId;
 }
+/** Rewrite one paragraph or one section from an explicit set of evidence resources.
+ * The unit's lineage is replaced: every sentence in the result traces to a selected extraction. */
+export function rewriteUnit(chapterId, { blockIds = [], extractionIds = [], instruction = '', unitLabel = 'the selection' } = {}) {
+  const c = getChapter(chapterId);
+  if (!c || !blockIds.length) return null;
+  const exts = extractionIds.map(getExtraction).filter(Boolean);
+  const askText = `Rewrite ${unitLabel} using ${exts.length} resource${exts.length === 1 ? '' : 's'}: ${exts.map(e => e.title).join('; ')}${instruction ? ` — ${instruction}` : ''}`;
+  const userMsg = { id: uid('msg'), role: 'user', at: Date.now(), text: askText, by: getState().auth.user?.name };
+  const pendingId = uid('msg');
+  update(s => { const x = s.chapters.find(q => q.id === chapterId); x.chat.push(userMsg, { id: pendingId, role: 'assistant', at: Date.now(), text: '', pending: true }); x.reviewing = true; });
+  const firstSentence = (t) => { const m = String(t || '').match(/^.*?[.!?](?=\s|$)/); return m ? m[0] : String(t || ''); };
+  setTimeout(() => {
+    update(s => {
+      const x = s.chapters.find(q => q.id === chapterId);
+      if (!x) return;
+      let nextN = Math.max(0, ...(x.footnotes || []).map(f => f.n)) + 1;
+      const weave = (e) => {
+        const n = nextN++;
+        (x.footnotes ||= []).push({ n, text: `${e.source?.docName || 'Manual entry'}${e.source?.page != null ? `, p. ${e.source.page}` : ''}.` });
+        const fn = `[^${n}]`;
+        if (e.pillar === 'indicators') { const u = /%/.test(e.unit || '') ? '%' : (e.unit ? ` ${e.unit}` : ''); return { n, text: `${e.title} stood at **${e.value}${u}** in ${e.year || 'the latest reporting year'}${fn}.` }; }
+        if (e.pillar === 'documentary') return { n, text: `${String(e.summary || e.title).replace(/\.$/, '')}${fn}.` };
+        if (e.pillar === 'projects') return { n, text: `The ${e.title}${e.period ? ` (${e.period})` : ''} is addressing this directly${fn}.` };
+        return { n, text: `Consultations with ${e.group || 'local stakeholders'} raised this as a ${String(e.category || 'priority').toLowerCase()}${fn}.` };
+      };
+      const targets = [];
+      const visit = (blocks) => blocks.forEach(b => { if (b.type === 'p' && blockIds.includes(b.id)) targets.push(b); });
+      (x.sections || []).forEach(sec => { visit(sec.blocks || []); (sec.subsections || []).forEach(ss => visit(ss.blocks || [])); });
+      const changed = [];
+      targets.forEach((b, i) => {
+        const mine = exts.filter((_, k) => k % targets.length === i);
+        if (!mine.length && !instruction) return;
+        const woven = mine.map(weave);
+        b.text = [firstSentence(b.text), ...woven.map(w => w.text)].join(' ');
+        b.extractionIds = mine.map(e => e.id); delete b.extractionId;
+        b.pillars = [...new Set(mine.map(e => e.pillar))];
+        changed.push(b.id);
+        x.provenance = (x.provenance || []).filter(p => p.blockId !== b.id)
+          .concat(mine.map(e => ({ blockId: b.id, extractionId: e.id, doc: e.source?.docName, page: e.source?.page })));
+      });
+      let words = 0; const wc = (t) => String(t || '').split(/\s+/).filter(Boolean).length;
+      (x.sections || []).forEach(sec => { (sec.blocks || []).forEach(b => { words += wc(b.text); (b.items || []).forEach(i => { words += wc(i.text); }); }); (sec.subsections || []).forEach(ss => (ss.blocks || []).forEach(b => { words += wc(b.text); })); });
+      x.wordCount = words;
+      x.version = Number(x.version || 1) + 1;
+      x.updatedAt = Date.now();
+      x.changedBlocks = changed;
+      (x.revisions ||= []).push({ version: x.version, by: 'Chapter Reviewer', at: Date.now(), summary: `Rewrote ${unitLabel} from ${exts.length} selected resource${exts.length === 1 ? '' : 's'}`, feedback: instruction || undefined });
+      const m = x.chat.find(q => q.id === pendingId);
+      if (m) { m.text = `I rewrote ${unitLabel} from the ${exts.length} selected resource${exts.length === 1 ? '' : 's'}${instruction ? ', applying your instruction' : ''}. Every sentence now cites its source; the changes are highlighted in the sheet.`; m.pending = false; m.at = Date.now(); m.version = x.version; m.changedBlockIds = changed; }
+      x.reviewing = false;
+      const project = s.projects.find(p => p.id === x.projectId); if (project) project.lastSyncedAt = Date.now();
+      s.logs.push({ ts: Date.now(), level: 'INFO', msg: `Chapter Reviewer rewrote ${unitLabel} of '${x.title}' → v${x.version} from ${exts.length} resource(s).`, projectId: x.projectId });
+    });
+  }, 1400 + exts.length * 350);
+  return pendingId;
+}
 export function approveChapter(chapterId) {
   update(s => { const x = s.chapters.find(q => q.id === chapterId); if (x) { x.status = 'approved'; x.approvedBy = s.auth.user?.name; x.approvedAt = Date.now(); x.updatedAt = Date.now(); x.changedBlocks = []; } });
   const c = getChapter(chapterId);
