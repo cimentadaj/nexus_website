@@ -299,7 +299,11 @@ function chatPanelHtml(chapter, ctx) {
         <span class="grow"></span>
         <button class="btn btn-light btn-xs ${ctx.local.resOpen ? 'is-active' : ''}" data-action="res-toggle">${icon(ctx.local.resOpen ? 'minus' : 'plus', 'icon-xs')}Add</button>
       </div>
-      <div class="ch-ctx-pills">${selected.length ? selected.map(e => mini(e, true)).join('') : `<span class="xs muted">Empty — add resources to rewrite from.</span>`}</div>
+      ${selected.length ? `<div class="ch-ctx-cols">${PILLARS.map(p => { const list = selected.filter(e => e.pillar === p.key); return `
+        <div class="ch-ctx-col">
+          <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span>${list.length}</div>
+          ${list.map(e => mini(e, true)).join('')}
+        </div>`; }).join('')}</div>` : `<div class="ch-ctx-pills"><span class="xs muted">Empty — add resources to rewrite from.</span></div>`}
       ${ctx.local.resOpen ? `
       <div class="ch-res-pillars">${PILLARS.map(p => `<button class="ch-res-pillar ${p.key === resPillar ? 'on' : ''}" data-action="res-pillar" data-pillar="${esc(p.key)}">${icon(p.icon, 'icon-xs')}${esc(p.label)}<span class="ch-res-n">${pool.filter(e => e.pillar === p.key).length}</span></button>`).join('')}</div>
       ${goalList.length > 1 ? `<div class="ch-res-goals">${goalList.map(g => `<button class="ch-res-goal ${resGoal === g ? 'on' : ''}" style="background:${resGoal && resGoal !== g ? '#cbd5e1' : SDG_COLORS[g]}" data-action="res-goal" data-goal="${g}" data-tip="SDG ${g}: ${esc(SDG_TITLES[g])}">${g}</button>`).join('')}</div>` : ''}
