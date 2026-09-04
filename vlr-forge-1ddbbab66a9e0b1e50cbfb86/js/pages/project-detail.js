@@ -1,7 +1,7 @@
 /* Project detail — Overview (mock-up 02) and History view. Route #/projects/:id and #/projects/:id/history */
 import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime, sdgChip, SDG_COLORS, SDG_TITLES } from '../ui.js';
 import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, getProjectRuns, getProjectReports, getProjectActivity, projectStats, getTask, getDoc, getLogs } from '../store.js';
-import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument, approveExtraction, unapproveExtraction, setIndicatorObservation } from '../actions.js';
+import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument, approveExtraction, unapproveExtraction } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
 import { topbarActions, searchBox, topbarTabs, statusBarHtml, projectStepper } from '../shell.js';
 import { PILLARS, STEP_META, STEP_ORDER, parsedDocMeta, quoteToHtml, fillTemplate, INDICATOR_OBSERVATIONS, defaultObservation } from '../seed.js';
@@ -364,16 +364,15 @@ function overviewHtml(ctx, project, stats) {
           if (!group.length) return `<div class="empty tq-empty">${icon('mouse-pointer-click')}<div class="empty-title">Nothing selected</div><div class="empty-sub">Click an indicator row to review all of its numbers.</div></div>`;
           const first = group[0];
           const pend = group.filter(isPending);
-          const obs = (project.obsNotes || {})[key] ?? fillTemplate(INDICATOR_OBSERVATIONS[first.sdg] || INDICATOR_OBSERVATIONS.default, project);
-          const obsVal = ctx.local.obsDraft?.key === key ? ctx.local.obsDraft.text : obs;
+          const obs = fillTemplate(INDICATOR_OBSERVATIONS[first.sdg] || INDICATOR_OBSERVATIONS.default, project);
           return `<div class="pd-ext-detail">
             <div class="row gap-8 mb-8">${sdgChip(first.goal)}<strong class="pd-rowd-title">${esc(first.indicator || first.title)}</strong></div>
             <div class="row gap-8 mb-8"><span class="grow"></span>
               ${pend.length ? `<button class="btn btn-primary btn-xs" data-action="row-confirm-all" data-key="${esc(key)}">${icon('check-check', 'icon-xs')}Confirm all (${pend.length})</button>` : `<span class="xs success-text">${icon('check-circle', 'icon-xs')} All confirmed</span>`}
             </div>
             <div class="pd-rowd-obs">
-              <label class="card-title-caps" for="pd-obs">${icon('notebook-pen', 'icon-sm')}Observations</label>
-              <textarea class="input pd-obs-text" id="pd-obs" data-key="${esc(key)}" rows="8" spellcheck="false">${esc(obsVal)}</textarea>
+              <div class="card-title-caps">${icon('notebook-pen', 'icon-sm')}Observations</div>
+              <div class="pd-obs-static">${esc(obs)}</div>
             </div>
             <div class="pd-rowd-list">${group.map(e => { const openCard = !!(ctx.local.rowdOpen || {})[e.id]; return `
               <div class="pd-rowd-item ${e.status === 'approved' ? 'ok' : ''}">
@@ -395,9 +394,7 @@ function overviewHtml(ctx, project, stats) {
         if (!e) return `<div class="empty tq-empty">${icon('mouse-pointer-click')}<div class="empty-title">Nothing selected</div><div class="empty-sub">Click a row in the table to inspect the extraction.</div></div>`;
         const srcDoc = e.source?.docId ? getDoc(e.source.docId) : null;
         const dm = srcDoc ? parsedDocMeta(srcDoc, project) : null;
-        const obsKey = 'ext:' + e.id;
-        const obs = (project.obsNotes || {})[obsKey] ?? defaultObservation(e, project);
-        const obsVal = ctx.local.obsDraft?.key === obsKey ? ctx.local.obsDraft.text : obs;
+        const obs = defaultObservation(e, project);
         return `<div class="pd-ext-detail">
           <div class="row gap-8 mb-8">${sdgChip(e.goal)}<strong class="pd-rowd-title">${esc(e.title)}</strong></div>
           <div class="pd-rowd-item ${e.status === 'approved' ? 'ok' : ''}">
@@ -420,8 +417,8 @@ function overviewHtml(ctx, project, stats) {
             <dt>Page number</dt><dd>${e.source?.page ? esc(e.source.page) : '—'}</dd>
           </dl>` : ''}
           <div class="pd-rowd-obs mt-12">
-            <label class="card-title-caps" for="pd-obs">${icon('notebook-pen', 'icon-sm')}Observations</label>
-            <textarea class="input pd-obs-text" id="pd-obs" data-key="${esc(obsKey)}" rows="5" spellcheck="false">${esc(obsVal)}</textarea>
+            <div class="card-title-caps">${icon('notebook-pen', 'icon-sm')}Observations</div>
+            <div class="pd-obs-static">${esc(obs)}</div>
           </div>
         </div>`;
       })()}
@@ -565,11 +562,6 @@ export default {
       else toast.warning('Nothing to run', `No documents need "${meta.label}" right now.`);
     };
 
-    const obsEl = ctx.content.querySelector('#pd-obs');
-    if (obsEl) {
-      obsEl.addEventListener('input', () => { ctx.local.obsDraft = { key: obsEl.dataset.key, text: obsEl.value }; });
-      obsEl.addEventListener('change', () => { setIndicatorObservation(pid, obsEl.dataset.key, obsEl.value); ctx.local.obsDraft = null; });
-    }
     const mw = ctx.content.querySelector('.pd-mx-wrap');
     if (mw) {
       mw.scrollLeft = ctx.local.mxScroll ?? mw.scrollWidth;
