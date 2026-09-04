@@ -279,12 +279,6 @@ function chatPanelHtml(chapter, ctx) {
       const ctxSel = ctx.local.ctxSel || {};
       const all = getProjectExtractions(chapter.projectId).filter(e => e.status === 'approved');
       const selected = Object.keys(ctxSel).filter(k => ctxSel[k]).map(id => all.find(e => e.id === id) || getExtraction(id)).filter(Boolean);
-      const resPillar = ctx.local.resPillar || 'indicators';
-      const resGoal = ctx.local.resGoal || null;
-      const pool = all.filter(e => !ctxSel[e.id]);
-      const pillarPool = pool.filter(e => e.pillar === resPillar);
-      const goalList = [...new Set(pillarPool.map(e => e.goal))].sort((a, b) => a - b);
-      const avail = pillarPool.filter(e => !resGoal || e.goal === resGoal);
       const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="mono">${esc(e.sdg)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
       const miniSeries = (g, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-ids="${esc(g.map(x => x.id).join(','))}"><span class="mono">${esc(g[0].sdg)}</span>${g.length > 1 ? `<span class="ch-yrs">×${g.length}</span>` : ''}${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
       const groupInd = (list) => { const m = new Map(); for (const e of list.filter(x => x.pillar === 'indicators')) { const k = e.sdg + '|' + e.title; if (!m.has(k)) m.set(k, []); m.get(k).push(e); } return [...m.values()].map(g => [...g].sort((a, b) => (a.year || 0) - (b.year || 0))); };
@@ -298,20 +292,33 @@ function chatPanelHtml(chapter, ctx) {
       </div>
       <div class="ch-ctx-bar">
         <span class="ch-unit-lbl">Context · ${selected.length} resource${selected.length === 1 ? '' : 's'}</span>
-        <span class="grow"></span>
-        <button class="btn btn-light btn-xs ${ctx.local.resOpen ? 'is-active' : ''}" data-action="res-toggle">${icon(ctx.local.resOpen ? 'minus' : 'plus', 'icon-xs')}Add</button>
       </div>
       ${selected.length ? `<div class="ch-ctx-cols">${PILLARS.map(p => { const list = selected.filter(e => e.pillar === p.key); return `
         <div class="ch-ctx-col col-${esc(p.key)}">
-          <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span></div>
+          <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span><button class="ch-col-add ${ctx.local.resPillar === p.key ? 'on' : ''}" data-action="res-open" data-pillar="${esc(p.key)}" data-tip="Browse ${esc(p.label.toLowerCase())} resources">${icon('plus', 'icon-xs')}</button></div>
           ${p.key === 'indicators' ? groupInd(list).map(g => miniSeries(g, true)).join('') : list.map(e => mini(e, true)).join('')}
         </div>`; }).join('')}</div>` : `<div class="ch-ctx-pills"><span class="xs muted">Empty — add resources to rewrite from.</span></div>`}
-      ${ctx.local.resOpen ? `
-      <div class="ch-res-pillars">${PILLARS.map(p => `<button class="ch-res-pillar ${p.key === resPillar ? 'on' : ''}" data-action="res-pillar" data-pillar="${esc(p.key)}">${icon(p.icon, 'icon-xs')}${esc(p.label)}<span class="ch-res-n">${pool.filter(e => e.pillar === p.key).length}</span></button>`).join('')}</div>
-      ${goalList.length > 1 ? `<div class="ch-res-goals">${goalList.map(g => `<button class="ch-res-goal ${resGoal === g ? 'on' : ''}" style="background:${resGoal && resGoal !== g ? '#cbd5e1' : SDG_COLORS[g]}" data-action="res-goal" data-goal="${g}" data-tip="SDG ${g}: ${esc(SDG_TITLES[g])}">${g}</button>`).join('')}</div>` : ''}
-      <div class="ch-ctx-avail">${resPillar === 'indicators'
-        ? (groupInd(avail).length ? groupInd(avail).map(g => `<button class="ch-ctx-mini" data-action="ctx-toggle" data-ids="${esc(g.map(x => x.id).join(','))}"><span class="ch-pillar p-indicators">${PILLAR_ABBR.indicators}</span><span class="mono">${esc(g[0].sdg)}</span><span class="ch-res-t">${esc(g[0].title)}</span>${g.length > 1 ? `<span class="ch-yrs">${g.length} yrs</span>` : ''}${icon('plus', 'icon-xs')}</button>`).join('') : `<span class="xs muted">Everything here is already in context.</span>`)
-        : avail.length ? avail.map(e => `<button class="ch-ctx-mini" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="ch-pillar p-${esc(e.pillar)}">${PILLAR_ABBR[e.pillar] || '·'}</span><span class="mono">${esc(e.sdg)}</span><span class="ch-res-t">${esc(e.title)}</span>${icon('plus', 'icon-xs')}</button>`).join('') : `<span class="xs muted">Everything here is already in context.</span>`}</div>` : ''}`
+      ${ctx.local.resPillar ? (() => {
+        const p = PILLARS.find(x => x.key === ctx.local.resPillar);
+        const pillarAll = all.filter(e => e.pillar === p.key);
+        const goals = [...new Set(pillarAll.map(e => e.goal))].sort((a, b) => a - b);
+        const g = ctx.local.resGoal;
+        const list = pillarAll.filter(e => !g || e.goal === g);
+        const entries = p.key === 'indicators' ? groupInd(list).map(gr => ({ ids: gr.map(x => x.id), sdg: gr[0].sdg, title: gr[0].title, n: gr.length })) : list.map(e => ({ ids: [e.id], sdg: e.sdg, title: e.title, n: 1 }));
+        return `
+      <div class="ch-brw">
+        <div class="ch-brw-head"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span><span class="ch-brw-title">${esc(p.label)}</span><span class="grow"></span><button class="btn-icon" data-action="res-close" data-tip="Close" aria-label="Close">${icon('x', 'icon-sm')}</button></div>
+        <div class="ch-brw-body">
+          <div class="ch-brw-goals">
+            <button class="ch-brw-goal all ${!g ? 'on' : ''}" data-action="res-goal" data-goal="">All</button>
+            ${goals.map(gl => `<button class="ch-brw-goal ${g === gl ? 'on' : ''}" style="--g:${SDG_COLORS[gl]}" data-action="res-goal" data-goal="${gl}" data-tip="SDG ${gl}: ${esc(SDG_TITLES[gl])}"><i></i>${gl}</button>`).join('')}
+          </div>
+          <div class="ch-brw-list">
+            ${entries.length ? entries.map(en => { const on = en.ids.some(id => ctxSel[id]); return `<button class="ch-ctx-mini ch-brw-item ${on ? 'on' : ''}" data-action="ctx-toggle" ${en.ids.length > 1 ? `data-ids="${esc(en.ids.join(','))}"` : `data-id="${esc(en.ids[0])}"`}><span class="mono">${esc(en.sdg)}</span><span class="ch-res-t">${esc(en.title)}</span>${en.n > 1 ? `<span class="ch-yrs">${en.n} yrs</span>` : ''}${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`; }).join('') : `<span class="xs muted">No resources in this pillar.</span>`}
+          </div>
+        </div>
+      </div>`;
+      })() : ''}`
       : ''}
     </div>
     <div class="ch-compose-box">
@@ -670,10 +677,10 @@ export default {
         ctx.local.resQ = '';
         ctx.rerender();
       },
-      'unit-clear': () => { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.local.resOpen = false; ctx.rerender(); },
-      'res-toggle': () => { ctx.local.resOpen = !ctx.local.resOpen; ctx.rerender(); },
-      'res-pillar': (el) => { ctx.local.resPillar = el.dataset.pillar; ctx.local.resGoal = null; ctx.rerender(); },
-      'res-goal': (el) => { const g = Number(el.dataset.goal); ctx.local.resGoal = ctx.local.resGoal === g ? null : g; ctx.rerender(); },
+      'unit-clear': () => { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.local.resPillar = null; ctx.rerender(); },
+      'res-open': (el, ev) => { ev.stopPropagation(); ctx.local.resPillar = ctx.local.resPillar === el.dataset.pillar ? null : el.dataset.pillar; ctx.local.resGoal = null; ctx.rerender(); },
+      'res-close': () => { ctx.local.resPillar = null; ctx.local.resGoal = null; ctx.rerender(); },
+      'res-goal': (el) => { const g = el.dataset.goal ? Number(el.dataset.goal) : null; ctx.local.resGoal = g && ctx.local.resGoal === g ? null : g; ctx.rerender(); },
       'ctx-toggle': (el, ev) => {
         ev.stopPropagation();
         // a selected chip only leaves the context via its ✕ — clicking the body does nothing

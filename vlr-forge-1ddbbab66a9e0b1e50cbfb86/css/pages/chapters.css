@@ -340,3 +340,21 @@ sup.ch-fn a:hover { background: var(--sky-100); }
 #ch-hovercard .hv-yr b { font-family: var(--mono); color: var(--text-muted); font-weight: 600; width: 36px; }
 #ch-hovercard .hv-yr .mono { font-weight: 700; color: var(--navy); }
 #ch-hovercard .hv-yr-src { margin-left: auto; font-size: 10px; color: var(--text-faint); font-family: var(--mono); }
+
+/* per-pillar browser */
+.ch-ctx-col-h { position: relative; }
+.ch-col-add { position: absolute; right: 1px; top: -1px; width: 18px; height: 18px; border-radius: 4px; display: grid; place-items: center; color: inherit; opacity: .65; cursor: pointer; }
+.ch-col-add:hover, .ch-col-add.on { opacity: 1; background: rgba(255,255,255,.35); }
+.ch-brw { border: 1px solid var(--border); border-radius: 8px; background: var(--surface-tint); overflow: hidden; }
+.ch-brw-head { display: flex; align-items: center; gap: 8px; padding: 7px 8px 7px 10px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.ch-brw-title { font-size: 12px; font-weight: 700; color: var(--navy); }
+.ch-brw-body { display: flex; gap: 0; max-height: 220px; }
+.ch-brw-goals { display: flex; flex-direction: column; gap: 3px; padding: 8px 6px; border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; }
+.ch-brw-goal { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; font-family: var(--mono); color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 3px 7px; cursor: pointer; }
+.ch-brw-goal i { width: 8px; height: 8px; border-radius: 2px; background: var(--g); display: inline-block; }
+.ch-brw-goal:hover { border-color: var(--sky-600); }
+.ch-brw-goal.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+.ch-brw-goal.all { font-family: var(--font); }
+.ch-brw-list { display: flex; flex-direction: column; gap: 4px; padding: 8px; overflow-y: auto; flex: 1; min-width: 0; }
+.ch-brw-item { width: 100%; justify-content: flex-start; background: var(--surface); }
+.ch-brw-item .icon-xs { margin-left: auto; }
