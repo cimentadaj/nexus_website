@@ -117,7 +117,7 @@ function sheetHtml(chapter, ctx) {
   <article class="ch-sheet" id="ch-sheet">
     <div class="ch-sheet-eyebrow">Voluntary Local Review · ${esc(getProject(chapter.projectId)?.name || '')}</div>
     <h1 class="ch-h1">${esc(chapter.title)}</h1>
-    <div class="ch-sheet-sub">${esc(chapter.subject ? chapter.subject[0].toUpperCase() + chapter.subject.slice(1) : '')} · version ${chapter.version} · ${Number(chapter.wordCount || 0).toLocaleString('en-US')} words · ${notes.length} notes</div>
+    <div class="ch-sheet-sub">${esc(chapter.subject ? chapter.subject[0].toUpperCase() + chapter.subject.slice(1) : '')} · ${Number(chapter.wordCount || 0).toLocaleString('en-US')} words</div>
     ${(chapter.sections || []).map(s => `
       <section class="ch-section" id="sec-${esc(s.key)}">
         <h2 class="ch-h2"><span class="ch-num">${esc(s.num)}</span>${esc(s.heading)}</h2>
@@ -171,8 +171,8 @@ function listHtml(project, chapters, active, tasks, stats, ctx) {
       <div class="ch-row-main">
         <div class="ch-row-top"><span class="ch-row-n">Chapter ${Number(c.number)}</span>${(c.changedBlocks || []).length ? `<span class="ch-dot" data-tip="${(c.changedBlocks || []).length} passage(s) changed in v${c.version}"></span>` : ''}${c.reviewing ? `<span class="ch-row-spin">${icon('loader-2', 'icon-xs spin')}</span>` : ''}</div>
         <div class="ch-row-title">${esc(SDG_TITLES[c.goal] || c.title)}</div>
-        <div class="ch-row-meta">${chapterStatusBadge(c)}${tierBadge(c.tier)}</div>
-        <div class="ch-row-sub">v${Number(c.version)} · ${Number(c.wordCount || 0).toLocaleString('en-US')} words</div>
+        <div class="ch-row-meta">${chapterStatusBadge(c)}</div>
+        <div class="ch-row-sub">${Number(c.wordCount || 0).toLocaleString('en-US')} words</div>
       </div>
       ${writeBtn(g, c)}
     </a>`;
@@ -227,7 +227,7 @@ function centreHtml(project, chapter, chapters, ctx) {
     <div class="ch-strip card">
       <div class="ch-strip-left">
         ${sdgChip(chapter.goal)}
-        <div><div class="ch-strip-title">${esc(chapter.title)}</div><div class="ch-strip-meta">${chapterStatusBadge(chapter)}${tierBadge(chapter.tier)}<span class="ch-strip-kv"><b>v${Number(chapter.version)}</b></span><span class="ch-strip-kv"><b>${Number(chapter.wordCount || 0).toLocaleString('en-US')}</b> words</span><span class="ch-strip-kv"><b>${(chapter.footnotes || []).length}</b> notes</span><span class="ch-strip-kv muted">updated ${esc(relTime(chapter.updatedAt))}</span></div></div>
+        <div><div class="ch-strip-title">${esc(chapter.title)}</div><div class="ch-strip-meta">${chapterStatusBadge(chapter)}<span class="ch-strip-kv"><b>${Number(chapter.wordCount || 0).toLocaleString('en-US')}</b> words</span></div></div>
       </div>
       <div class="ch-strip-actions">
         ${approved
