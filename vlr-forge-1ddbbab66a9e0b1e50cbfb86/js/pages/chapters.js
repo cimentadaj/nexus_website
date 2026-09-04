@@ -3,12 +3,12 @@
  * All UI state (draft text, inline edits, scroll positions, open panels) lives in ctx.local so the ~350 ms
  * re-render while tasks run never loses typing or scroll.
  */
-import { esc, icon, refreshIcons, sdgChip, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, relTime, download, avatarHtml, SDG_TITLES } from '../ui.js';
+import { esc, icon, refreshIcons, sdgChip, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, relTime, download, avatarHtml, SDG_TITLES, SDG_COLORS } from '../ui.js';
 import { getProject, getProjectChapters, getChapter, getProjectTasks, getExtraction, getProjectExtractions, projectStats, currentUser, getProjectBook } from '../store.js';
 import { composeChapters, recomposeChapter, sendChapterFeedback, rewriteUnit, approveChapter, reopenChapter, editChapterBlock, assembleFinalBook } from '../actions.js';
 import { openTaskDrawer } from '../modals.js';
 import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml } from '../shell.js';
-import { STEP_META, quotePlain } from '../seed.js';
+import { STEP_META, PILLARS, quotePlain } from '../seed.js';
 import { navigate } from '../router.js';
 
 const PILLAR_LABEL = { indicators: 'Urban Data', documentary: 'Documentary', projects: 'Projects', stakeholders: 'Stakeholder' };
@@ -279,8 +279,12 @@ function chatPanelHtml(chapter, ctx) {
       const ctxSel = ctx.local.ctxSel || {};
       const all = getProjectExtractions(chapter.projectId).filter(e => e.status === 'approved');
       const selected = Object.keys(ctxSel).filter(k => ctxSel[k]).map(id => all.find(e => e.id === id) || getExtraction(id)).filter(Boolean);
-      const q = (ctx.local.resQ || '').trim().toLowerCase();
-      const avail = all.filter(e => !ctxSel[e.id] && (!q || `${e.title} ${e.sdg} ${e.pillar} ${e.value || ''}`.toLowerCase().includes(q))).slice(0, 24);
+      const resPillar = ctx.local.resPillar || 'indicators';
+      const resGoal = ctx.local.resGoal || null;
+      const pool = all.filter(e => !ctxSel[e.id]);
+      const pillarPool = pool.filter(e => e.pillar === resPillar);
+      const goalList = [...new Set(pillarPool.map(e => e.goal))].sort((a, b) => a - b);
+      const avail = pillarPool.filter(e => !resGoal || e.goal === resGoal);
       const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="ch-pillar p-${esc(e.pillar)}">${PILLAR_ABBR[e.pillar] || '·'}</span><span class="mono">${esc(e.sdg)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
       return `
     <div class="ch-unit">
@@ -297,8 +301,9 @@ function chatPanelHtml(chapter, ctx) {
       </div>
       <div class="ch-ctx-pills">${selected.length ? selected.map(e => mini(e, true)).join('') : `<span class="xs muted">Empty — add resources to rewrite from.</span>`}</div>
       ${ctx.local.resOpen ? `
-      <input class="input input-sm" id="ch-res-q" type="search" placeholder="Search the urban data…" value="${esc(ctx.local.resQ || '')}">
-      <div class="ch-ctx-avail">${avail.length ? avail.map(e => mini(e, false)).join('') : `<span class="xs muted">${q ? 'No matches.' : 'Everything is already in context.'}</span>`}</div>` : ''}`
+      <div class="ch-res-pillars">${PILLARS.map(p => `<button class="ch-res-pillar ${p.key === resPillar ? 'on' : ''}" data-action="res-pillar" data-pillar="${esc(p.key)}">${icon(p.icon, 'icon-xs')}${esc(p.label)}<span class="ch-res-n">${pool.filter(e => e.pillar === p.key).length}</span></button>`).join('')}</div>
+      ${goalList.length > 1 ? `<div class="ch-res-goals">${goalList.map(g => `<button class="ch-res-goal ${resGoal === g ? 'on' : ''}" style="background:${resGoal && resGoal !== g ? '#cbd5e1' : SDG_COLORS[g]}" data-action="res-goal" data-goal="${g}" data-tip="SDG ${g}: ${esc(SDG_TITLES[g])}">${g}</button>`).join('')}</div>` : ''}
+      <div class="ch-ctx-avail">${avail.length ? avail.map(e => `<button class="ch-ctx-mini" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="ch-pillar p-${esc(e.pillar)}">${PILLAR_ABBR[e.pillar] || '·'}</span><span class="mono">${esc(e.sdg)}</span><span class="ch-res-t">${esc(e.title)}</span>${icon('plus', 'icon-xs')}</button>`).join('') : `<span class="xs muted">Everything here is already in context.</span>`}</div>` : ''}`
       : ''}
     </div>
     <div class="ch-compose-box">
@@ -478,7 +483,6 @@ export default {
       });
       draftEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDraft(); } });
     }
-    ctx.content.querySelector('#ch-res-q')?.addEventListener('input', (e) => { ctx.local.resQ = e.target.value; ctx.rerender(); });
     /* hovering a resource pill shows the full evidence inline — value, quote, source — no page change */
     const hideCard = () => document.getElementById('ch-hovercard')?.remove();
     const showCard = (pillEl) => {
@@ -637,7 +641,9 @@ export default {
         ctx.rerender();
       },
       'unit-clear': () => { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.local.resOpen = false; ctx.rerender(); },
-      'res-toggle': () => { ctx.local.resOpen = !ctx.local.resOpen; if (!ctx.local.resOpen) ctx.local.resQ = ''; ctx.rerender(); },
+      'res-toggle': () => { ctx.local.resOpen = !ctx.local.resOpen; ctx.rerender(); },
+      'res-pillar': (el) => { ctx.local.resPillar = el.dataset.pillar; ctx.local.resGoal = null; ctx.rerender(); },
+      'res-goal': (el) => { const g = Number(el.dataset.goal); ctx.local.resGoal = ctx.local.resGoal === g ? null : g; ctx.rerender(); },
       'ctx-toggle': (el, ev) => { ev.stopPropagation(); (ctx.local.ctxSel ||= {})[el.dataset.id] = !ctx.local.ctxSel[el.dataset.id]; ctx.rerender(); },
       'send': sendDraft,
     });
