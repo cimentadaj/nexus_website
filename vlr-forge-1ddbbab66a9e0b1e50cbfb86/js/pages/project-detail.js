@@ -305,15 +305,13 @@ function overviewHtml(ctx, project, stats) {
 
   <div class="pd-grid">
     <section class="card pd-extractions">
-      <div class="tabs">
+      <div class="tabs pd-tabs-actions">
         ${PILLARS.map(p => `<button class="tab ${p.key === tab ? 'active' : ''}" data-action="tab" data-tab="${p.key}">${icon(p.icon)}${esc(p.label)}</button>`).join('')}
+        <span class="grow"></span>
+        ${exts.some(isPending) ? `<button class="btn btn-primary btn-sm" data-action="confirm-all-shown">${icon('check-check', 'icon-sm')}Confirm all ${tab === 'indicators' ? 'SDG indicators' : esc(pillar.label.toLowerCase())}</button>` : ''}
+        <button class="btn btn-light btn-sm" data-action="add-entry">${icon('plus', 'icon-sm')}Add entry</button>
       </div>
       <div class="card-body">
-        <div class="pd-ext-toolbar">
-          <span class="grow"></span>
-          ${exts.some(isPending) ? `<button class="btn btn-primary btn-sm" data-action="confirm-all-shown">${icon('check-check', 'icon-sm')}Confirm all ${tab === 'indicators' ? 'SDG indicators' : esc(pillar.label.toLowerCase())}</button>` : ''}
-          <button class="btn btn-light btn-sm" data-action="add-entry">${icon('plus', 'icon-sm')}Add entry</button>
-        </div>
         ${exts.length ? tab === 'indicators' ? indicatorsMatrixHtml(ctx, exts) : `<div class="pd-table-wrap"><table class="table pd-ext-table">
           <thead><tr><th>SDG</th><th>Extraction</th><th>Value</th><th>Unit</th><th>Source</th><th></th></tr></thead>
           <tbody>${exts.map(e => { const [val, unit] = extCells(e); return `
