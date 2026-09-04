@@ -353,7 +353,7 @@ export function openMenu(anchor, items, { align = 'right', minWidth } = {}) {
   menu.innerHTML = items.map((it, i) => {
     if (it === 'divider') return '<div class="menu-divider"></div>';
     if (it.header) return `<div class="menu-label">${esc(it.header)}</div>`;
-    return `<button class="menu-item ${it.danger ? 'danger' : ''} ${it.active ? 'active' : ''}" data-i="${i}">${it.icon ? icon(it.icon) : ''}<span class="grow">${esc(it.label)}${it.sub ? `<div class="xs muted">${esc(it.sub)}</div>` : ''}</span>${it.active ? icon('check', 'icon-sm') : ''}</button>`;
+    return `<button class="menu-item ${it.danger ? 'danger' : ''} ${it.active ? 'active' : ''}" data-i="${i}">${it.icon ? icon(it.icon) : ''}<span class="grow">${it.labelHtml ?? esc(it.label)}${it.sub ? `<div class="xs muted">${esc(it.sub)}</div>` : ''}</span>${it.active ? icon('check', 'icon-sm') : ''}</button>`;
   }).join('');
   document.body.appendChild(menu);
   refreshIcons(menu);

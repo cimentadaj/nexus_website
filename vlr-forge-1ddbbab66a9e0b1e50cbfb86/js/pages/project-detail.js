@@ -34,7 +34,6 @@ function extValueLine(e) {
 /* Indicators pillar: wide year-matrix — one column per year (2000..today), each
  * number is its own extraction, inspectable and confirmable on its own */
 function indicatorsMatrixHtml(ctx, exts) {
-  const goals = [...new Set(exts.map(e => e.goal))].sort((a, b) => a - b);
   const sel = ctx.local.mxSdg && ctx.local.mxSdg !== 'all' ? Number(ctx.local.mxSdg) : null;
   const shown = sel ? exts.filter(e => e.goal === sel) : exts;
   // fixed grid: 2000, 2010, 2015, then annually 2016-2025
@@ -48,12 +47,8 @@ function indicatorsMatrixHtml(ctx, exts) {
   }
   const dir = ctx.local.mxSort;
   if (dir) rows.sort((a, b) => dir === 'az' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
-  return `<div class="pd-mx-goalbar">
-    <button class="pd-mx-goal all ${sel ? '' : 'on'}" data-action="mx-sdg" data-goal="all">All SDGs</button>
-    ${goals.map(g => `<button class="pd-mx-goal ${sel === g ? 'on' : ''}" style="background:${SDG_COLORS[g]}" data-action="mx-sdg" data-goal="${g}" data-tip="SDG ${g}: ${esc(SDG_TITLES[g])}">${g}</button>`).join('')}
-  </div>
-  <div class="pd-mx-wrap"><table class="table pd-mx-table">
-    <thead><tr><th class="pd-mx-sdgcol">SDG</th><th class="pd-mx-sticky pd-mx-sortable" data-action="mx-sort" data-tip="Sort by indicator name">Indicator ${dir ? icon(dir === 'az' ? 'arrow-down-a-z' : 'arrow-up-a-z', 'icon-xs') : icon('arrow-up-down', 'icon-xs faint')}</th>${years.map(y => `<th class="pd-mx-year">${y}</th>`).join('')}</tr></thead>
+  return `<div class="pd-mx-wrap"><table class="table pd-mx-table">
+    <thead><tr><th class="pd-mx-sdgcol pd-mx-sortable" data-action="mx-sdg-menu" data-tip="Filter by SDG">${sel ? sdgChip(sel, { title: false }) : 'SDG'} ${icon('chevron-down', 'icon-xs faint')}</th><th class="pd-mx-sticky pd-mx-sortable" data-action="mx-sort" data-tip="Sort by indicator name">Indicator ${dir ? icon(dir === 'az' ? 'arrow-down-a-z' : 'arrow-up-a-z', 'icon-xs') : icon('arrow-up-down', 'icon-xs faint')}</th>${years.map(y => `<th class="pd-mx-year">${y}</th>`).join('')}</tr></thead>
     <tbody>${rows.map(r => { const key = r.sdg + '|' + r.title; return `<tr class="clickable ${ctx.local.extRow === key ? 'row-sel' : ''}" data-action="ext-row" data-key="${esc(key)}">
       <td class="pd-mx-sdgcol">${sdgChip(r.goal)}</td>
       <td class="pd-mx-sticky" style="border-left:3px solid ${SDG_COLORS[r.goal]}"><div class="pd-mx-namewrap"><div><span class="pd-mx-code mono">${esc(r.sdg)}</span><span class="pd-mx-name">${esc(r.name)}</span></div>${Object.values(r.cells).some(isPending)
@@ -296,7 +291,6 @@ function overviewHtml(ctx, project, stats) {
       <div class="pd-actions">
         <span ${cantRun ? `data-tip="${esc(cantRun)}"` : ''}><button class="btn btn-primary" data-action="run-pipeline" ${cantRun ? 'disabled' : ''}>${icon('play', 'icon-sm')}Run Full Pipeline</button></span>
         <button class="btn btn-light" data-action="configure">${icon('settings', 'icon-sm')}Configure</button>
-        ${unapproved ? `<button class="btn btn-light" data-action="approve-all" data-count="${unapproved}">${icon('check-check', 'icon-sm')}Approve all <span class="pd-count">${unapproved}</span></button>` : ''}
         ${(() => {
           const st = stats;
           if (st.bookFinal) return `<a class="btn btn-outline" href="#/projects/${project.id}/vlr">${icon('book-open-check', 'icon-sm')}Open final VLR</a>`;
@@ -565,7 +559,17 @@ export default {
         toast.success('Confirmed', `${list.length} number${list.length === 1 ? '' : 's'} approved.`);
         ctx.rerender();
       },
-      'mx-sdg': (el) => { ctx.local.mxSdg = el.dataset.goal; memo.mxSdg = el.dataset.goal; ctx.rerender(); },
+      'mx-sdg-menu': (el, ev) => {
+        ev.stopPropagation();
+        const setGoal = (g) => { ctx.local.mxSdg = g; memo.mxSdg = g; ctx.rerender(); };
+        const cur = ctx.local.mxSdg && ctx.local.mxSdg !== 'all' ? Number(ctx.local.mxSdg) : null;
+        const goals = [...new Set(getProjectExtractions(pid).filter(e => e.pillar === 'indicators').map(e => e.goal))].sort((a, b) => a - b);
+        openMenu(el, [
+          { label: 'All SDGs', active: !cur, onClick: () => setGoal('all') },
+          'divider',
+          ...goals.map(g => ({ labelHtml: `${sdgChip(g, { title: false })} <span style="margin-left:6px">SDG ${g} — ${esc(SDG_TITLES[g])}</span>`, active: cur === g, onClick: () => setGoal(String(g)) })),
+        ], { align: 'left', minWidth: '280px' });
+      },
       'mx-sort': () => { ctx.local.mxSort = ctx.local.mxSort === 'az' ? 'za' : 'az'; memo.mxSort = ctx.local.mxSort; ctx.rerender(); },
       'ext-sel': (el) => { ctx.local.extSel = ctx.local.extSel === el.dataset.id ? null : el.dataset.id; memo.extSel = ctx.local.extSel; ctx.rerender(); },
       'ext-approve': (el, ev) => { ev.stopPropagation(); approveExtraction(el.dataset.id); ctx.rerender(); },
