@@ -393,24 +393,35 @@ function overviewHtml(ctx, project, stats) {
         }
         const e = allExt.find(x => x.id === ctx.local.extSel);
         if (!e) return `<div class="empty tq-empty">${icon('mouse-pointer-click')}<div class="empty-title">Nothing selected</div><div class="empty-sub">Click a row in the table to inspect the extraction.</div></div>`;
-        const [val, unit] = extCells(e);
+        const srcDoc = e.source?.docId ? getDoc(e.source.docId) : null;
+        const dm = srcDoc ? parsedDocMeta(srcDoc, project) : null;
+        const obsKey = 'ext:' + e.id;
+        const obs = (project.obsNotes || {})[obsKey] ?? '';
+        const obsVal = ctx.local.obsDraft?.key === obsKey ? ctx.local.obsDraft.text : obs;
         return `<div class="pd-ext-detail">
           <div class="row gap-8 mb-8">${sdgChip(e.goal)}<strong class="pd-rowd-title">${esc(e.title)}</strong></div>
-          <dl class="kv">
-            <dt>Value</dt><dd>${esc(val)}</dd>
-            <dt>Unit</dt><dd>${esc(unit)}</dd>
-            <dt>Year</dt><dd>${e.year ? esc(e.year) : '—'}</dd>
-          </dl>
-          <div class="pd-rowd-item ${e.status === 'approved' ? 'ok' : ''} mt-12">
+          <div class="pd-rowd-item ${e.status === 'approved' ? 'ok' : ''}">
             <div class="pd-rowd-head">
               <span class="pd-rowd-src">${esc(e.source?.docName || 'Manual entry')}${e.source?.page ? `, p. ${esc(e.source.page)} ¶${esc(e.source.paragraph || 1)}` : ''}</span>
               <span class="grow"></span>
-              ${e.source?.docId ? `<a class="btn-icon" href="#/projects/${esc(project.id)}/documents/${esc(e.source.docId)}?page=${esc(e.source.page || 1)}&hl=${esc(e.id)}" data-tip="See in document (p. ${esc(e.source.page)})">${icon('eye', 'icon-sm')}</a>` : ''}
+              ${e.source?.docId ? `<a class="btn-icon" href="#/projects/${esc(project.id)}/documents/${esc(e.source.docId)}?page=${esc(e.source.page || 1)}&hl=${esc(e.id)}" data-tip="See in document — switch to the original language there to see the same paragraph highlighted">${icon('eye', 'icon-sm')}</a>` : ''}
               ${e.status === 'approved'
                 ? `<span data-tip="Confirmed — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
                 : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}
             </div>
             ${e.source?.quote ? `<div class="pd-rowd-quote">${quoteToHtml(e.source.quote, esc)}</div>` : ''}
+          </div>
+          ${dm ? `<dl class="kv mt-12">
+            <dt>Source document</dt><dd class="mono xs">${esc(srcDoc.name)}</dd>
+            <dt>Document title</dt><dd>${esc(dm.title)}</dd>
+            <dt>Document type</dt><dd>${esc(dm.type)}</dd>
+            <dt>Year published</dt><dd>${esc(dm.year)}</dd>
+            <dt>Issuing body</dt><dd>${esc(dm.issuing)}</dd>
+            <dt>Page number</dt><dd>${e.source?.page ? esc(e.source.page) : '—'}</dd>
+          </dl>` : ''}
+          <div class="pd-rowd-obs mt-12">
+            <label class="card-title-caps" for="pd-obs">${icon('notebook-pen', 'icon-sm')}Observations</label>
+            <textarea class="input pd-obs-text" id="pd-obs" data-key="${esc(obsKey)}" rows="5" spellcheck="false" placeholder="Notes on this entry — anomalies, context, caveats…">${esc(obsVal)}</textarea>
           </div>
         </div>`;
       })()}

@@ -147,8 +147,14 @@ export default {
       for (let p = 1; p <= doc.pages; p++) {
         const t = pageText(doc, p, project, orig ? bank : null);
         const pageExts = exts.filter(e => Number(e.source?.page) === p);
+        // original-language view: the extraction anchors to the same paragraph (¶N),
+        // highlighted in place so the reader can verify the untranslated source
+        const origAt = {};
+        if (orig) pageExts.forEach(e => { const pi = Math.min(Number(e.source.paragraph) || 1, t.paragraphs.length) - 1; origAt[pi] ||= e; });
         const paras = t.paragraphs.map((par, i) => {
           const before = (i === 1 && !orig) ? pageExts.map(e => `<p class="dv-para dv-extract ${hlExt?.id === e.id ? 'dv-hl-active' : ''}" id="dv-ext-${esc(e.id)}" data-tip="Extraction SDG ${esc(e.sdg)} · ${esc(e.title)}">${quoteToHtml(e.source.quote, esc)}<span class="dv-ext-tag">${icon('link', 'icon-xs')}SDG ${esc(e.sdg)} · ¶${Number(e.source.paragraph) || 1}</span></p>`).join('') : '';
+          const oe = origAt[i];
+          if (oe) return `${before}<p class="dv-para dv-extract ${hlExt?.id === oe.id ? 'dv-hl-active' : ''}" id="dv-ext-${esc(oe.id)}" data-tip="Extraction SDG ${esc(oe.sdg)} · ${esc(oe.title)} — original-language paragraph">${esc(par)}<span class="dv-ext-tag">${icon('link', 'icon-xs')}SDG ${esc(oe.sdg)} · ¶${Number(oe.source.paragraph) || 1} · ${esc(doc.language)}</span></p>`;
           return `${before}<p class="dv-para">${esc(par)}</p>`;
         }).join('');
         sheets.push(`<article class="dv-sheet" id="dv-page-${p}" data-page="${p}">
@@ -182,7 +188,6 @@ export default {
               <button class="dv-lang ${orig ? '' : 'on'}" data-action="dv-lang" data-lang="en" data-tip="Translated markdown (used by the pillars)">EN · translated</button>
               <button class="dv-lang ${orig ? 'on' : ''}" data-action="dv-lang" data-lang="orig" data-tip="Original document as parsed">${esc(doc.language)} · original</button>
             </span>` : ''}
-            ${orig && exts.length ? `<span class="xs muted" data-tip="Extraction quotes are anchored to the translated text">${icon('highlighter', 'icon-xs')} highlights in EN view</span>` : ''}
             ${hlExt && !orig ? `<span class="badge badge-sky dv-hl-badge" data-action="focus-ext" data-id="${esc(hlExt.id)}" data-tip="Jump to highlighted evidence">${icon('highlighter', 'icon-xs')}SDG ${esc(hlExt.sdg)} · p.${Number(hlExt.source.page)}</span><button class="btn-icon" data-action="clear-hl" data-tip="Clear highlight" aria-label="Clear highlight">${icon('x', 'icon-sm')}</button>` : ''}
           </div>
         </div>
