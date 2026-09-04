@@ -96,24 +96,26 @@ function projectsTableHtml(ctx, exts) {
   const shown = exts.filter(e => (!sel || (e.goals || [e.goal]).includes(sel)) && (!st || e.projectStatus === st) && (!sec || e.sector === sec));
   return `<div class="pd-table-wrap"><table class="table pd-doc-table">
     <thead><tr>
-      <th class="pd-doc-okth">Confirm</th>
+      <th class="pd-doc-tickth" data-tip="Approve">${icon('check-check', 'icon-sm')}</th>
       <th class="pd-mx-sortable" data-action="proj-sector-menu" data-tip="Filter by sector">${sec ? esc(sec) : 'Sector'} ${icon('chevron-down', 'icon-xs faint')}</th>
       <th>Project</th>
+      <th>Description</th>
       <th>Lead department</th>
       <th>Start / End</th>
       <th class="pd-mx-sortable" data-action="proj-status-menu" data-tip="Filter by status">${st ? `<span class="badge pd-doc-cat ${PROJ_STATUS_CLASS[st] || ''}">${esc(PROJ_STATUS_LABEL[st] || st)}</span>` : 'Status'} ${icon('chevron-down', 'icon-xs faint')}</th>
       <th class="pd-mx-sortable" data-action="proj-sdg-menu" data-tip="Filter by SDG">${sel ? sdgChip(sel, { title: false }) : 'SDG'} ${icon('chevron-down', 'icon-xs faint')}</th></tr></thead>
     <tbody>${shown.map(e => `
       <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
-        <td class="pd-doc-oktd">${e.status === 'approved'
+        <td class="pd-doc-tick">${e.status === 'approved'
           ? `<span data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''} — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
-          : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}</td>
+          : `<span data-tip="Approve"><button class="btn-icon pd-tick" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-sm')}</button></span>`}</td>
         <td class="xs">${esc(e.sector || '—')}</td>
         <td class="pd-doc-insight">${esc(e.title)}</td>
+        <td class="pd-proj-desc">${esc(e.summary || '—')}</td>
         <td class="xs">${esc(e.lead || '—')}</td>
         <td class="xs mono">${esc(e.period || '—')}</td>
         <td><span class="badge pd-doc-cat ${PROJ_STATUS_CLASS[e.projectStatus] || ''}">${esc(PROJ_STATUS_LABEL[e.projectStatus] || e.projectStatus || '—')}</span></td>
-        <td class="pd-proj-sdgrow">${(e.goals || [e.goal]).map(g => sdgChip(g)).join('')}</td>
+        <td><span class="sdg-chips pd-proj-sdgrow">${(e.goals || [e.goal]).map(g => sdgChip(g)).join('')}</span></td>
       </tr>`).join('')}</tbody>
   </table></div>
   ${!shown.length ? `<div class="empty"><div class="empty-sub">No projects match the current filters.</div></div>` : ''}`;
