@@ -213,7 +213,6 @@ function listHtml(project, chapters, active, tasks, stats, ctx) {
     <div class="ch-list-scroll" id="ch-list-scroll">
       ${rows}
       ${skeletons}${empty}
-      ${chapters.length && !composing.length && project.status !== 'archived' ? `<div class="ch-list-foot"><button class="btn btn-ghost btn-sm" data-action="recompose-all" data-tip="Queue a fresh composition of every chapter">${icon('rotate-ccw', 'icon-sm')}Recompose all</button></div>` : ''}
     </div>
   </aside>`;
 }
