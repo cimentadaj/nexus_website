@@ -179,7 +179,7 @@ function listHtml(project, chapters, active, tasks, stats, ctx) {
         <div class="ch-row-top"><span class="ch-row-n">Chapter ${Number(c.number)}</span>${(c.changedBlocks || []).length ? `<span class="ch-dot" data-tip="${(c.changedBlocks || []).length} passage(s) changed in v${c.version}"></span>` : ''}${c.reviewing ? `<span class="ch-row-spin">${icon('loader-2', 'icon-xs spin')}</span>` : ''}</div>
         <div class="ch-row-title">${esc(SDG_TITLES[c.goal] || c.title)}</div>
         <div class="ch-row-meta">${chapterStatusBadge(c)}</div>
-        <div class="ch-row-sub">${Number(c.wordCount || 0).toLocaleString('en-US')} words</div>
+
       </div>
       ${writeBtn(g, c)}
     </a>`;
@@ -208,7 +208,7 @@ function listHtml(project, chapters, active, tasks, stats, ctx) {
     <div class="ch-list-foot"><span ${tip ? `data-tip="${esc(tip)}"` : ''}><button class="btn btn-primary btn-sm" data-action="write-vlr" ${ok ? '' : 'disabled'}>${icon('pen-line', 'icon-sm')}Write all chapters</button></span></div>` : '';
   return `
   <aside class="ch-list card" id="ch-list">
-    <div class="card-header tinted"><div class="card-title-caps">${icon('book-open')}Chapters</div><span class="xs muted">${chapters.length ? `${stats.chaptersApproved}/${chapters.length} approved` : goalsPending.length ? `${goalsPending.length} composing` : '—'}</span></div>
+    <div class="card-header tinted"><div class="card-title-caps">Chapters</div></div>
     <div class="ch-list-scroll" id="ch-list-scroll">
       ${rows}
       ${skeletons}${empty}
