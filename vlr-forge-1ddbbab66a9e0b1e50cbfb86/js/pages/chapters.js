@@ -627,7 +627,7 @@ export default {
         const unit = { type: 'block', id: el.dataset.block };
         if (ctx.local.unit?.type === 'block' && ctx.local.unit.id === unit.id) { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.rerender(); return; }
         ctx.local.unit = unit;
-        ctx.local.ctxSel = Object.fromEntries(getProjectExtractions(project.id).filter(e => e.status === 'approved').map(e => [e.id, true]));
+        ctx.local.ctxSel = Object.fromEntries(getProjectExtractions(project.id).filter(e => e.status === 'approved' && (e.goal === chapter.goal || (e.goals || []).includes(chapter.goal))).map(e => [e.id, true]));
         ctx.local.resQ = '';
         ctx.rerender();
       },
@@ -636,7 +636,7 @@ export default {
         const unit = { type: 'sec', id: el.dataset.sec };
         if (ctx.local.unit?.type === 'sec' && ctx.local.unit.id === unit.id) { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.rerender(); return; }
         ctx.local.unit = unit;
-        ctx.local.ctxSel = Object.fromEntries(getProjectExtractions(project.id).filter(e => e.status === 'approved').map(e => [e.id, true]));
+        ctx.local.ctxSel = Object.fromEntries(getProjectExtractions(project.id).filter(e => e.status === 'approved' && (e.goal === chapter.goal || (e.goals || []).includes(chapter.goal))).map(e => [e.id, true]));
         ctx.local.resQ = '';
         ctx.rerender();
       },
