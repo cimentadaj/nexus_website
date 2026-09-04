@@ -432,17 +432,6 @@ function overviewHtml(ctx, project, stats) {
         const obs = defaultObservation(e, project);
         return `<div class="pd-ext-detail">
           <div class="row gap-8 mb-8"><span class="pd-proj-sdgs">${(e.goals || [e.goal]).map(g => sdgChip(g)).join('')}</span><strong class="pd-rowd-title">${esc(e.title)}</strong></div>
-          <div class="pd-rowd-item ${e.status === 'approved' ? 'ok' : ''}">
-            <div class="pd-rowd-head">
-              <span class="pd-rowd-src">${esc(e.source?.docName || 'Manual entry')}${e.source?.page ? `, p. ${esc(e.source.page)} ¶${esc(e.source.paragraph || 1)}` : ''}</span>
-              <span class="grow"></span>
-              ${e.source?.docId ? `<a class="btn-icon" href="#/projects/${esc(project.id)}/documents/${esc(e.source.docId)}?page=${esc(e.source.page || 1)}&hl=${esc(e.id)}" data-tip="See in document — switch to the original language there to see the same paragraph highlighted">${icon('eye', 'icon-sm')}</a>` : ''}
-              ${e.status === 'approved'
-                ? `<span data-tip="Confirmed — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
-                : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}
-            </div>
-            ${e.source?.quote ? `<div class="pd-rowd-quote">${esc(quotePlain(e.source.quote))}</div>` : ''}
-          </div>
           ${e.pillar === 'projects' ? `<dl class="kv mt-12">
             <dt>Description</dt><dd class="pd-dd-wrap">${esc(e.summary || '—')}</dd>
             <dt>Lead department</dt><dd>${esc(e.lead || '—')}</dd>
@@ -460,6 +449,17 @@ function overviewHtml(ctx, project, stats) {
             <dt>Issuing body</dt><dd>${esc(dm.issuing)}</dd>
             <dt>Page number</dt><dd>${e.source?.page ? esc(e.source.page) : '—'}</dd>
           </dl>` : ''}
+          <div class="mt-12 pd-rowd-item ${e.status === 'approved' ? 'ok' : ''}">
+            <div class="pd-rowd-head">
+              <span class="pd-rowd-src">${esc(e.source?.docName || 'Manual entry')}${e.source?.page ? `, p. ${esc(e.source.page)} ¶${esc(e.source.paragraph || 1)}` : ''}</span>
+              <span class="grow"></span>
+              ${e.source?.docId ? `<a class="btn-icon" href="#/projects/${esc(project.id)}/documents/${esc(e.source.docId)}?page=${esc(e.source.page || 1)}&hl=${esc(e.id)}" data-tip="See in document — switch to the original language there to see the same paragraph highlighted">${icon('eye', 'icon-sm')}</a>` : ''}
+              ${e.status === 'approved'
+                ? `<span data-tip="Confirmed — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
+                : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}
+            </div>
+            ${e.source?.quote ? `<div class="pd-rowd-quote">${esc(quotePlain(e.source.quote))}</div>` : ''}
+          </div>
           <div class="pd-rowd-obs mt-12">
             <div class="card-title-caps">${icon('notebook-pen', 'icon-sm')}Observations</div>
             <div class="pd-obs-static">${esc(obs)}</div>
