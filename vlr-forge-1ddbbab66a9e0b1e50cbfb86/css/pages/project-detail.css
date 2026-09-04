@@ -199,7 +199,17 @@ tr.pp-open td { background: var(--sky-50); }
 .pd-mx-year { font-variant-numeric: tabular-nums; text-align: center; padding: 8px 6px; font-size: 12px; }
 .pd-mx-td { text-align: center; padding: 4px 3px; }
 .pd-mx-unit { max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
-.pd-mx-sticky { position: sticky; left: 0; background: var(--surface); z-index: 2; box-shadow: 2px 0 0 var(--border); max-width: 320px; }
+.pd-mx-sdgcol { position: sticky; left: 0; width: 52px; min-width: 52px; background: var(--surface); z-index: 2; text-align: center; }
+.pd-mx-sticky { position: sticky; left: 52px; background: var(--surface); z-index: 2; box-shadow: 2px 0 0 var(--border); max-width: 320px; }
+.pd-mx-sortable { cursor: pointer; user-select: none; }
+.pd-mx-sortable:hover { color: var(--navy); }
+.pd-mx-code { font-size: 11px; font-weight: 700; margin-right: 4px; }
+.pd-mx-goalbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding: 2px 0 12px; }
+.pd-mx-goal { width: 30px; height: 30px; border-radius: 6px; color: #fff; font-weight: 700; font-size: 12.5px; border: 2px solid transparent; cursor: pointer; opacity: .5; transition: opacity .12s, border-color .12s; }
+.pd-mx-goal:hover { opacity: .85; }
+.pd-mx-goal.on { opacity: 1; border-color: var(--navy); }
+.pd-mx-goal.all { width: auto; padding: 0 12px; background: var(--surface-tint); color: var(--navy); border: 1px solid var(--border); opacity: 1; }
+.pd-mx-goal.all.on { background: var(--navy); color: #fff; border-color: var(--navy); }
 .pd-mx-table thead th { background: var(--surface); }
 .pd-mx-cell { font-family: var(--mono); font-size: 12.5px; font-weight: 600; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-tint); color: var(--text); cursor: pointer; transition: background .12s, border-color .12s; }
 .pd-mx-cell:hover { border-color: var(--sky-600); background: var(--sky-50); }

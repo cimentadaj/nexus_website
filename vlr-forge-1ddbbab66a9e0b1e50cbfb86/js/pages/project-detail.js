@@ -1,5 +1,5 @@
 /* Project detail — Overview (mock-up 02) and History view. Route #/projects/:id and #/projects/:id/history */
-import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime } from '../ui.js';
+import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime, sdgChip, SDG_COLORS, SDG_TITLES } from '../ui.js';
 import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, getProjectRuns, getProjectReports, getProjectActivity, projectStats, getTask, getDoc, getLogs } from '../store.js';
 import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument, approveExtraction, unapproveExtraction } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
@@ -34,6 +34,9 @@ function extValueLine(e) {
 /* Indicators pillar: wide year-matrix — one column per year (2000..today), each
  * number is its own extraction, inspectable and confirmable on its own */
 function indicatorsMatrixHtml(ctx, exts) {
+  const goals = [...new Set(exts.map(e => e.goal))].sort((a, b) => a - b);
+  const sel = ctx.local.mxSdg && ctx.local.mxSdg !== 'all' ? Number(ctx.local.mxSdg) : null;
+  const shown = sel ? exts.filter(e => e.goal === sel) : exts;
   const yMax = new Date().getFullYear();
   // 2000-2010 annually, then 5-year steps up to the current year; years that
   // actually hold a number are merged in so no extraction ever disappears
@@ -41,18 +44,25 @@ function indicatorsMatrixHtml(ctx, exts) {
   for (let y = 2000; y <= 2010; y++) yset.add(y);
   for (let y = 2015; y < yMax; y += 5) yset.add(y);
   yset.add(yMax);
-  exts.forEach(e => { if (e.year) yset.add(Number(e.year)); });
+  shown.forEach(e => { if (e.year) yset.add(Number(e.year)); });
   const years = [...yset].sort((a, b) => a - b);
   const rows = []; const byKey = new Map();
-  for (const e of exts) {
+  for (const e of shown) {
     const k = e.sdg + '|' + e.title;
-    if (!byKey.has(k)) { byKey.set(k, { sdg: e.sdg, title: e.title, unit: e.unit, cells: {} }); rows.push(byKey.get(k)); }
+    if (!byKey.has(k)) { byKey.set(k, { sdg: e.sdg, goal: e.goal, title: e.title, unit: e.unit, cells: {} }); rows.push(byKey.get(k)); }
     if (e.year) byKey.get(k).cells[e.year] = e;
   }
-  return `<div class="pd-mx-wrap"><table class="table pd-mx-table">
-    <thead><tr><th class="pd-mx-sticky">Indicator</th><th>Unit</th>${years.map(y => `<th class="pd-mx-year">${y}</th>`).join('')}</tr></thead>
+  const dir = ctx.local.mxSort;
+  if (dir) rows.sort((a, b) => dir === 'az' ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title));
+  return `<div class="pd-mx-goalbar">
+    <button class="pd-mx-goal all ${sel ? '' : 'on'}" data-action="mx-sdg" data-goal="all">All SDGs</button>
+    ${goals.map(g => `<button class="pd-mx-goal ${sel === g ? 'on' : ''}" style="background:${SDG_COLORS[g]}" data-action="mx-sdg" data-goal="${g}" data-tip="SDG ${g}: ${esc(SDG_TITLES[g])}">${g}</button>`).join('')}
+  </div>
+  <div class="pd-mx-wrap"><table class="table pd-mx-table">
+    <thead><tr><th class="pd-mx-sdgcol">SDG</th><th class="pd-mx-sticky pd-mx-sortable" data-action="mx-sort" data-tip="Sort by indicator name">Indicator ${dir ? icon(dir === 'az' ? 'arrow-down-a-z' : 'arrow-up-a-z', 'icon-xs') : icon('arrow-up-down', 'icon-xs faint')}</th><th>Unit</th>${years.map(y => `<th class="pd-mx-year">${y}</th>`).join('')}</tr></thead>
     <tbody>${rows.map(r => `<tr>
-      <td class="pd-mx-sticky"><span class="badge badge-sdg">SDG ${esc(r.sdg)}</span> <span class="cell-title">${esc(r.title)}</span></td>
+      <td class="pd-mx-sdgcol">${sdgChip(r.goal)}</td>
+      <td class="pd-mx-sticky" style="border-left:3px solid ${SDG_COLORS[r.goal]}"><span class="pd-mx-code mono" style="color:${SDG_COLORS[r.goal]}">${esc(r.sdg)}</span> <span class="cell-title">${esc(r.title)}</span></td>
       <td class="xs muted pd-mx-unit">${esc(r.unit || '—')}</td>
       ${years.map(y => { const e = r.cells[y];
         return `<td class="pd-mx-td">${e ? `<button class="pd-mx-cell st-${esc(e.status)} ${ctx.local.extSel === e.id ? 'sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}" data-tip="${esc(r.title)} · ${y} — click to inspect and confirm">${esc(e.value)}</button>` : ''}</td>`; }).join('')}
@@ -472,6 +482,8 @@ export default {
       ctx.local.tab = PILLAR_KEYS.includes(ctx.query?.tab) ? ctx.query.tab : (memo.tab || 'indicators');
       if (memo.extSel !== undefined) ctx.local.extSel = memo.extSel;
       if (memo.filter) ctx.local.filter = memo.filter;
+      if (memo.mxSdg) ctx.local.mxSdg = memo.mxSdg;
+      if (memo.mxSort) ctx.local.mxSort = memo.mxSort;
     }
     const stats = projectStats(project);
 
@@ -505,6 +517,8 @@ export default {
     }
     const unbindClick = bindActions(ctx.content, {
       'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.local.extSel = null; Object.assign(memo, { tab: el.dataset.tab, filter: 'all', extSel: null }); ctx.rerender(); },
+      'mx-sdg': (el) => { ctx.local.mxSdg = el.dataset.goal; memo.mxSdg = el.dataset.goal; ctx.rerender(); },
+      'mx-sort': () => { ctx.local.mxSort = ctx.local.mxSort === 'az' ? 'za' : 'az'; memo.mxSort = ctx.local.mxSort; ctx.rerender(); },
       'ext-sel': (el) => { ctx.local.extSel = ctx.local.extSel === el.dataset.id ? null : el.dataset.id; memo.extSel = ctx.local.extSel; ctx.rerender(); },
       'ext-approve': (el, ev) => { ev.stopPropagation(); approveExtraction(el.dataset.id); ctx.rerender(); },
       'ext-unapprove': (el, ev) => { ev.stopPropagation(); unapproveExtraction(el.dataset.id); ctx.rerender(); },
