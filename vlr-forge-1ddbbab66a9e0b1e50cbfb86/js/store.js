@@ -1,7 +1,7 @@
 /* store.js — single in-memory state persisted to localStorage, with subscriptions and selectors */
 import { buildSeed, expectedExtractions, PILLARS } from './seed.js';
 
-export const STORAGE_KEY = 'vlrforge.demo.v10';
+export const STORAGE_KEY = 'vlrforge.demo.v9';
 
 let state = load();
 const listeners = new Set();
@@ -10,7 +10,9 @@ let notifyScheduled = false;
 
 function load() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    // the key is STABLE: never bump it — user-created projects must survive code updates.
+    // v10 existed briefly; fold it back into v9 rather than dropping either.
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('vlrforge.demo.v10');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.version === 1 && Array.isArray(parsed.projects)) {
@@ -18,6 +20,8 @@ function load() {
         const defaults = buildSeed();
         for (const k of Object.keys(defaults)) if (parsed[k] === undefined) parsed[k] = defaults[k];
         parsed.settings = { ...defaults.settings, ...(parsed.settings || {}) };
+        // in-place migrations (instead of key bumps that wipe user work)
+        for (const c of parsed.chapters || []) if (Array.isArray(c.chat)) c.chat = c.chat.filter(m => !(m.role === 'assistant' && String(m.text || '').startsWith('I composed Chapter')));
         return parsed;
       }
     }

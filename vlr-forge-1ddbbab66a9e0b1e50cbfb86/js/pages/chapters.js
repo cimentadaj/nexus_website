@@ -95,19 +95,11 @@ function lineageIds(chapter, blocks) {
 
 function blockHtml(b, chapter, ctx) {
   const changed = (chapter.changedBlocks || []).includes(b.id);
-  const marker = changed ? `<span class="ch-changed-mark">${icon('sparkles', 'icon-xs')}changed in v${chapter.version}</span>` : '';
+  const marker = '';
   const wrap = (inner, cls = '') => `<div class="ch-block ch-${esc(b.type)} ${changed ? 'is-changed' : ''} ${cls}" data-block="${esc(b.id)}" id="blk-${esc(b.id)}">${marker}${inner}</div>`;
   switch (b.type) {
     case 'p': {
       const editing = ctx.local.editing?.blockId === b.id;
-      const srcIds = [...(b.extractionId ? [b.extractionId] : []), ...(b.extractionIds || [])];
-      const meta = (b.pillars?.length || srcIds.length) ? `<div class="ch-p-meta">${pillarChips(b.pillars)}${srcIds.map(id => {
-        const e = getExtraction(id);
-        if (e) return `<a class="ch-src" href="#/review/${esc(id)}" data-tip="Source: ${esc(e.sdg)} ${esc(e.title)}">${icon('link', 'icon-xs')}</a>`;
-        // evidence no longer in the review store → fall back to the provenance map (document · page)
-        const pv = (chapter.provenance || []).find(p => p.blockId === b.id && p.extractionId === id) || (chapter.provenance || []).find(p => p.blockId === b.id);
-        return pv ? `<span class="ch-src is-static" data-tip="Source: ${esc(pv.doc || 'document')}${pv.page != null ? ` · p. ${esc(pv.page)}` : ''}">${icon('link', 'icon-xs')}</span>` : '';
-      }).join('')}</div>` : '';
       if (editing) {
         return wrap(`<div class="ch-edit">
           <textarea class="textarea ch-edit-ta" id="ch-edit-${esc(b.id)}" data-key="ch-edit" rows="6">${esc(ctx.local.editing.text)}</textarea>
@@ -115,14 +107,14 @@ function blockHtml(b, chapter, ctx) {
         </div>`, 'is-editing');
       }
       const sel = ctx.local.unit?.type === 'block' && ctx.local.unit.id === b.id;
-      return wrap(`<p class="ch-text" data-action="sel-unit" data-block="${esc(b.id)}" data-tip="Click to see the evidence this paragraph was written from">${rich(b.text)}</p>${meta}`, sel ? 'is-sel' : '');
+      return wrap(`<p class="ch-text" data-action="sel-unit" data-block="${esc(b.id)}" data-tip="Click to see the evidence this paragraph was written from">${rich(b.text)}</p>`, sel ? 'is-sel' : '');
     }
     case 'box':
-      return wrap(`<div class="ch-box-inner"><div class="ch-box-title">${icon('bookmark', 'icon-sm')}${esc(b.title)}</div><ul>${(b.items || []).map(i => `<li>${rich(i.text)}${i.fn ? `<sup class="ch-fn"><a href="#" data-action="goto-fn" data-fn="${Number(i.fn)}">${Number(i.fn)}</a></sup>` : ''}</li>`).join('')}</ul>${b.nexus ? `<div class="ch-box-nexus">${icon('git-merge', 'icon-xs')}Cross-reference: SDG ${Number(b.nexus)} — ${esc(SDG_TITLES[b.nexus] || '')}</div>` : ''}</div>`);
+      return wrap(`<div class="ch-box-inner"><div class="ch-box-title">${icon('bookmark', 'icon-sm')}${esc(b.title)}</div><ul>${(b.items || []).map(i => `<li>${rich(i.text)}${i.fn ? `<sup class="ch-fn"><a href="#" data-action="goto-fn" data-fn="${Number(i.fn)}">${Number(i.fn)}</a></sup>` : ''}</li>`).join('')}</ul></div>`);
     case 'figure':
       return wrap(`<figure class="ch-figure"><div class="ch-figure-ph"><div class="ch-figure-ph-inner">${icon('image', 'icon-lg')}<span>Regional dashboard — image placeholder</span><span class="xs">SDG ${Number(b.goal) || ''} · inserted at layout</span></div></div><figcaption>${esc(b.caption)}</figcaption></figure>`);
     case 'table':
-      return wrap(`<figure class="ch-table"><figcaption>${esc(b.title)}</figcaption><div class="ch-table-wrap"><table><thead><tr>${(b.columns || []).map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${(b.rows || []).map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${b.source ? `<div class="ch-table-src">${esc(b.source)}${b.extractionId ? ` <a href="#/review/${esc(b.extractionId)}" class="ch-src-link">${icon('link', 'icon-xs')}view evidence</a>` : ''}</div>` : ''}</figure>`);
+      return wrap(`<figure class="ch-table"><figcaption>${esc(b.title)}</figcaption><div class="ch-table-wrap"><table><thead><tr>${(b.columns || []).map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${(b.rows || []).map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${b.source ? `<div class="ch-table-src">${esc(b.source)}</div>` : ''}</figure>`);
     case 'rec':
       return wrap(`<div class="ch-rec kind-${esc(b.kind)}">
         <div class="ch-rec-head"><span class="ch-rec-kind">${b.kind === 'priority' ? 'Priority' : 'Supporting'}</span><h4>${esc(b.title)}</h4></div>
@@ -135,7 +127,6 @@ function blockHtml(b, chapter, ctx) {
           <dt>Indicators and targets</dt><dd>${(b.indicators || []).length ? `<ul>${b.indicators.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '—'}</dd>
           <dt>Financing route</dt><dd>${esc(b.financing)}</dd>
         </dl>
-        ${b.basedOn && getExtraction(b.basedOn) ? `<a class="ch-src-link" href="#/review/${esc(b.basedOn)}">${icon('link', 'icon-xs')}Based on: ${esc(getExtraction(b.basedOn).title)}</a>` : ''}
       </div>`);
     default:
       return b.text ? wrap(`<p class="ch-text">${rich(b.text)}</p>`) : '';
