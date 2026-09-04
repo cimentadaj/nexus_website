@@ -427,7 +427,6 @@ export default {
       <div class="breadcrumb"><a href="#/projects/${esc(project.id)}">${esc(project.name)}</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">Chapters</span></div>
       <span class="grow"></span>
       ${projectStepper(project, 'chapters', { compact: true })}
-      <span class="badge badge-pill ${allApproved ? 'badge-success' : 'badge-neutral'} ch-progress-pill">${icon(allApproved ? 'check-circle-2' : 'pen-line', 'icon-xs')}${stats.chaptersApproved}/${chapters.length} chapters approved</span>
       ${assembleBtn}
       ${avatarButton()}`;
 
