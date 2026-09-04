@@ -281,7 +281,7 @@ function chatPanelHtml(chapter, ctx) {
       const selected = Object.keys(ctxSel).filter(k => ctxSel[k]).map(id => all.find(e => e.id === id) || getExtraction(id)).filter(Boolean);
       const q = (ctx.local.resQ || '').trim().toLowerCase();
       const avail = all.filter(e => !ctxSel[e.id] && (!q || `${e.title} ${e.sdg} ${e.pillar} ${e.value || ''}`.toLowerCase().includes(q))).slice(0, 24);
-      const pill = (e, on) => `<button class="ch-ctx-pill ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="ch-pillar p-${esc(e.pillar)}">${PILLAR_ABBR[e.pillar] || '·'}</span><span class="ch-ctx-t">SDG ${esc(e.sdg)} · ${esc(e.title)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
+      const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="ch-pillar p-${esc(e.pillar)}">${PILLAR_ABBR[e.pillar] || '·'}</span><span class="mono">${esc(e.sdg)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
       return `
     <div class="ch-unit">
       ${u ? `
@@ -290,11 +290,15 @@ function chatPanelHtml(chapter, ctx) {
         <span class="grow"></span>
         <button class="btn-icon" data-action="unit-clear" data-tip="Clear selection" aria-label="Clear selection">${icon('x', 'icon-sm')}</button>
       </div>
-      <div class="ch-unit-lbl">Context for the rewrite — the resources this ${ctx.local.unit.type === 'sec' ? 'section' : 'paragraph'} draws on</div>
-      <div class="ch-ctx-pills">${selected.length ? selected.map(e => pill(e, true)).join('') : `<span class="xs muted">No resources selected — add some below.</span>`}</div>
-      <div class="ch-unit-lbl">Add from the urban data</div>
-      <input class="input input-sm" id="ch-res-q" type="search" placeholder="Search indicators, documentary, projects, stakeholders…" value="${esc(ctx.local.resQ || '')}">
-      <div class="ch-ctx-avail">${avail.length ? avail.map(e => pill(e, false)).join('') : `<span class="xs muted">${q ? 'No matches.' : 'Everything is already in context.'}</span>`}</div>`
+      <div class="ch-ctx-bar">
+        <span class="ch-unit-lbl">Context · ${selected.length} resource${selected.length === 1 ? '' : 's'}</span>
+        <span class="grow"></span>
+        <button class="btn btn-light btn-xs ${ctx.local.resOpen ? 'is-active' : ''}" data-action="res-toggle">${icon(ctx.local.resOpen ? 'minus' : 'plus', 'icon-xs')}Add</button>
+      </div>
+      <div class="ch-ctx-pills">${selected.length ? selected.map(e => mini(e, true)).join('') : `<span class="xs muted">Empty — add resources to rewrite from.</span>`}</div>
+      ${ctx.local.resOpen ? `
+      <input class="input input-sm" id="ch-res-q" type="search" placeholder="Search the urban data…" value="${esc(ctx.local.resQ || '')}">
+      <div class="ch-ctx-avail">${avail.length ? avail.map(e => mini(e, false)).join('') : `<span class="xs muted">${q ? 'No matches.' : 'Everything is already in context.'}</span>`}</div>` : ''}`
       : ''}
     </div>
     <div class="ch-compose-box">
@@ -503,9 +507,9 @@ export default {
       let y = Math.max(8, Math.min(r.top + r.height / 2 - h / 2, window.innerHeight - h - 8));
       card.style.left = `${x}px`; card.style.top = `${y}px`;
     };
-    ctx.content.addEventListener('mouseover', (e) => { const p = e.target.closest('.ch-ctx-pill'); if (p) showCard(p); });
-    ctx.content.addEventListener('mouseout', (e) => { const p = e.target.closest('.ch-ctx-pill'); if (p && !p.contains(e.relatedTarget)) hideCard(); });
-    ctx.content.addEventListener('click', (e) => { if (e.target.closest('.ch-ctx-pill')) hideCard(); });
+    ctx.content.addEventListener('mouseover', (e) => { const p = e.target.closest('.ch-ctx-mini'); if (p) showCard(p); });
+    ctx.content.addEventListener('mouseout', (e) => { const p = e.target.closest('.ch-ctx-mini'); if (p && !p.contains(e.relatedTarget)) hideCard(); });
+    ctx.content.addEventListener('click', (e) => { if (e.target.closest('.ch-ctx-mini')) hideCard(); });
     const editTa = ctx.local.editing ? document.getElementById(`ch-edit-${ctx.local.editing.blockId}`) : null;
     if (editTa) {
       editTa.addEventListener('input', (e) => { ctx.local.editing.text = e.target.value; });
@@ -634,7 +638,8 @@ export default {
         ctx.local.resQ = '';
         ctx.rerender();
       },
-      'unit-clear': () => { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.rerender(); },
+      'unit-clear': () => { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.local.resOpen = false; ctx.rerender(); },
+      'res-toggle': () => { ctx.local.resOpen = !ctx.local.resOpen; if (!ctx.local.resOpen) ctx.local.resQ = ''; ctx.rerender(); },
       'ctx-toggle': (el, ev) => { ev.stopPropagation(); (ctx.local.ctxSel ||= {})[el.dataset.id] = !ctx.local.ctxSel[el.dataset.id]; ctx.rerender(); },
       'send': sendDraft,
     });
