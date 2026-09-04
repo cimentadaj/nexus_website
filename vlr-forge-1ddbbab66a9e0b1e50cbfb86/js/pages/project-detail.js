@@ -355,6 +355,7 @@ function overviewHtml(ctx, project, stats) {
           const obsVal = ctx.local.obsDraft?.key === key ? ctx.local.obsDraft.text : obs;
           return `<div class="pd-ext-detail">
             <div class="row gap-8 mb-8">${sdgChip(first.goal)}<strong class="pd-rowd-title">${esc(first.title)}</strong></div>
+            ${first.indicator ? `<div class="pd-rowd-localname"><span class="pd-rowd-locallabel">Local indicator name</span>${esc(first.indicator)}</div>` : ''}
             <div class="row gap-8 mb-8"><span class="xs muted">${esc(first.unit || '')}</span><span class="grow"></span>
               ${pend.length ? `<button class="btn btn-primary btn-xs" data-action="row-confirm-all" data-key="${esc(key)}">${icon('check-check', 'icon-xs')}Confirm all (${pend.length})</button>` : `<span class="xs success-text">${icon('check-circle', 'icon-xs')} All confirmed</span>`}
             </div>
