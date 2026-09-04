@@ -263,7 +263,7 @@ function chatPanelHtml(chapter, ctx) {
   <aside class="ch-chat card" id="ch-chat">
     <div class="card-header tinted ch-chat-head">
       <div class="card-title-caps">${icon('bot')}Chapter Reviewer</div>
-      <span class="ch-live"><span class="ch-live-dot ${busy ? 'busy' : ''}"></span>${busy ? 'Rewriting' : 'Gemini 2.5 Pro'}</span>
+      ${busy ? `<span class="ch-live"><span class="ch-live-dot busy"></span>Rewriting</span>` : ''}
     </div>
     <div class="ch-msgs" id="ch-msgs">
       ${!chapter ? `<div class="empty"><div class="empty-sub">Select a chapter to review it with the Chapter Reviewer.</div></div>` : msgs.length ? msgs.map(m => m.role === 'user'
