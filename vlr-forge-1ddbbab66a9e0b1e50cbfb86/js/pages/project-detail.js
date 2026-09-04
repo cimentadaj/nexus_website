@@ -70,15 +70,14 @@ function documentaryTableHtml(ctx, exts) {
     <thead><tr>
       <th class="pd-doc-sdgth pd-mx-sortable" data-action="doc-sdg-menu" data-tip="Filter by SDG">${sel ? sdgChip(sel, { title: false }) : 'SDG'} ${icon('chevron-down', 'icon-xs faint')}</th>
       <th class="pd-mx-sortable" data-action="doc-cat-menu" data-tip="Filter by category">${cat ? `<span class="badge pd-doc-cat ${DOC_CAT_CLASS[cat] || ''}">${esc(cat)}</span>` : 'Category'} ${icon('chevron-down', 'icon-xs faint')}</th>
-      <th>Key insight</th><th class="th-right"></th></tr></thead>
+      <th>Key insight</th></tr></thead>
     <tbody>${shown.map(e => `
       <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
         <td class="pd-doc-sdgtd">${sdgChip(e.goal)}</td>
-        <td><span class="badge pd-doc-cat ${DOC_CAT_CLASS[e.categoryLabel] || ''}">${esc(e.categoryLabel || '—')}</span></td>
-        <td class="pd-doc-insight">${esc(e.summary || e.title)}</td>
-        <td class="td-right"><div class="table-actions">${e.status === 'approved'
-          ? `<span data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''} — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle')}</button></span>`
+        <td><div class="row gap-8"><span class="badge pd-doc-cat ${DOC_CAT_CLASS[e.categoryLabel] || ''}">${esc(e.categoryLabel || '—')}</span>${e.status === 'approved'
+          ? `<span data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''} — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
           : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}</div></td>
+        <td class="pd-doc-insight">${esc(e.summary || e.title)}</td>
       </tr>`).join('')}</tbody>
   </table></div>
   ${!shown.length ? `<div class="empty"><div class="empty-sub">No entries match the current filters.</div></div>` : ''}`;
