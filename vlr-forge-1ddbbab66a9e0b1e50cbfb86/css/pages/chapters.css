@@ -247,3 +247,12 @@ sup.ch-fn a:hover { background: var(--sky-100); }
 .ch-row-write { flex-shrink: 0; align-self: center; color: var(--text-muted); }
 .ch-row-write:hover { color: var(--navy); }
 .ch-row { position: relative; }
+
+/* spine row + panel */
+.ch-row-spinebtn { border-top: 1px dashed var(--border); width: 100%; text-align: left; }
+.ch-row-spinebtn .ch-spine-ic { width: 26px; height: 26px; border-radius: 4px; display: grid; place-items: center; background: var(--surface-tint); border: 1px solid var(--border); color: var(--navy); flex-shrink: 0; }
+.ch-row-spinebtn.active { background: var(--sky-50); }
+.ch-spinepanel .ch-spine-body { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; flex: 1; min-height: 0; }
+.ch-spine-note { line-height: 1.5; }
+.ch-spine-text { flex: 1; min-height: 0; width: 100%; resize: none; font-size: 12px; line-height: 1.55; font-family: var(--mono); white-space: pre-wrap; }
+.ch-spine-foot { padding-bottom: 2px; }

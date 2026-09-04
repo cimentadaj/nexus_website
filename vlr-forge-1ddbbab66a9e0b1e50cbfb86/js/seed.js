@@ -57,6 +57,28 @@ export function defaultObservation(e, project) {
   return `Statement extracted from ${src}. It is consistent with the other documents uploaded for ${project.city} and no conflicting evidence was found in the source pool for SDG ${e.sdg}. ${tail}`;
 }
 
+/* Canonical chapter spine (condensed from docs/vlr_chapter_template.md, July 2026).
+ * Projects may override it per VLR and per SDG chapter. */
+export const DEFAULT_SPINE = `1. Divider page — "Chapter {number} — SDG {N}: {official goal name}" (the only place the SDG number appears outside tables).
+
+2. N.1 Introduction — three paragraphs and a box
+   - Global: what this goal is about and where the world stands (Global SDG report).
+   - Regional: standing and direction, referencing the regional figure (Arab Region SDG report).
+   - National: priorities and programmes by name, then one bridge sentence to the city.
+   - National initiatives box when the national source names two or more relevant programmes.
+
+3. Regional performance figure — image placeholder plus caption, adapted from the Arab Region report.
+
+4. N.2 Overview — one paragraph: which subjects have data, trend directions, and the gaps named plainly; ends with a roadmap sentence naming the subsections.
+
+5. N.3 {City}'s progress and challenges — one subsection per evidenced target, ascending target codes; headings name themes ("Safe drinking water (Target 6.1)"); every finding pillar-tagged and footnoted to page and quote; time-series tables where present.
+
+6. N.4 National-local alignment — where city delivery advances national commitments, and where it diverges.
+
+7. N.5 Policy recommendations — grounded in the evidenced gaps, each with means of implementation.
+
+Rules: heading text identical across chapters; no scores, no rankings, no verdicts; every factual sentence traces to an accepted snippet or a context document; skipped slots are skipped silently and logged in the gap report.`;
+
 export const INDICATOR_OBSERVATIONS = {
   '6.1.1': 'For {city} (the local level), the data is broadly consistent, but two source documents report different denominators for the share of population using safely managed drinking water services, so year-on-year comparisons should be treated with care. Several non-standard units appear in the source pack (m3/day supply capacity, network subscribers, liters/person/day consumption) which describe supply and capacity rather than the proportion of population served and were therefore not integrated into this series. At the national level the indicator has been stable, placing the country in the SDG Achievement category, although the trend is Stagnating; at the subnational level urban coverage is effectively universal while rural coverage lags slightly and carries the 2025/2030 catch-up targets.',
   '11.1.1': 'The informal-housing series for {city} is internally consistent (2018, 2020, 2022) and shows a steady improvement, but the 2018 census figure and the biennial-review figures use slightly different definitions of sub-standard housing, so the level shift between 2018 and 2020 partly reflects a methodology change rather than real improvement. The values remain concentrated in the outer metropolitan zones; district-level disaggregation exists only for 2022. No national comparison series was found in the uploaded documents.',
