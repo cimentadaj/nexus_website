@@ -37,15 +37,9 @@ function indicatorsMatrixHtml(ctx, exts) {
   const goals = [...new Set(exts.map(e => e.goal))].sort((a, b) => a - b);
   const sel = ctx.local.mxSdg && ctx.local.mxSdg !== 'all' ? Number(ctx.local.mxSdg) : null;
   const shown = sel ? exts.filter(e => e.goal === sel) : exts;
-  const yMax = new Date().getFullYear();
-  // 2000-2010 annually, then 5-year steps up to the current year; years that
-  // actually hold a number are merged in so no extraction ever disappears
-  const yset = new Set();
-  for (let y = 2000; y <= 2010; y++) yset.add(y);
-  for (let y = 2015; y < yMax; y += 5) yset.add(y);
-  yset.add(yMax);
-  shown.forEach(e => { if (e.year) yset.add(Number(e.year)); });
-  const years = [...yset].sort((a, b) => a - b);
+  // fixed grid: 2000, 2010, 2015, then annually 2016-2025
+  const years = [2000, 2010, 2015];
+  for (let y = 2016; y <= 2025; y++) years.push(y);
   const rows = []; const byKey = new Map();
   for (const e of shown) {
     const k = e.sdg + '|' + e.title;
