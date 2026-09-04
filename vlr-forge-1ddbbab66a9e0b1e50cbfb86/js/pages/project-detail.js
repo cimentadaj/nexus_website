@@ -56,7 +56,9 @@ function indicatorsMatrixHtml(ctx, exts) {
     <thead><tr><th class="pd-mx-sdgcol">SDG</th><th class="pd-mx-sticky pd-mx-sortable" data-action="mx-sort" data-tip="Sort by indicator name">Indicator ${dir ? icon(dir === 'az' ? 'arrow-down-a-z' : 'arrow-up-a-z', 'icon-xs') : icon('arrow-up-down', 'icon-xs faint')}</th>${years.map(y => `<th class="pd-mx-year">${y}</th>`).join('')}</tr></thead>
     <tbody>${rows.map(r => { const key = r.sdg + '|' + r.title; return `<tr class="clickable ${ctx.local.extRow === key ? 'row-sel' : ''}" data-action="ext-row" data-key="${esc(key)}">
       <td class="pd-mx-sdgcol">${sdgChip(r.goal)}</td>
-      <td class="pd-mx-sticky" style="border-left:3px solid ${SDG_COLORS[r.goal]}"><span class="pd-mx-code mono">${esc(r.sdg)}</span><span class="pd-mx-name">${esc(r.name)}</span></td>
+      <td class="pd-mx-sticky" style="border-left:3px solid ${SDG_COLORS[r.goal]}"><div class="pd-mx-namewrap"><div><span class="pd-mx-code mono">${esc(r.sdg)}</span><span class="pd-mx-name">${esc(r.name)}</span></div>${Object.values(r.cells).some(isPending)
+        ? `<span data-tip="Confirm every number in this row"><button class="btn-icon pd-mx-rowok" data-action="row-confirm-all" data-key="${esc(key)}">${icon('check-check', 'icon-sm')}</button></span>`
+        : `<span class="pd-mx-rowdone" data-tip="All numbers confirmed">${icon('check-circle', 'icon-sm')}</span>`}</div></td>
       ${years.map(y => { const e = r.cells[y];
         return `<td class="pd-mx-td">${e ? `<span class="pd-mx-cell st-${esc(e.status)}">${esc(e.value)}</span>` : ''}</td>`; }).join('')}
     </tr>`; }).join('')}</tbody>

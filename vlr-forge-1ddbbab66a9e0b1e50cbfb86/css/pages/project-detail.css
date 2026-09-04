@@ -237,3 +237,8 @@ tr.pp-open td { background: var(--sky-50); }
 
 .pd-mx-name { display: block; font-size: 12.5px; line-height: 1.35; color: var(--text); font-weight: 500; }
 .pd-mx-code { display: block; margin-bottom: 1px; }
+
+.pd-mx-namewrap { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.pd-mx-rowok { color: var(--text-muted); flex-shrink: 0; }
+.pd-mx-rowok:hover { color: var(--success-600); }
+.pd-mx-rowdone { color: var(--success-600); flex-shrink: 0; display: inline-flex; }
