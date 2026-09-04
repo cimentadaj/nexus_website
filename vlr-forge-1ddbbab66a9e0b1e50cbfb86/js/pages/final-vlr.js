@@ -3,18 +3,18 @@
  * continuous paper sheets, with highlight-and-comment on any passage, a comments panel, VLR Editor revisions,
  * finalize / reopen and real DOCX / PDF / Markdown exports. All UI state lives in ctx.local (re-renders are frequent).
  */
-import { esc, icon, initials, relTime, fmtDateTime, sdgChips, progressHtml, bindActions, toast, confirmDialog, openMenu, download, refreshIcons, clamp } from '../ui.js';
-import { getProject, getProjectBook, getProjectChapters, getProjectTasks, projectStats, currentUser } from '../store.js';
-import { assembleFinalBook, addBookComment, replyBookComment, resolveBookComment, deleteBookComment, reviseFromComment, finalizeBook, reopenBook } from '../actions.js';
+import { esc, icon, relTime, fmtDateTime, sdgChips, SDG_TITLES, SDG_COLORS, progressHtml, bindActions, toast, confirmDialog, openMenu, download, refreshIcons } from '../ui.js';
+import { getProject, getProjectBook, getProjectChapters, getProjectTasks, getProjectExtractions, getExtraction, projectStats, currentUser } from '../store.js';
+import { assembleFinalBook, rewriteUnit, finalizeBook, reopenBook } from '../actions.js';
 import { bookOutline, bookExport } from '../export.js';
 import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml } from '../shell.js';
-import { STEP_META } from '../seed.js';
+import { STEP_META, PILLARS, quotePlain } from '../seed.js';
 import { navigate } from '../router.js';
 
 const PILLAR_LABEL = { indicators: 'Urban Data', documentary: 'Documentary', projects: 'Projects', stakeholders: 'Stakeholder' };
 const PART_ICON = { foreword: 'quote', 'executive-summary': 'file-text', introduction: 'book-open', profile: 'map-pin', recommendations: 'list-checks', annex: 'shield-check' };
 const TOPBAR_OFFSET = 62 + 18;
-const DEFAULT_REVISE_TEXT = 'Please revise this passage for clarity and precision, keeping every figure and citation unchanged.';
+const PILLAR_ABBR = { indicators: 'IND', documentary: 'DOC', projects: 'PRJ', stakeholders: 'STK' };
 
 /* =========================================================================
  * Rich text: **bold**, [^n] footnote markers and comment marks over plain-text offsets
@@ -99,45 +99,11 @@ function tocItems(book) {
 /* =========================================================================
  * Block renderers
  * ======================================================================= */
-function pBlockHtml(it, { commentsByBlock, sel, project }) {
-  const marks = (commentsByBlock[it.id] || []).map(c => ({ id: c.id, quote: c.quote, cls: c.status === 'resolved' ? 'resolved' : 'open' }));
-  const selected = sel && sel.blockId === it.id;
-  if (selected) marks.push({ id: '', quote: sel.quote, cls: 'pending' });
-  const cls = ['vlr-p', it.revised ? 'is-revised' : '', selected ? 'is-selected' : '', it.role ? `role-${it.role}` : ''].filter(Boolean).join(' ');
-  const pillars = (it.pillars || []).map(p => `<span class="vlr-chip pillar-${esc(p)}">${esc(PILLAR_LABEL[p] || p)}</span>`).join('');
-  const src = it.extractionId ? `<a class="vlr-chip vlr-chip-link" href="#/review/${esc(it.extractionId)}" title="Open the source extraction">${icon('link', 'icon-xs')}source</a>` : '';
-  const revised = it.revised ? `<span class="vlr-chip revised">${icon('pen-line', 'icon-xs')}revised by editor</span>` : '';
-  const chap = it.chapterId && !it._chapter ? `<a class="vlr-chip vlr-chip-link" href="#/projects/${esc(project.id)}/chapters/${esc(it.chapterId)}" title="Open the chapter">${icon('book-open', 'icon-xs')}chapter</a>` : '';
-  const meta = pillars || src || revised || chap ? `<div class="vlr-p-meta">${pillars}${src}${chap}${revised}</div>` : '';
-  const nOpen = (commentsByBlock[it.id] || []).filter(c => c.status === 'open').length;
-  const gutter = nOpen ? `<button class="vlr-gutter" data-action="focus-block-comments" data-block="${esc(it.id)}" title="${nOpen} open comment${nOpen === 1 ? '' : 's'}">${icon('message-square', 'icon-xs')}${nOpen}</button>` : '';
+function pBlockHtml(it, { unit }) {
+  const selected = unit && unit.type === 'block' && unit.id === it.id;
+  const cls = ['vlr-p', selected ? 'is-sel' : '', it.role ? `role-${it.role}` : ''].filter(Boolean).join(' ');
   return `<div class="${cls}" data-block="${esc(it.id)}" data-section="${esc(it._section)}" ${it._chapter ? `data-chapter="${esc(it._chapter)}"` : ''}>
-    ${gutter}
-    <p>${richHtml(it.text, marks)}</p>
-    ${meta}
-    ${selected ? selectionUiHtml(sel) : ''}
-  </div>`;
-}
-
-function selectionUiHtml(sel) {
-  if (sel.mode === 'comment' || sel.mode === 'revise') {
-    const revise = sel.mode === 'revise';
-    return `<div class="vlr-cform" data-vlr-keep>
-      <div class="vlr-cform-quote">${icon(revise ? 'sparkles' : 'message-square-plus', 'icon-sm')}<span>“${esc(sel.quote.length > 140 ? sel.quote.slice(0, 140) + '…' : sel.quote)}”</span></div>
-      <textarea class="textarea vlr-cform-text" id="vlr-cmt-text" data-action="draft" rows="3" placeholder="${revise ? 'What should the VLR Editor change? (optional — leave empty for a general revision)' : 'Write your comment…'}">${esc(sel.draft || '')}</textarea>
-      <div class="vlr-cform-actions">
-        <span class="xs muted">${revise ? 'The editor rewrites the passage and replies in the comments panel.' : 'Ctrl + Enter to submit'}</span>
-        <span class="grow"></span>
-        <button class="btn btn-light btn-sm" data-action="cancel-sel">Cancel</button>
-        ${revise ? `<button class="btn btn-primary btn-sm" data-action="send-revise">${icon('sparkles', 'icon-sm')}Send to VLR Editor</button>`
-                 : `<button class="btn btn-primary btn-sm" data-action="add-comment">${icon('message-square-plus', 'icon-sm')}Add comment</button>`}
-      </div>
-    </div>`;
-  }
-  return `<div class="vlr-seltip" data-vlr-keep style="top:${Math.round(sel.top)}px;left:${Math.round(sel.left)}px">
-    <button data-action="sel-comment">${icon('message-square-plus', 'icon-sm')}Comment</button>
-    <span class="vlr-seltip-sep"></span>
-    <button data-action="sel-revise">${icon('sparkles', 'icon-sm')}Ask editor to revise</button>
+    <p data-action="sel-unit" data-block="${esc(it.id)}">${richHtml(it.text, [])}</p>
   </div>`;
 }
 
@@ -145,13 +111,13 @@ function blockHtml(it, data) {
   switch (it.kind) {
     case 'cover': return '';
     case 'h1': return `<h1 class="vlr-h1" data-anchor="${esc(it.key)}">${esc(it.text)}</h1>`;
-    case 'h2': return `<h2 class="vlr-h2" data-anchor="${esc(it.key)}">${esc(it.text)}</h2>`;
+    case 'h2': return `<h2 class="vlr-h2 vlr-h-sel ${data.unit?.type === 'sec' && data.unit.id === it.key ? 'is-sel' : ''}" data-anchor="${esc(it.key)}" data-action="sel-sec" data-sec="${esc(it.key)}">${esc(it.text)}</h2>`;
     case 'h3': return `<h3 class="vlr-h3" data-anchor="${esc(it.key)}">${esc(it.text)}</h3>`;
     case 'p': return pBlockHtml(it, data);
     case 'signature': return `<div class="vlr-sig">${esc(it.text).replace(/\n/g, '<br>')}</div>`;
     case 'box': return `<aside class="vlr-box ${it.nexus ? 'nexus' : ''}"><div class="vlr-box-title">${icon(it.nexus ? 'git-merge' : 'landmark', 'icon-sm')}${esc(it.title)}</div><ul>${(it.items || []).map(i => `<li>${esc(i.text)}${i.fn ? supHtml(i.fn) : ''}</li>`).join('')}</ul></aside>`;
     case 'figure': return `<figure class="vlr-figure"><div class="vlr-figure-ph"><div class="vlr-figure-bars">${[62, 78, 45, 90, 70, 55, 84].map((h, i) => `<span style="height:${h}%;animation-delay:${i * 60}ms"></span>`).join('')}</div><div class="vlr-figure-label">${icon('image', 'icon-sm')}Regional dashboard — figure placeholder${it.goal ? ` · SDG ${esc(it.goal)}` : ''}</div></div><figcaption>${esc(it.caption)}</figcaption></figure>`;
-    case 'table': return `<figure class="vlr-table"><figcaption>${esc(it.title)}</figcaption><div class="vlr-table-wrap"><table><thead><tr>${(it.columns || []).map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${(it.rows || []).map(r => `<tr>${r.map((c, i) => `<td class="${i > 0 && /^[\d.,%\s–-]+$/.test(String(c)) ? 'num' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${it.source ? `<div class="vlr-table-src">${esc(it.source)}</div>` : ''}${it.extractionId ? `<a class="vlr-chip vlr-chip-link vlr-table-link" href="#/review/${esc(it.extractionId)}">${icon('link', 'icon-xs')}source extraction</a>` : ''}</figure>`;
+    case 'table': return `<figure class="vlr-table"><figcaption>${esc(it.title)}</figcaption><div class="vlr-table-wrap"><table><thead><tr>${(it.columns || []).map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${(it.rows || []).map(r => `<tr>${r.map((c, i) => `<td class="${i > 0 && /^[\d.,%\s–-]+$/.test(String(c)) ? 'num' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${it.source ? `<div class="vlr-table-src">${esc(it.source)}</div>` : ''}</figure>`;
     case 'kv': return `<table class="vlr-kv"><tbody>${(it.rows || []).map(r => `<tr><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table>`;
     case 'list': return `<ul class="vlr-list">${(it.items || []).map(i => `<li>${esc(i.text)}</li>`).join('')}</ul>`;
     case 'rec': return `<article class="vlr-rec ${esc(it.kind || 'supporting')} rec-${esc(it.kind === 'priority' ? 'priority' : 'supporting')}">
@@ -165,7 +131,6 @@ function blockHtml(it, data) {
           <dt>Indicators and targets</dt><dd><ul>${(it.indicators || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul></dd>
           <dt>Financing route</dt><dd>${esc(it.financing)}</dd>
         </dl>
-        ${it.basedOn ? `<a class="vlr-chip vlr-chip-link" href="#/review/${esc(it.basedOn)}">${icon('link', 'icon-xs')}based on evidence</a>` : ''}
       </article>`;
     case 'footnotes': return (it.items || []).length ? `<section class="vlr-notes"><h4>Notes</h4><ol>${it.items.map(f => `<li value="${esc(f.n)}" data-fnote="${esc(f.n)}"><span class="vlr-note-n">${esc(f.n)}</span>${esc(f.text)}</li>`).join('')}</ol></section>` : '';
     default: return '';
@@ -214,59 +179,99 @@ function tocHtml(book, chapters, active, commentsAll) {
         const lead = ch ? `<span class="vlr-toc-goal" style="background:var(--sdg-${esc(ch.goal)})">${esc(ch.goal)}</span>` : icon(it.icon || 'file-text', 'icon-sm');
         const badge = ch && openByChapter[ch.id] ? `<span class="vlr-toc-badge" title="${openByChapter[ch.id]} open comment(s)">${openByChapter[ch.id]}</span>` : '';
         return `<button class="vlr-toc-item lvl0 ${active === it.key ? 'active' : ''}" data-action="toc" data-key="${esc(it.key)}">${lead}<span class="grow truncate">${esc(label)}</span>${badge}</button>
-          ${(it.children || []).map(c => `<button class="vlr-toc-item lvl1 ${active === c.key ? 'active' : ''}" data-action="toc" data-key="${esc(c.key)}"><span class="grow truncate">${esc(c.label)}</span></button>`).join('')}`;
+          ${(it.children || []).map(c => `<button class="vlr-toc-item lvl1 ${active === c.key ? 'active' : ''}" data-action="toc" data-key="${esc(c.key)}" data-sub="1"><span class="grow truncate">${esc(c.label)}</span></button>`).join('')}`;
       }).join('')}
     </div>
   </nav>`;
 }
 
-function commentCardHtml(c, { me, focus, replyOpen, replyDraft, project }) {
-  const own = c.author === me;
-  const isEditor = (a) => a === 'VLR Editor';
-  const chapterLbl = c.chapterId ? (getProjectChapters(project.id).find(x => x.id === c.chapterId)?.title || 'Chapter').replace(/ — .*$/, '') : (c.sectionKey || '').replace(/-/g, ' ');
-  return `<article class="vlr-cmt ${c.status} ${focus === c.id ? 'is-focus' : ''} ${c.revising ? 'is-revising' : ''}" data-comment-card="${esc(c.id)}">
-    <div class="vlr-cmt-head">
-      <span class="avatar avatar-sm">${esc(initials(c.author))}</span>
-      <div class="grow"><div class="vlr-cmt-author">${esc(c.author)}${own ? ' <span class="muted">(you)</span>' : ''}</div><div class="vlr-cmt-meta">${esc(relTime(c.at))} · <span class="caps-inline">${esc(chapterLbl)}</span></div></div>
-      <span class="vlr-cmt-status ${c.status}" title="${c.status === 'resolved' ? `Resolved${c.resolvedBy ? ' by ' + esc(c.resolvedBy) : ''}` : 'Open'}">${icon(c.status === 'resolved' ? 'check-circle-2' : 'circle-dot', 'icon-xs')}${c.status === 'resolved' ? 'Resolved' : 'Open'}</span>
-    </div>
-    <button class="vlr-cmt-quote" data-action="goto-comment" data-comment="${esc(c.id)}" title="Jump to the passage">“${esc(c.quote.length > 110 ? c.quote.slice(0, 110) + '…' : c.quote)}”</button>
-    <div class="vlr-cmt-text">${esc(c.text)}</div>
-    ${(c.replies || []).length ? `<div class="vlr-replies">${c.replies.map(r => `<div class="vlr-reply ${isEditor(r.author) ? 'editor' : ''}"><span class="vlr-reply-av">${isEditor(r.author) ? icon('bot', 'icon-sm') : esc(initials(r.author))}</span><div><div class="vlr-reply-head"><strong>${esc(r.author)}</strong><span class="muted">${esc(relTime(r.at))}</span></div><div class="vlr-reply-text">${esc(r.text)}</div></div></div>`).join('')}</div>` : ''}
-    ${c.revising ? `<div class="vlr-revising">${icon('loader-2', 'icon-sm spin')}Revising… the VLR Editor is rewriting the passage</div>` : ''}
-    ${replyOpen === c.id ? `<div class="vlr-replybox" data-vlr-keep><input class="input" id="vlr-reply-${esc(c.id)}" data-action="reply-draft" data-comment="${esc(c.id)}" placeholder="Write a reply…" value="${esc(replyDraft || '')}" autocomplete="off"><button class="btn btn-primary btn-sm" data-action="send-reply" data-comment="${esc(c.id)}">Send</button><button class="btn btn-light btn-sm" data-action="cancel-reply">Cancel</button></div>` : ''}
-    <div class="vlr-cmt-actions">
-      <button class="vlr-cmt-btn" data-action="reply" data-comment="${esc(c.id)}">${icon('reply', 'icon-xs')}Reply</button>
-      ${c.status === 'open' ? `<button class="vlr-cmt-btn" data-action="resolve" data-comment="${esc(c.id)}">${icon('check', 'icon-xs')}Resolve</button>` : `<button class="vlr-cmt-btn" data-action="reopen" data-comment="${esc(c.id)}">${icon('rotate-ccw', 'icon-xs')}Reopen</button>`}
-      ${!c.revising ? `<button class="vlr-cmt-btn accent" data-action="revise" data-comment="${esc(c.id)}">${icon('sparkles', 'icon-xs')}Ask editor to revise</button>` : ''}
-      ${own ? `<button class="vlr-cmt-btn danger" data-action="delete" data-comment="${esc(c.id)}">${icon('trash-2', 'icon-xs')}Delete</button>` : ''}
-    </div>
-  </article>`;
+/* =========================================================================
+ * Unit selection + editor panel — same philosophy as the chapter reviewer:
+ * click a paragraph, a heading or a TOC entry, curate the urban-data context,
+ * rewrite that unit from exactly the selected resources.
+ * ======================================================================= */
+function bookFlatItems(book) {
+  const out = [];
+  let h1 = null, h2 = null, chapterId = null;
+  for (const it of bookOutline(book)) {
+    if (it.kind === 'h1') { h1 = it.key; h2 = null; chapterId = it.chapterId || null; continue; }
+    if (it.kind === 'h2') { h2 = it.key; continue; }
+    if (it.kind === 'p' && it.id) out.push({ id: it.id, secKey: h2 || h1, h1Key: h1, chapterId });
+  }
+  return out;
+}
+function bookHeadingLabel(book, key) {
+  for (const it of bookOutline(book)) if ((it.kind === 'h1' || it.kind === 'h2') && it.key === key) return it.text;
+  return 'section';
+}
+function bookUnit(book, unit) {
+  if (!unit) return null;
+  const items = bookFlatItems(book);
+  if (unit.type === 'block') {
+    const b = items.find(x => x.id === unit.id);
+    return b ? { blocks: [b], label: 'the selected paragraph', short: 'Paragraph', heading: bookHeadingLabel(book, b.secKey), chapterId: b.chapterId } : null;
+  }
+  const list = items.filter(x => x.secKey === unit.id);
+  if (!list.length) return null;
+  const heading = bookHeadingLabel(book, unit.id);
+  return { blocks: list, label: `the section “${heading}”`, short: 'Section', heading, chapterId: list.every(x => x.chapterId === list[0].chapterId) ? list[0].chapterId : null };
 }
 
-function panelHtml(book, project, local) {
-  const all = book.comments || [];
-  const open = all.filter(c => c.status === 'open').length;
-  const resolved = all.length - open;
-  const filter = local.cfilter || 'all';
-  const shown = all.filter(c => filter === 'all' || c.status === filter).sort((a, b) => (a.status === b.status ? b.at - a.at : a.status === 'open' ? -1 : 1));
-  const me = currentUser()?.name;
-  const revs = [...(book.revisions || [])].sort((a, b) => b.at - a.at);
-  return `<aside class="vlr-panel card" data-vlr-keep>
+function editorPanelHtml(book, project, chapters, local) {
+  const u = bookUnit(book, local.unit);
+  const ctxSel = local.ctxSel || {};
+  const all = getProjectExtractions(project.id).filter(e => e.status === 'approved');
+  const selected = Object.keys(ctxSel).filter(k => ctxSel[k]).map(id => all.find(e => e.id === id) || getExtraction(id)).filter(Boolean);
+  const targetChapter = u?.chapterId ? chapters.find(c => c.id === u.chapterId) : null;
+  const busy = !!targetChapter?.reviewing;
+  const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="mono">${esc(e.sdg)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
+  const miniSeries = (g, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-ids="${esc(g.map(x => x.id).join(','))}"><span class="mono">${esc(g[0].sdg)}</span>${g.length > 1 ? `<span class="ch-yrs">×${g.length}</span>` : ''}${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
+  const groupInd = (list) => { const m = new Map(); for (const e of list.filter(x => x.pillar === 'indicators')) { const k = e.sdg + '|' + e.title; if (!m.has(k)) m.set(k, []); m.get(k).push(e); } return [...m.values()].map(g => [...g].sort((a, b) => (a.year || 0) - (b.year || 0))); };
+  return `<aside class="vlr-panel card vlr-editor" data-vlr-keep>
     <div class="card-header tinted">
-      <div class="card-title-caps">${icon('message-square')}Comments</div>
-      <div class="vlr-counts"><span class="badge badge-warning">${open} open</span><span class="badge badge-success">${resolved} resolved</span></div>
+      <div class="card-title-caps">${icon('bot')}VLR Editor</div>
+      ${busy ? `<span class="ch-live"><span class="ch-live-dot busy"></span>Rewriting</span>` : ''}
     </div>
-    <div class="vlr-cfilters">
-      ${[['all', 'All', all.length], ['open', 'Open', open], ['resolved', 'Resolved', resolved]].map(([k, l, n]) => `<button class="vlr-cfilter ${filter === k ? 'active' : ''}" data-action="cfilter" data-filter="${k}">${l}<span>${n}</span></button>`).join('')}
+    <div class="ch-unit vlr-editor-body">
+      ${u ? `
+      <div class="ch-unit-head">
+        <span class="ch-unit-tag">${icon('text-select', 'icon-xs')}${esc(u.short)} — ${esc(u.heading)}</span>
+        <span class="grow"></span>
+        <button class="btn-icon" data-action="unit-clear" data-tip="Clear selection" aria-label="Clear selection">${icon('x', 'icon-sm')}</button>
+      </div>
+      <div class="ch-ctx-bar"><span class="ch-unit-lbl">Context · ${selected.length} resource${selected.length === 1 ? '' : 's'}</span></div>
+      ${selected.length ? `<div class="ch-ctx-cols">${PILLARS.map(p => { const list = selected.filter(e => e.pillar === p.key); return `
+        <div class="ch-ctx-col col-${esc(p.key)}">
+          <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span><button class="ch-col-add ${local.resPillar === p.key ? 'on' : ''}" data-action="res-open" data-pillar="${esc(p.key)}" data-tip="Browse ${esc(p.label.toLowerCase())} resources">${icon('plus', 'icon-xs')}</button></div>
+          ${p.key === 'indicators' ? groupInd(list).map(g => miniSeries(g, true)).join('') : list.map(e => mini(e, true)).join('')}
+        </div>`; }).join('')}</div>` : `<div class="ch-ctx-pills"><span class="xs muted">Empty — add resources to rewrite from.</span></div>`}
+      ${local.resPillar ? (() => {
+        const p = PILLARS.find(x => x.key === local.resPillar);
+        const pillarAll = all.filter(e => e.pillar === p.key);
+        const goals = [...new Set(pillarAll.map(e => e.goal))].sort((x, y) => x - y);
+        const g = local.resGoal;
+        const list = pillarAll.filter(e => !g || e.goal === g);
+        const entries = p.key === 'indicators' ? groupInd(list).map(gr => ({ ids: gr.map(x => x.id), sdg: gr[0].sdg, title: gr[0].title, n: gr.length })) : list.map(e => ({ ids: [e.id], sdg: e.sdg, title: e.title, n: 1 }));
+        return `
+      <div class="ch-brw">
+        <div class="ch-brw-head"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span><span class="ch-brw-title">${esc(p.label)}</span><span class="grow"></span><button class="btn-icon" data-action="res-close" data-tip="Close" aria-label="Close">${icon('x', 'icon-sm')}</button></div>
+        <div class="ch-brw-body">
+          <div class="ch-brw-goals">
+            <button class="ch-brw-goal all ${!g ? 'on' : ''}" data-action="res-goal" data-goal="">All</button>
+            ${goals.map(gl => `<button class="ch-brw-goal ${g === gl ? 'on' : ''}" style="--g:${SDG_COLORS[gl]}" data-action="res-goal" data-goal="${gl}" data-tip="SDG ${gl}: ${esc(SDG_TITLES[gl])}"><i></i>${gl}</button>`).join('')}
+          </div>
+          <div class="ch-brw-list">
+            ${entries.length ? entries.map(en => { const on = en.ids.some(id => ctxSel[id]); return `<button class="ch-ctx-mini ch-brw-item ${on ? 'on' : ''}" data-action="ctx-toggle" ${en.ids.length > 1 ? `data-ids="${esc(en.ids.join(','))}"` : `data-id="${esc(en.ids[0])}"`}><span class="mono">${esc(en.sdg)}</span><span class="ch-res-t">${esc(en.title)}</span>${en.n > 1 ? `<span class="ch-yrs">${en.n} yrs</span>` : ''}${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`; }).join('') : `<span class="xs muted">No resources in this pillar.</span>`}
+          </div>
+        </div>
+      </div>`;
+      })() : ''}` : ''}
     </div>
-    <div class="vlr-clist" id="vlr-clist">
-      ${shown.length ? shown.map(c => commentCardHtml(c, { me, focus: local.focusComment, replyOpen: local.replyOpen, replyDraft: local.replyDraft, project })).join('')
-        : `<div class="empty vlr-cempty">${icon(all.length ? 'filter' : 'highlighter')}<div class="empty-title">${all.length ? 'No comments match' : 'No comments yet'}</div><div class="empty-sub">${all.length ? 'Switch the filter to see the rest.' : 'Select any passage in the book to comment on it or ask the VLR Editor to revise it.'}</div></div>`}
-    </div>
-    <div class="card-header tinted vlr-panel-sub"><div class="card-title-caps">${icon('history')}Revision history</div><span class="badge badge-neutral">v${esc(book.version)}</span></div>
-    <div class="vlr-revs">
-      ${revs.map(r => `<div class="vlr-rev"><span class="vlr-rev-v">v${esc(r.version)}</span><div class="grow"><div class="vlr-rev-sum">${esc(r.summary)}</div><div class="vlr-rev-meta">${esc(r.by)} · ${esc(relTime(r.at))}</div></div></div>`).join('') || '<div class="empty-sub" style="padding:14px 18px">No revisions recorded.</div>'}
+    <div class="ch-compose-box">
+      <textarea class="textarea" id="vlr-instr" rows="2" placeholder="${u ? 'Optional instruction — e.g. lead with the 2023 figure…' : 'Click a paragraph, a heading or a contents entry first'}" ${!u || busy ? 'disabled' : ''}>${esc(local.instr || '')}</textarea>
+      <div class="ch-compose-actions"><span class="xs muted">${busy ? 'The editor is rewriting — hang on.' : ''}</span><span class="grow"></span>
+        <span ${u && !u.chapterId ? 'data-tip="Front and back matter are maintained by the VLR team — select a chapter passage"' : ''}><button class="btn btn-primary btn-sm" data-action="editor-rewrite" ${!u || busy || !u.chapterId || !selected.length ? 'disabled' : ''}>${icon('refresh-cw', 'icon-sm')}Rewrite ${u?.short === 'Section' ? 'section' : 'paragraph'}</button></span>
+      </div>
     </div>
   </aside>`;
 }
@@ -346,19 +351,15 @@ export default {
     const tabs = projectStepper(project, 'vlr', { compact: true });
 
     /* ---------- top bar ---------- */
-    const sub = book
-      ? `v${book.version} · ${isFinal ? 'Final' : 'Draft'} · ${book.stats?.pages ?? '—'} pages · ${book.stats?.figures ?? 0} figures · ${book.stats?.footnotes ?? 0} footnotes`
-      : `${stats.phase} · ${chapters.length} chapter${chapters.length === 1 ? '' : 's'}`;
     ctx.topbar.innerHTML = `
       <button class="btn-icon vlr-back" data-action="back" aria-label="Back">${icon('arrow-left', 'icon-lg')}</button>
-      <div class="vlr-heading"><div class="topbar-title">Final VLR — ${esc(project.name)}</div><div class="topbar-subtitle">${esc(sub)}</div></div>
+      <div class="vlr-heading"><div class="topbar-title">Final VLR — ${esc(project.name)}</div></div>
       <span class="grow"></span>
       ${tabs}
       ${book ? `
-        ${isFinal ? `<span class="badge badge-success badge-dot vlr-status">Published</span>` : `<span class="badge badge-warning vlr-status">Draft</span>`}
         <button class="btn btn-light" data-action="download-menu">${icon('download', 'icon-sm')}Download${icon('chevron-down', 'icon-sm')}</button>
         ${isFinal ? `<button class="btn btn-light" data-action="reopen-book">${icon('unlock', 'icon-sm')}Reopen for edits</button>`
-                  : `<button class="btn btn-primary" data-action="finalize">${icon('badge-check', 'icon-sm')}Finalize VLR</button>`}` : ''}
+                  : `<button class="btn btn-primary" data-action="finalize">${icon('badge-check', 'icon-sm')}Approve VLR</button>`}` : ''}
       ${avatarButton()}`;
 
     /* ---------- content ---------- */
@@ -373,48 +374,28 @@ export default {
       return () => { unbind(); unbindTop(); };
     }
 
-    const commentsByBlock = {};
-    (book.comments || []).forEach(c => { (commentsByBlock[c.blockId] ||= []).push(c); });
-    /* drop a stale selection whose block no longer exists in the book */
-    const sel = local.sel && local.sel.blockId ? local.sel : null;
     const activeTasks = tasks.filter(t => ['assemble', 'render'].includes(t.step) && ['queued', 'running'].includes(t.status));
-    const openCount = (book.comments || []).filter(c => c.status === 'open').length;
 
     ctx.content.innerHTML = `<div class="vlr-page">
       ${activeTasks.length ? `<div class="callout vlr-banner">${icon('loader-2', 'spin')}<div class="grow"><strong>${activeTasks.some(t => t.step === 'assemble') ? 'Re-assembling the book' : 'Rendering the Word file'}</strong> — ${esc(activeTasks.map(t => `${STEP_META[t.step]?.label || t.label} ${t.status === 'running' ? Math.round(t.progress || 0) + '%' : '(queued)'}`).join(' · '))}</div></div>` : ''}
-      ${isFinal ? `<div class="callout success vlr-banner">${icon('badge-check')}<div class="grow"><strong>Published</strong> — finalised ${book.finalizedAt ? esc(fmtDateTime(book.finalizedAt)) : ''}${book.finalizedBy ? ` by ${esc(book.finalizedBy)}` : ''}. Comments stay open for the record; asking the editor to revise a passage reopens the draft.</div><button class="btn btn-light btn-sm" data-action="download-docx">${icon('file-type', 'icon-sm')}Word (.docx)</button></div>`
-        : openCount ? `<div class="callout warning vlr-banner">${icon('message-square-warning')}<div class="grow"><strong>${openCount} open comment${openCount === 1 ? '' : 's'}</strong> — resolve them or ask the VLR Editor to revise the passages before finalising.</div><button class="btn btn-light btn-sm" data-action="cfilter" data-filter="open">Show open</button></div>` : ''}
+      ${isFinal ? `<div class="callout success vlr-banner">${icon('badge-check')}<div class="grow"><strong>Approved</strong> — ${book.finalizedAt ? esc(fmtDateTime(book.finalizedAt)) : ''}${book.finalizedBy ? ` by ${esc(book.finalizedBy)}` : ''}.</div><button class="btn btn-light btn-sm" data-action="download-docx">${icon('file-type', 'icon-sm')}Word (.docx)</button></div>` : ''}
       <div class="vlr-layout">
-        ${tocHtml(book, chapters, local.tocActive || 'cover', book.comments || [])}
+        ${tocHtml(book, chapters, local.tocActive || 'cover', [])}
         <div class="vlr-book" id="vlr-book">
-          ${sheetsHtml(book, project, chapters, { commentsByBlock, sel, project })}
-          <div class="vlr-colophon">${icon('shield-check', 'icon-sm')}Generated by VLR Forge · every figure above traces to a source document, page and quotation · v${esc(book.version)} · assembled ${esc(fmtDateTime(book.assembledAt))}</div>
+          ${sheetsHtml(book, project, chapters, { unit: local.unit })}
         </div>
-        ${panelHtml(book, project, local)}
+        ${editorPanelHtml(book, project, chapters, local)}
       </div>
     </div>`;
-    ctx.footer.innerHTML = statusBarHtml(project);
+    ctx.footer.innerHTML = '';
 
-    /* one-off post-render effects (scroll a comment card into view, focus the textarea) */
-    if (local.scrollToCard) {
-      const panel = ctx.content.querySelector('.vlr-panel'); const card = ctx.content.querySelector(`[data-comment-card="${CSS.escape(local.scrollToCard)}"]`);
-      if (panel && card) panel.scrollTo({ top: Math.max(0, card.offsetTop - 70), behavior: 'smooth' });
-      local.scrollToCard = null;
-    }
-    if (local.focusInput) {
-      const el = ctx.content.querySelector(`#${CSS.escape(local.focusInput)}`);
-      if (el) { el.focus(); if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') { try { el.setSelectionRange(el.value.length, el.value.length); } catch { /* ignore */ } } }
-      local.focusInput = null;
-    }
-    if (local.scrollToBlock) {
-      const el = ctx.content.querySelector(`mark[data-comment="${CSS.escape(local.scrollToBlock.comment)}"]`) || ctx.content.querySelector(`[data-block="${CSS.escape(local.scrollToBlock.block)}"]`);
-      if (el) { requestAnimationFrame(() => { scrollToEl(el, 120); el.closest('.vlr-p')?.classList.add('flash'); }); }
-      local.scrollToBlock = null;
+    if (local.scrollKey) {
+      const el = anchorEl(ctx.content, local.scrollKey);
+      if (el) requestAnimationFrame(() => scrollToEl(el, local.scrollKey === 'cover' ? 40 : 0));
+      local.scrollKey = null;
     }
 
     /* ---------- actions ---------- */
-    const comment = (id) => (book.comments || []).find(c => c.id === id);
-    const clearSel = () => { local.sel = null; local.draft = ''; };
     const doDownload = (fmt) => {
       const b = getProjectBook(project.id); if (!b) return;
       const out = bookExport(b, fmt);
@@ -427,48 +408,107 @@ export default {
       download(out.name, out.blob, out.mime);
       toast.success('Download started', out.name);
     };
-    const submitComment = (mode) => {
-      const s = local.sel; if (!s) return;
-      const text = (local.draft || '').trim();
-      if (mode === 'comment' && !text) { toast.warning('Write a comment first'); local.focusInput = 'vlr-cmt-text'; ctx.rerender(); return; }
-      const c = addBookComment(book.id, { sectionKey: s.sectionKey, chapterId: s.chapterId || null, blockId: s.blockId, quote: s.quote, text: text || DEFAULT_REVISE_TEXT });
-      clearSel();
-      local.cfilter = 'all'; local.focusComment = c.id; local.scrollToCard = c.id;
-      if (mode === 'revise') { reviseFromComment(book.id, c.id); toast.info('Sent to the VLR Editor', 'The passage is being revised — watch the comment for the reply.'); }
-      else toast.success('Comment added', 'The passage is highlighted in the book.');
-      window.getSelection()?.removeAllRanges?.();
+
+    const setCtxDefault = (u) => {
+      const all = getProjectExtractions(project.id).filter(e => e.status === 'approved');
+      const ch = u?.chapterId ? chapters.find(c => c.id === u.chapterId) : null;
+      const pool = ch ? all.filter(e => e.goal === ch.goal || (e.goals || []).includes(ch.goal)) : all;
+      local.ctxSel = Object.fromEntries(pool.map(e => [e.id, true]));
+    };
+    const selectUnit = (unit) => {
+      if (local.unit && local.unit.type === unit.type && local.unit.id === unit.id) { local.unit = null; local.ctxSel = null; local.resPillar = null; ctx.rerender(); return; }
+      local.unit = unit;
+      setCtxDefault(bookUnit(book, unit));
+      local.resPillar = null; local.resGoal = null;
       ctx.rerender();
     };
 
     const unbindClick = bindActions(ctx.content, {
-      'toc': (el) => { const key = el.dataset.key; local.tocActive = key; ctx.content.querySelectorAll('.vlr-toc-item').forEach(b => b.classList.toggle('active', b.dataset.key === key)); scrollToEl(anchorEl(ctx.content, key), key === 'cover' ? 40 : 0); },
+      'toc': (el) => {
+        const key = el.dataset.key;
+        local.tocActive = key;
+        local.scrollKey = key;
+        if (el.dataset.sub) { selectUnit({ type: 'sec', id: key }); return; }
+        ctx.rerender();
+      },
+      'sel-unit': (el, ev) => { if (ev.target.closest('a, sup')) return; selectUnit({ type: 'block', id: el.dataset.block }); },
+      'sel-sec': (el, ev) => { if (ev.target.closest('a, sup')) return; selectUnit({ type: 'sec', id: el.dataset.sec }); },
+      'unit-clear': () => { local.unit = null; local.ctxSel = null; local.resPillar = null; ctx.rerender(); },
+      'ctx-toggle': (el, ev) => {
+        ev.stopPropagation();
+        if (el.classList.contains('on') && !ev.target.closest('svg, i')) return;
+        const ids = el.dataset.ids ? el.dataset.ids.split(',') : [el.dataset.id];
+        const on = ids.some(id => (local.ctxSel || {})[id]);
+        ids.forEach(id => { (local.ctxSel ||= {})[id] = !on; });
+        ctx.rerender();
+      },
+      'res-open': (el, ev) => { ev.stopPropagation(); local.resPillar = local.resPillar === el.dataset.pillar ? null : el.dataset.pillar; local.resGoal = null; ctx.rerender(); },
+      'res-close': () => { local.resPillar = null; local.resGoal = null; ctx.rerender(); },
+      'res-goal': (el) => { const g = el.dataset.goal ? Number(el.dataset.goal) : null; local.resGoal = g && local.resGoal === g ? null : g; ctx.rerender(); },
+      'editor-rewrite': () => {
+        const u = bookUnit(book, local.unit);
+        if (!u || !u.chapterId) return;
+        const ids = Object.keys(local.ctxSel || {}).filter(k => local.ctxSel[k]);
+        if (!ids.length) { toast.warning('No context selected', 'Pick at least one resource to rewrite from.'); return; }
+        if (isFinal) reopenBook(book.id);
+        rewriteUnit(u.chapterId, { blockIds: u.blocks.map(x => x.id), extractionIds: ids, instruction: (local.instr || '').trim(), unitLabel: u.label });
+        local.instr = '';
+        toast.info('Rewrite queued', `The VLR Editor is rewriting ${u.label} from ${ids.length} resource${ids.length === 1 ? '' : 's'}.`);
+        ctx.rerender();
+      },
       'goto-fn': (el, ev) => { ev.preventDefault(); const n = el.dataset.fn; const note = ctx.content.querySelector(`[data-fnote="${CSS.escape(n)}"]`); if (note) { scrollToEl(note, 160); note.classList.add('flash'); setTimeout(() => note.classList.remove('flash'), 1600); } },
-      'focus-comment': (el, ev) => { ev.preventDefault(); ev.stopPropagation(); const id = el.dataset.comment; const c = comment(id); if (!c) return; if ((local.cfilter || 'all') !== 'all' && local.cfilter !== c.status) local.cfilter = 'all'; local.focusComment = id; local.scrollToCard = id; clearSel(); ctx.rerender(); },
-      'focus-block-comments': (el) => { const first = (commentsByBlock[el.dataset.block] || []).find(c => c.status === 'open'); if (!first) return; local.cfilter = 'all'; local.focusComment = first.id; local.scrollToCard = first.id; ctx.rerender(); },
-      'goto-comment': (el) => { const c = comment(el.dataset.comment); if (!c) return; local.focusComment = c.id; local.scrollToBlock = { comment: c.id, block: c.blockId }; ctx.rerender(); },
-      'cfilter': (el) => { local.cfilter = el.dataset.filter; ctx.rerender(); },
-      'sel-comment': () => { if (!local.sel) return; local.sel.mode = 'comment'; local.draft = ''; local.focusInput = 'vlr-cmt-text'; ctx.rerender(); },
-      'sel-revise': () => { if (!local.sel) return; local.sel.mode = 'revise'; local.draft = ''; local.focusInput = 'vlr-cmt-text'; ctx.rerender(); },
-      'cancel-sel': () => { clearSel(); window.getSelection()?.removeAllRanges?.(); ctx.rerender(); },
-      'add-comment': () => submitComment('comment'),
-      'send-revise': () => submitComment('revise'),
-      'reply': (el) => { local.replyOpen = el.dataset.comment; local.replyDraft = ''; local.focusInput = `vlr-reply-${el.dataset.comment}`; local.focusComment = el.dataset.comment; ctx.rerender(); },
-      'cancel-reply': () => { local.replyOpen = null; local.replyDraft = ''; ctx.rerender(); },
-      'send-reply': (el) => { const id = el.dataset.comment; const t = (local.replyDraft || '').trim(); if (!t) { toast.warning('Write a reply first'); local.focusInput = `vlr-reply-${id}`; ctx.rerender(); return; } replyBookComment(book.id, id, t); local.replyOpen = null; local.replyDraft = ''; toast.success('Reply added'); },
-      'resolve': (el) => { resolveBookComment(book.id, el.dataset.comment, true); toast.success('Comment resolved'); },
-      'reopen': (el) => { resolveBookComment(book.id, el.dataset.comment, false); toast.info('Comment reopened'); },
-      'revise': (el) => { const c = comment(el.dataset.comment); if (!c || c.revising) return; local.focusComment = c.id; reviseFromComment(book.id, c.id); toast.info('Sent to the VLR Editor', `“${c.quote.slice(0, 60)}${c.quote.length > 60 ? '…' : ''}” is being revised.`); },
-      'delete': async (el) => { const c = comment(el.dataset.comment); if (!c) return; if (await confirmDialog({ title: 'Delete comment?', msg: `Your comment on “${esc(c.quote.slice(0, 80))}${c.quote.length > 80 ? '…' : ''}” will be removed${c.replies?.length ? ` together with ${c.replies.length} repl${c.replies.length === 1 ? 'y' : 'ies'}` : ''}.`, confirmText: 'Delete', danger: true, icon: 'trash-2' })) { deleteBookComment(book.id, c.id); if (local.focusComment === c.id) local.focusComment = null; toast.success('Comment deleted'); } },
       'download-docx': () => doDownload('docx'),
     });
-    const unbindInput = bindActions(ctx.content, {
-      'draft': (el) => { local.draft = el.value; },
-      'reply-draft': (el) => { local.replyDraft = el.value; },
-    }, 'input');
-    const unbindKey = bindActions(ctx.content, {
-      'draft': (el, ev) => { if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); submitComment(local.sel?.mode === 'revise' ? 'revise' : 'comment'); } },
-      'reply-draft': (el, ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const id = el.dataset.comment; const t = (el.value || '').trim(); if (!t) return; replyBookComment(book.id, id, t); local.replyOpen = null; local.replyDraft = ''; toast.success('Reply added'); } },
-    }, 'keydown');
+    ctx.content.querySelector('#vlr-instr')?.addEventListener('input', (e) => { local.instr = e.target.value; });
+
+    /* hovercard: full evidence preview when hovering a resource chip */
+    const hideCard = () => document.getElementById('ch-hovercard')?.remove();
+    const showCard = (pillEl) => {
+      hideCard();
+      const place = (card, r) => {
+        document.body.appendChild(card);
+        const w = card.offsetWidth, h = card.offsetHeight;
+        let x = r.left - w - 10;
+        if (x < 8) x = Math.min(window.innerWidth - w - 8, r.right + 10);
+        card.style.left = `${x}px`;
+        card.style.top = `${Math.max(8, Math.min(r.top + r.height / 2 - h / 2, window.innerHeight - h - 8))}px`;
+      };
+      if (pillEl.dataset.ids) {
+        const items = pillEl.dataset.ids.split(',').map(getExtraction).filter(Boolean).sort((a, b) => (a.year || 0) - (b.year || 0));
+        if (!items.length) return;
+        const f = items[0];
+        const u = (e) => /%/.test(e.unit || '') ? '%' : e.unit ? ` ${e.unit}` : '';
+        const card = document.createElement('div');
+        card.id = 'ch-hovercard';
+        card.innerHTML = `
+          <div class="hv-top"><span class="ch-pillar p-indicators">Urban data · indicator series</span><span class="badge badge-sdg">SDG ${esc(f.sdg)}</span></div>
+          <div class="hv-title">${esc(f.title)}</div>
+          <div class="hv-series">${items.map(e => `<div class="hv-yr"><b>${esc(e.year || '—')}</b><span class="mono">${esc(e.value)}${esc(u(e))}</span><span class="hv-yr-src">p. ${esc(e.source?.page ?? '—')}</span></div>`).join('')}</div>
+          <div class="hv-src">${esc(f.source?.docName || 'Manual entry')}</div>`;
+        place(card, pillEl.getBoundingClientRect());
+        return;
+      }
+      const e = getExtraction(pillEl.dataset.id);
+      if (!e) return;
+      const PA = { indicators: 'Urban data · indicator', documentary: 'Documentary evidence', projects: 'Project', stakeholders: 'Stakeholder voice' };
+      const fact = e.pillar === 'documentary' ? `${esc(e.categoryLabel || e.category || '')}`
+        : e.pillar === 'projects' ? `${esc(e.projectStatus || '')}${e.period ? ` · ${esc(e.period)}` : ''}`
+        : `${esc(e.group || '')}${e.category ? ` · ${esc(e.category)}` : ''}`;
+      const card = document.createElement('div');
+      card.id = 'ch-hovercard';
+      card.innerHTML = `
+        <div class="hv-top"><span class="ch-pillar p-${esc(e.pillar)}">${esc(PA[e.pillar] || e.pillar)}</span><span class="badge badge-sdg">SDG ${esc(e.sdg)}</span></div>
+        <div class="hv-title">${esc(e.title)}</div>
+        ${fact ? `<div class="hv-fact">${fact}</div>` : ''}
+        ${e.summary ? `<div class="hv-sum">${esc(e.summary)}</div>` : ''}
+        ${e.source?.quote ? `<div class="hv-quote">${esc(quotePlain(e.source.quote))}</div>` : ''}
+        <div class="hv-src">${esc(e.source?.docName || 'Manual entry')}${e.source?.page != null ? ` · p. ${esc(e.source.page)} ¶${esc(e.source.paragraph || 1)}` : ''}</div>`;
+      place(card, pillEl.getBoundingClientRect());
+    };
+    ctx.content.addEventListener('mouseover', (e) => { const p = e.target.closest('.ch-ctx-mini'); if (p) showCard(p); });
+    ctx.content.addEventListener('mouseout', (e) => { const p = e.target.closest('.ch-ctx-mini'); if (p && !p.contains(e.relatedTarget)) hideCard(); });
+    ctx.content.addEventListener('click', (e) => { if (e.target.closest('.ch-ctx-mini')) hideCard(); });
+
     const unbindTop = bindActions(ctx.topbar, {
       'download-menu': (el) => openMenu(el, [
         { header: `${book.title} · v${book.version}` },
@@ -489,37 +529,6 @@ export default {
         if (await confirmDialog({ title: 'Reopen for edits?', msg: `The published edition goes back to <strong>draft</strong>. Comments and editor revisions become possible again; finalize it once more to publish.`, confirmText: 'Reopen', icon: 'unlock' })) { reopenBook(b.id); toast.info('VLR reopened for edits'); }
       },
     });
-
-    /* ---------- text selection → floating toolbar ---------- */
-    const bookEl = ctx.content.querySelector('#vlr-book');
-    const onMouseUp = (e) => {
-      if (e.button !== undefined && e.button !== 0) return;
-      if (e.target?.closest?.('[data-vlr-keep], .menu, .modal-backdrop, .drawer, #toast-root')) return;
-      setTimeout(() => {
-        const s = window.getSelection();
-        const text = s && !s.isCollapsed ? s.toString().replace(/\s+/g, ' ').trim() : '';
-        if (text.length >= 3 && bookEl) {
-          const a = blockOf(s.anchorNode), f = blockOf(s.focusNode);
-          if (a && a === f && bookEl.contains(a)) {
-            const r = s.getRangeAt(0).getBoundingClientRect(); const br = a.getBoundingClientRect();
-            const quote = text.slice(0, 240);
-            const cur = local.sel;
-            local.sel = { blockId: a.dataset.block, sectionKey: a.dataset.section, chapterId: a.dataset.chapter || null, quote, mode: cur && cur.blockId === a.dataset.block && cur.mode && cur.quote === quote ? cur.mode : null,
-              top: clamp(r.top - br.top - 44, -44, br.height), left: clamp(r.left - br.left + r.width / 2, 90, Math.max(90, br.width - 90)) };
-            if (!local.sel.mode) local.draft = '';
-            ctx.rerender();
-            return;
-          }
-        }
-        if (local.sel) {
-          const keepForm = (local.sel.mode === 'comment' || local.sel.mode === 'revise') && (local.draft || '').trim();
-          if (!keepForm) { clearSel(); ctx.rerender(); }
-        }
-      }, 0);
-    };
-    const onKey = (e) => { if (e.key === 'Escape' && local.sel && !document.querySelector('#modal-root .modal-backdrop')) { clearSel(); window.getSelection()?.removeAllRanges?.(); ctx.rerender(); } };
-    document.addEventListener('mouseup', onMouseUp);
-    document.addEventListener('keydown', onKey);
 
     /* ---------- scroll spy for the TOC (DOM patch only — no re-render) ---------- */
     let ticking = false;
@@ -544,6 +553,6 @@ export default {
     onScroll();
     refreshIcons(ctx.content);
 
-    return () => { unbindClick(); unbindInput(); unbindKey(); unbindTop(); document.removeEventListener('mouseup', onMouseUp); document.removeEventListener('keydown', onKey); window.removeEventListener('scroll', onScroll); };
+    return () => { unbindClick(); unbindTop(); window.removeEventListener('scroll', onScroll); document.getElementById('ch-hovercard')?.remove(); };
   },
 };
