@@ -4,7 +4,7 @@ import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, get
 import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument, approveExtraction, unapproveExtraction } from '../actions.js';
 import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
 import { topbarActions, searchBox, topbarTabs, statusBarHtml, projectStepper } from '../shell.js';
-import { PILLARS, STEP_META, STEP_ORDER, parsedDocMeta, quoteToHtml, fillTemplate, INDICATOR_OBSERVATIONS, defaultObservation } from '../seed.js';
+import { PILLARS, STEP_META, STEP_ORDER, parsedDocMeta, quotePlain, fillTemplate, INDICATOR_OBSERVATIONS, defaultObservation } from '../seed.js';
 import { navigate } from '../router.js';
 
 const PILLAR_KEYS = PILLARS.map(p => p.key);
@@ -386,7 +386,7 @@ function overviewHtml(ctx, project, stats) {
                     ? `<span data-tip="Confirmed — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
                     : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}
                 </div>
-                ${openCard && e.source?.quote ? `<div class="pd-rowd-quote">${quoteToHtml(e.source.quote, esc)} <span class="pd-rowd-src">— ${esc(e.source.docName || '')}, p. ${esc(e.source.page || '—')} ¶${esc(e.source.paragraph || 1)}</span></div>` : ''}
+                ${openCard && e.source?.quote ? `<div class="pd-rowd-quote">${esc(quotePlain(e.source.quote))} <span class="pd-rowd-src">— ${esc(e.source.docName || '')}, p. ${esc(e.source.page || '—')} ¶${esc(e.source.paragraph || 1)}</span></div>` : ''}
               </div>`; }).join('')}</div>
           </div>`;
         }
@@ -406,7 +406,7 @@ function overviewHtml(ctx, project, stats) {
                 ? `<span data-tip="Confirmed — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle', 'icon-sm')}</button></span>`
                 : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}
             </div>
-            ${e.source?.quote ? `<div class="pd-rowd-quote">${quoteToHtml(e.source.quote, esc)}</div>` : ''}
+            ${e.source?.quote ? `<div class="pd-rowd-quote">${esc(quotePlain(e.source.quote))}</div>` : ''}
           </div>
           ${dm ? `<dl class="kv mt-12">
             <dt>Source document</dt><dd class="mono xs">${esc(srcDoc.name)}</dd>
