@@ -43,11 +43,11 @@ function indicatorsMatrixHtml(ctx, exts) {
   const rows = []; const byKey = new Map();
   for (const e of shown) {
     const k = e.sdg + '|' + e.title;
-    if (!byKey.has(k)) { byKey.set(k, { sdg: e.sdg, goal: e.goal, title: e.title, unit: e.unit, cells: {} }); rows.push(byKey.get(k)); }
+    if (!byKey.has(k)) { byKey.set(k, { sdg: e.sdg, goal: e.goal, title: e.title, name: e.indicator || e.title, unit: e.unit, cells: {} }); rows.push(byKey.get(k)); }
     if (e.year) byKey.get(k).cells[e.year] = e;
   }
   const dir = ctx.local.mxSort;
-  if (dir) rows.sort((a, b) => dir === 'az' ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title));
+  if (dir) rows.sort((a, b) => dir === 'az' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
   return `<div class="pd-mx-goalbar">
     <button class="pd-mx-goal all ${sel ? '' : 'on'}" data-action="mx-sdg" data-goal="all">All SDGs</button>
     ${goals.map(g => `<button class="pd-mx-goal ${sel === g ? 'on' : ''}" style="background:${SDG_COLORS[g]}" data-action="mx-sdg" data-goal="${g}" data-tip="SDG ${g}: ${esc(SDG_TITLES[g])}">${g}</button>`).join('')}
@@ -56,7 +56,7 @@ function indicatorsMatrixHtml(ctx, exts) {
     <thead><tr><th class="pd-mx-sdgcol">SDG</th><th class="pd-mx-sticky pd-mx-sortable" data-action="mx-sort" data-tip="Sort by indicator name">Indicator ${dir ? icon(dir === 'az' ? 'arrow-down-a-z' : 'arrow-up-a-z', 'icon-xs') : icon('arrow-up-down', 'icon-xs faint')}</th>${years.map(y => `<th class="pd-mx-year">${y}</th>`).join('')}</tr></thead>
     <tbody>${rows.map(r => { const key = r.sdg + '|' + r.title; return `<tr class="clickable ${ctx.local.extRow === key ? 'row-sel' : ''}" data-action="ext-row" data-key="${esc(key)}">
       <td class="pd-mx-sdgcol">${sdgChip(r.goal)}</td>
-      <td class="pd-mx-sticky" style="border-left:3px solid ${SDG_COLORS[r.goal]}"><span class="pd-mx-code mono">${esc(r.sdg)}</span> <span class="cell-title">${esc(r.title)}</span></td>
+      <td class="pd-mx-sticky" style="border-left:3px solid ${SDG_COLORS[r.goal]}"><span class="pd-mx-code mono">${esc(r.sdg)}</span><span class="pd-mx-name">${esc(r.name)}</span></td>
       ${years.map(y => { const e = r.cells[y];
         return `<td class="pd-mx-td">${e ? `<span class="pd-mx-cell st-${esc(e.status)}">${esc(e.value)}</span>` : ''}</td>`; }).join('')}
     </tr>`; }).join('')}</tbody>
@@ -354,8 +354,7 @@ function overviewHtml(ctx, project, stats) {
           const obs = (project.obsNotes || {})[key] ?? fillTemplate(INDICATOR_OBSERVATIONS[first.sdg] || INDICATOR_OBSERVATIONS.default, project);
           const obsVal = ctx.local.obsDraft?.key === key ? ctx.local.obsDraft.text : obs;
           return `<div class="pd-ext-detail">
-            <div class="row gap-8 mb-8">${sdgChip(first.goal)}<strong class="pd-rowd-title">${esc(first.title)}</strong></div>
-            ${first.indicator ? `<div class="pd-rowd-localname"><span class="pd-rowd-locallabel">Local indicator name</span>${esc(first.indicator)}</div>` : ''}
+            <div class="row gap-8 mb-8">${sdgChip(first.goal)}<strong class="pd-rowd-title">${esc(first.indicator || first.title)}</strong></div>
             <div class="row gap-8 mb-8"><span class="xs muted">${esc(first.unit || '')}</span><span class="grow"></span>
               ${pend.length ? `<button class="btn btn-primary btn-xs" data-action="row-confirm-all" data-key="${esc(key)}">${icon('check-check', 'icon-xs')}Confirm all (${pend.length})</button>` : `<span class="xs success-text">${icon('check-circle', 'icon-xs')} All confirmed</span>`}
             </div>

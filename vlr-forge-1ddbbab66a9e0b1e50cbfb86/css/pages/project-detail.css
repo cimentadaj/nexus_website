@@ -200,7 +200,7 @@ tr.pp-open td { background: var(--sky-50); }
 .pd-mx-td { text-align: center; padding: 4px 3px; }
 .pd-mx-unit { max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
 .pd-mx-sdgcol { position: sticky; left: 0; width: 52px; min-width: 52px; background: var(--surface); z-index: 2; text-align: center; }
-.pd-mx-sticky { position: sticky; left: 52px; background: var(--surface); z-index: 2; box-shadow: 2px 0 0 var(--border); max-width: 320px; }
+.pd-mx-sticky { position: sticky; left: 52px; background: var(--surface); z-index: 2; box-shadow: 2px 0 0 var(--border); width: 340px; min-width: 340px; max-width: 340px; white-space: normal !important; }
 .pd-mx-sortable { cursor: pointer; user-select: none; }
 .pd-mx-sortable:hover { color: var(--navy); }
 .pd-mx-code { font-size: 11px; font-weight: 700; margin-right: 4px; color: var(--text-muted); }
@@ -234,3 +234,6 @@ tr.pp-open td { background: var(--sky-50); }
 
 .pd-rowd-localname { font-size: 12px; color: var(--text-secondary); line-height: 1.45; margin: -2px 0 8px; }
 .pd-rowd-locallabel { display: block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 2px; }
+
+.pd-mx-name { display: block; font-size: 12.5px; line-height: 1.35; color: var(--text); font-weight: 500; }
+.pd-mx-code { display: block; margin-bottom: 1px; }
