@@ -239,7 +239,7 @@ function centreHtml(project, chapter, chapters, ctx) {
       </div>
       <div class="ch-strip-actions">
         ${approved
-          ? `<span class="badge badge-success badge-lg">${icon('check-circle-2', 'icon-sm')}Approved ✓</span><button class="btn btn-light" data-action="reopen" data-tip="Back to in-review">${icon('undo-2', 'icon-sm')}Reopen</button>${nextUnapproved ? `<a class="btn btn-primary" href="#/projects/${esc(project.id)}/chapters/${esc(nextUnapproved.id)}">Next chapter${icon('arrow-right', 'icon-sm')}</a>` : ''}`
+          ? `<span class="badge badge-success badge-lg">${icon('check-circle-2', 'icon-sm')}Approved ✓</span><button class="btn btn-light" data-action="reopen" data-tip="Back to in-review">${icon('undo-2', 'icon-sm')}Reopen</button>`
           : `<span ${busy ? 'data-tip="Wait for the reviewer to finish rewriting"' : ''}><button class="btn btn-primary" data-action="approve" ${busy ? 'disabled' : ''}>${icon('check-circle-2', 'icon-sm')}Approve chapter</button></span>`}
         <button class="btn btn-light" data-action="download-menu">${icon('download', 'icon-sm')}Download${icon('chevron-down', 'icon-sm')}</button>
       </div>
