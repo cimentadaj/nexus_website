@@ -63,18 +63,25 @@ function indicatorsMatrixHtml(ctx, exts) {
 /* Documentary pillar: key-insight table — SDG chip, one-two sentence insight, category */
 const DOC_CAT_CLASS = { Challenge: 'cat-challenge', Commitment: 'cat-commitment', Policy: 'cat-policy' };
 function documentaryTableHtml(ctx, exts) {
+  const sel = ctx.local.docSdg && ctx.local.docSdg !== 'all' ? Number(ctx.local.docSdg) : null;
+  const cat = ctx.local.docCat && ctx.local.docCat !== 'all' ? ctx.local.docCat : null;
+  const shown = exts.filter(e => (!sel || e.goal === sel) && (!cat || e.categoryLabel === cat));
   return `<div class="pd-table-wrap"><table class="table pd-doc-table">
-    <thead><tr><th class="pd-doc-sdgth">SDG</th><th>Key insight</th><th>Category</th><th class="th-right"></th></tr></thead>
-    <tbody>${exts.map(e => `
+    <thead><tr>
+      <th class="pd-doc-sdgth pd-mx-sortable" data-action="doc-sdg-menu" data-tip="Filter by SDG">${sel ? sdgChip(sel, { title: false }) : 'SDG'} ${icon('chevron-down', 'icon-xs faint')}</th>
+      <th class="pd-mx-sortable" data-action="doc-cat-menu" data-tip="Filter by category">${cat ? `<span class="badge pd-doc-cat ${DOC_CAT_CLASS[cat] || ''}">${esc(cat)}</span>` : 'Category'} ${icon('chevron-down', 'icon-xs faint')}</th>
+      <th>Key insight</th><th class="th-right"></th></tr></thead>
+    <tbody>${shown.map(e => `
       <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
         <td class="pd-doc-sdgtd">${sdgChip(e.goal)}</td>
-        <td class="pd-doc-insight">${esc(e.summary || e.title)}</td>
         <td><span class="badge pd-doc-cat ${DOC_CAT_CLASS[e.categoryLabel] || ''}">${esc(e.categoryLabel || '—')}</span></td>
+        <td class="pd-doc-insight">${esc(e.summary || e.title)}</td>
         <td class="td-right"><div class="table-actions">${e.status === 'approved'
           ? `<span data-tip="Approved${e.reviewedBy ? ' by ' + esc(e.reviewedBy) : ''} — click to undo"><button class="btn-icon success-text" data-action="ext-unapprove" data-id="${esc(e.id)}">${icon('check-circle')}</button></span>`
           : `<button class="btn btn-light btn-xs" data-action="ext-approve" data-id="${esc(e.id)}">${icon('check', 'icon-xs')}Confirm</button>`}</div></td>
       </tr>`).join('')}</tbody>
-  </table></div>`;
+  </table></div>
+  ${!shown.length ? `<div class="empty"><div class="empty-sub">No entries match the current filters.</div></div>` : ''}`;
 }
 
 /* per-project UI memory: active pillar tab, selected extraction, filter — survives
@@ -517,6 +524,8 @@ export default {
       if (memo.filter) ctx.local.filter = memo.filter;
       if (memo.extRow) ctx.local.extRow = memo.extRow;
       if (memo.mxSdg) ctx.local.mxSdg = memo.mxSdg;
+      if (memo.docSdg) ctx.local.docSdg = memo.docSdg;
+      if (memo.docCat) ctx.local.docCat = memo.docCat;
       if (memo.mxSort) ctx.local.mxSort = memo.mxSort;
     }
     const stats = projectStats(project);
@@ -570,6 +579,27 @@ export default {
         list.forEach(e => approveExtraction(e.id));
         toast.success('Confirmed', `${list.length} number${list.length === 1 ? '' : 's'} approved.`);
         ctx.rerender();
+      },
+      'doc-sdg-menu': (el, ev) => {
+        ev.stopPropagation();
+        const setGoal = (g) => { ctx.local.docSdg = g; memo.docSdg = g; ctx.rerender(); };
+        const cur = ctx.local.docSdg && ctx.local.docSdg !== 'all' ? Number(ctx.local.docSdg) : null;
+        const goals = [...new Set(getProjectExtractions(pid).filter(e => e.pillar === 'documentary').map(e => e.goal))].sort((a, b) => a - b);
+        openMenu(el, [
+          { label: 'All SDGs', active: !cur, onClick: () => setGoal('all') },
+          'divider',
+          ...goals.map(g => ({ labelHtml: `${sdgChip(g, { title: false })} <span style="margin-left:6px">SDG ${g} — ${esc(SDG_TITLES[g])}</span>`, active: cur === g, onClick: () => setGoal(String(g)) })),
+        ], { align: 'left', minWidth: '280px' });
+      },
+      'doc-cat-menu': (el, ev) => {
+        ev.stopPropagation();
+        const setCat = (c) => { ctx.local.docCat = c; memo.docCat = c; ctx.rerender(); };
+        const cur = ctx.local.docCat && ctx.local.docCat !== 'all' ? ctx.local.docCat : null;
+        openMenu(el, [
+          { label: 'All categories', active: !cur, onClick: () => setCat('all') },
+          'divider',
+          ...['Challenge', 'Commitment', 'Policy'].map(c => ({ label: c, active: cur === c, onClick: () => setCat(c) })),
+        ], { align: 'left', minWidth: '200px' });
       },
       'mx-sdg-menu': (el, ev) => {
         ev.stopPropagation();
