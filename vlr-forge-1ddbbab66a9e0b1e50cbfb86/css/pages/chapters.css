@@ -357,3 +357,5 @@ sup.ch-fn a:hover { background: var(--sky-100); }
 .ch-brw-list { display: flex; flex-direction: column; gap: 4px; padding: 8px; overflow-y: auto; flex: 1; min-width: 0; }
 .ch-brw-item { width: 100%; justify-content: flex-start; background: var(--surface); }
 .ch-brw-item .icon-xs { margin-left: auto; }
+
+.ch-strip-words { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-left: 8px; white-space: nowrap; }

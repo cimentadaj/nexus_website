@@ -234,7 +234,7 @@ function centreHtml(project, chapter, chapters, ctx) {
     <div class="ch-strip card">
       <div class="ch-strip-left">
         ${sdgChip(chapter.goal)}
-        <div><div class="ch-strip-title">${esc(chapter.title)}</div><div class="ch-strip-meta">${chapterStatusBadge(chapter)}<span class="ch-strip-kv"><b>${Number(chapter.wordCount || 0).toLocaleString('en-US')}</b> words</span></div></div>
+        <div><div class="ch-strip-title">${esc(chapter.title)} <span class="ch-strip-words">${Number(chapter.wordCount || 0).toLocaleString('en-US')} words</span></div></div>
       </div>
       <div class="ch-strip-actions">
         ${approved
