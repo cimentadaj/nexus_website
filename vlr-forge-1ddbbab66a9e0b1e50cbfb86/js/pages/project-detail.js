@@ -320,6 +320,7 @@ function overviewHtml(ctx, project, stats) {
         <div class="pd-ext-toolbar">
           <span class="xs muted">${exts.length} of ${pillarTotal} shown</span>
           <span class="grow"></span>
+          ${exts.some(isPending) ? `<button class="btn btn-primary btn-sm" data-action="confirm-all-shown">${icon('check-check', 'icon-sm')}Confirm all</button>` : ''}
           <button class="btn btn-light btn-sm" data-action="add-entry">${icon('plus', 'icon-sm')}Add entry</button>
         </div>
         ${exts.length ? tab === 'indicators' ? indicatorsMatrixHtml(ctx, exts) : `<div class="pd-table-wrap"><table class="table pd-ext-table">
@@ -510,6 +511,13 @@ export default {
     }
     const unbindClick = bindActions(ctx.content, {
       'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.local.extSel = null; Object.assign(memo, { tab: el.dataset.tab, filter: 'all', extSel: null }); ctx.rerender(); },
+      'confirm-all-shown': () => {
+        const sel = ctx.local.mxSdg && ctx.local.mxSdg !== 'all' ? Number(ctx.local.mxSdg) : null;
+        const list = getProjectExtractions(pid).filter(e => e.pillar === ctx.local.tab && isPending(e) && (!sel || ctx.local.tab !== 'indicators' || e.goal === sel));
+        list.forEach(e => approveExtraction(e.id));
+        toast.success('Confirmed', `${list.length} extraction${list.length === 1 ? '' : 's'} approved.`);
+        ctx.rerender();
+      },
       'mx-sdg': (el) => { ctx.local.mxSdg = el.dataset.goal; memo.mxSdg = el.dataset.goal; ctx.rerender(); },
       'mx-sort': () => { ctx.local.mxSort = ctx.local.mxSort === 'az' ? 'za' : 'az'; memo.mxSort = ctx.local.mxSort; ctx.rerender(); },
       'ext-sel': (el) => { ctx.local.extSel = ctx.local.extSel === el.dataset.id ? null : el.dataset.id; memo.extSel = ctx.local.extSel; ctx.rerender(); },
