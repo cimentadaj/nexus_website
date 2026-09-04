@@ -8,7 +8,7 @@ import { getProject, getProjectChapters, getChapter, getProjectTasks, getExtract
 import { composeChapters, recomposeChapter, setChapterSpine, resetChapterSpine, sendChapterFeedback, approveChapter, reopenChapter, editChapterBlock, assembleFinalBook } from '../actions.js';
 import { openTaskDrawer } from '../modals.js';
 import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml } from '../shell.js';
-import { STEP_META, DEFAULT_SPINE } from '../seed.js';
+import { STEP_META, DEFAULT_SPINE_SECTIONS } from '../seed.js';
 import { REVIEW_CHIPS } from '../reviewer.js';
 import { navigate } from '../router.js';
 
@@ -211,16 +211,9 @@ function listHtml(project, chapters, active, tasks, stats, ctx) {
     <div class="ch-list-foot"><span ${tip ? `data-tip="${esc(tip)}"` : ''}><button class="btn btn-primary btn-sm" data-action="write-vlr" ${ok ? '' : 'disabled'}>${icon('pen-line', 'icon-sm')}Write all chapters</button></span></div>` : '';
   return `
   <aside class="ch-list card" id="ch-list">
-    <div class="card-header tinted"><div class="card-title-caps">${icon('book-open')}Chapters</div><span class="xs muted">${chapters.length ? `${stats.chaptersApproved}/${chapters.length} approved` : goalsPending.length ? `${goalsPending.length} composing` : '—'}</span></div>
+    <div class="card-header tinted"><div class="card-title-caps">${icon('book-open')}Chapters</div><div class="row gap-8"><button class="btn btn-light btn-xs ${ctx.local.spineFor ? 'is-active' : ''}" data-action="open-spine" data-tip="The structure every chapter is written along — view and edit it">${icon('list-tree', 'icon-xs')}Spine${(project.spines || {}).default ? ' *' : ''}</button><span class="xs muted">${chapters.length ? `${stats.chaptersApproved}/${chapters.length} approved` : goalsPending.length ? `${goalsPending.length} composing` : '—'}</span></div></div>
     <div class="ch-list-scroll" id="ch-list-scroll">
       ${rows}
-      <button class="ch-row ch-row-spinebtn ${ctx.local.spineFor === 'default' ? 'active' : ''}" data-action="open-spine">
-        <span class="ch-spine-ic">${icon('list-tree', 'icon-sm')}</span>
-        <div class="ch-row-main">
-          <div class="ch-row-title">Chapter spine</div>
-          <div class="ch-row-sub muted">${(project.spines || {}).default ? 'Customised for this VLR' : 'Default structure for every chapter'}</div>
-        </div>
-      </button>
       ${skeletons}${taskList}${empty}
       ${chapters.length && !composing.length && project.status !== 'archived' ? `<div class="ch-list-foot"><button class="btn btn-ghost btn-sm" data-action="recompose-all" data-tip="Queue a fresh composition of every chapter">${icon('rotate-ccw', 'icon-sm')}Recompose all</button></div>` : ''}
     </div>
@@ -247,7 +240,6 @@ function centreHtml(project, chapter, chapters, ctx) {
         <div><div class="ch-strip-title">${esc(chapter.title)}</div><div class="ch-strip-meta">${chapterStatusBadge(chapter)}${tierBadge(chapter.tier)}<span class="ch-strip-kv"><b>v${Number(chapter.version)}</b></span><span class="ch-strip-kv"><b>${Number(chapter.wordCount || 0).toLocaleString('en-US')}</b> words</span><span class="ch-strip-kv"><b>${(chapter.footnotes || []).length}</b> notes</span><span class="ch-strip-kv muted">updated ${esc(relTime(chapter.updatedAt))}</span></div></div>
       </div>
       <div class="ch-strip-actions">
-        <button class="btn btn-light ${ctx.local.spineFor === chapter.goal ? 'is-active' : ''}" data-action="open-spine" data-goal="${Number(chapter.goal)}" data-tip="View or edit the spine this chapter is written along">${icon('list-tree', 'icon-sm')}Spine${(project.spines || {})[chapter.goal] ? ' *' : ''}</button>
         ${approved
           ? `<span class="badge badge-success badge-lg">${icon('check-circle-2', 'icon-sm')}Approved ✓</span><button class="btn btn-light" data-action="reopen" data-tip="Back to in-review">${icon('undo-2', 'icon-sm')}Reopen</button>${nextUnapproved ? `<a class="btn btn-primary" href="#/projects/${esc(project.id)}/chapters/${esc(nextUnapproved.id)}">Next chapter${icon('arrow-right', 'icon-sm')}</a>` : ''}`
           : `<span ${busy ? 'data-tip="Wait for the reviewer to finish rewriting"' : ''}><button class="btn btn-primary" data-action="approve" ${busy ? 'disabled' : ''}>${icon('check-circle-2', 'icon-sm')}Approve chapter</button></span>`}
@@ -266,40 +258,45 @@ function centreHtml(project, chapter, chapters, ctx) {
 /* Right — Chapter Reviewer chat + revision history                     */
 /* ------------------------------------------------------------------ */
 /* ------------------------------------------------------------------ */
-/* Spine panel — view/edit the default spine or a per-SDG override      */
+/* Spine — rendered as a document in the centre column, editable inline */
 /* ------------------------------------------------------------------ */
-function spinePanelHtml(project, chapters, ctx) {
-  const key = ctx.local.spineFor;
-  const isDefault = key === 'default';
-  const goal = isDefault ? null : Number(key);
-  const spines = project.spines || {};
-  const overridden = !isDefault && spines[goal] != null;
-  const saved = isDefault ? (spines.default ?? DEFAULT_SPINE) : (spines[goal] ?? spines.default ?? DEFAULT_SPINE);
-  const text = ctx.local.spineDraft?.key === String(key) ? ctx.local.spineDraft.text : saved;
-  const dirty = text !== saved;
-  const chapter = goal != null ? chapters.find(c => c.goal === goal) : null;
+function spineSections(project) {
+  const stored = (project.spines || {}).default;
+  if (Array.isArray(stored)) return stored;
+  if (typeof stored === 'string') return [{ h: 'Chapter spine', b: stored }];
+  return DEFAULT_SPINE_SECTIONS;
+}
+function spineSheetHtml(project, ctx) {
+  const saved = spineSections(project);
+  const secs = ctx.local.spineDraft || saved;
+  const dirty = JSON.stringify(secs) !== JSON.stringify(saved);
+  const custom = Array.isArray((project.spines || {}).default) || typeof (project.spines || {}).default === 'string';
   return `
-  <aside class="ch-chat card ch-spinepanel">
-    <div class="card-header tinted">
-      <div class="card-title-caps">${icon('list-tree', 'icon-sm')}${isDefault ? 'Chapter spine — default' : `Spine — SDG ${goal}`}</div>
-      <div class="row gap-6">
-        ${overridden ? `<span class="badge badge-sky" data-tip="This chapter deviates from the default spine">override</span>` : ''}
-        <button class="btn-icon" data-action="spine-close" data-tip="Close" aria-label="Close">${icon('x', 'icon-sm')}</button>
+  <section class="ch-centre" id="ch-centre">
+    <div class="ch-strip card">
+      <div class="ch-strip-left">
+        <span class="ch-spine-ic">${icon('list-tree', 'icon-sm')}</span>
+        <div><div class="ch-strip-title">Chapter spine</div><div class="ch-strip-meta"><span class="ch-strip-kv">${custom ? 'customised for this VLR' : 'canonical template'}</span><span class="ch-strip-kv muted">click any text below to edit</span></div></div>
+      </div>
+      <div class="ch-strip-actions">
+        ${custom ? `<button class="btn btn-light" data-action="spine-reset" data-tip="Back to the canonical template">${icon('rotate-ccw', 'icon-sm')}Reset</button>` : ''}
+        <button class="btn btn-primary" data-action="spine-save" id="spine-save-btn" ${dirty ? '' : 'disabled'}>${icon('save', 'icon-sm')}Save spine</button>
+        <button class="btn-icon" data-action="spine-close" data-tip="Back to the chapters" aria-label="Close">${icon('x', 'icon-sm')}</button>
       </div>
     </div>
-    <div class="ch-spine-body">
-      <div class="xs muted ch-spine-note">${isDefault
-        ? 'The structure every chapter is written along (docs/vlr_chapter_template.md). Edit to change how all chapters of this VLR are composed; a per-SDG spine overrides it for that chapter only.'
-        : `How the SDG ${goal} chapter is composed. Starts from the ${spines.default ? 'VLR default' : 'canonical default'}; saving creates an override for this chapter only.`}</div>
-      <textarea class="input ch-spine-text" id="ch-spine-text" spellcheck="false">${esc(text)}</textarea>
-      <div class="row gap-6 ch-spine-foot">
-        <button class="btn btn-primary btn-sm" data-action="spine-save" ${dirty ? '' : 'disabled'}>${icon('save', 'icon-sm')}Save</button>
-        ${(isDefault && spines.default) || overridden ? `<button class="btn btn-light btn-sm" data-action="spine-reset" data-tip="${isDefault ? 'Back to the canonical template' : 'Back to the VLR default spine'}">${icon('rotate-ccw', 'icon-sm')}Reset</button>` : ''}
-        <span class="grow"></span>
-        ${goal != null ? `<span data-tip="${chapter ? 'Rewrite this chapter along the spine above' : 'Write this chapter along the spine above'}"><button class="btn btn-outline btn-sm" data-action="spine-rewrite" data-goal="${goal}" ${chapter ? `data-chapter="${esc(chapter.id)}"` : ''}>${icon('refresh-cw', 'icon-sm')}${chapter ? 'Rewrite chapter' : 'Write chapter'}</button></span>` : ''}
-      </div>
+    <div class="ch-doc">
+      <article class="ch-sheet spine-sheet" id="spine-sheet">
+        <div class="ch-sheet-eyebrow">Voluntary Local Review · ${esc(project.name || '')}</div>
+        <h1 class="ch-h1">The chapter spine</h1>
+        <div class="ch-sheet-sub">The structure every SDG chapter is written along · adapted from docs/vlr_chapter_template.md · editable — changes apply to chapters written after saving</div>
+        ${secs.map(sec => `
+        <section class="spine-sec">
+          <h2 class="ch-h2 spine-h" contenteditable="plaintext-only" spellcheck="false">${esc(sec.h)}</h2>
+          <div class="spine-b" contenteditable="plaintext-only" spellcheck="false">${esc(sec.b)}</div>
+        </section>`).join('')}
+      </article>
     </div>
-  </aside>`;
+  </section>`;
 }
 
 function chatPanelHtml(chapter, ctx) {
@@ -437,7 +434,7 @@ export default {
       ${avatarButton()}`;
 
     /* ---- content ---- */
-    ctx.content.innerHTML = `<div class="ch-page">${listHtml(project, chapters, chapter, tasks, stats, ctx)}${centreHtml(project, chapter, chapters, ctx)}${ctx.local.spineFor != null ? spinePanelHtml(project, chapters, ctx) : chatPanelHtml(chapter, ctx)}</div>`;
+    ctx.content.innerHTML = `<div class="ch-page">${listHtml(project, chapters, chapter, tasks, stats, ctx)}${ctx.local.spineFor ? spineSheetHtml(project, ctx) : centreHtml(project, chapter, chapters, ctx)}${chatPanelHtml(chapter, ctx)}</div>`;
     ctx.footer.innerHTML = statusBarHtml(project);
 
     /* ---- restore scroll positions + auto-scroll behaviours ---- */
@@ -493,11 +490,11 @@ export default {
       });
       draftEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDraft(); } });
     }
-    const spineTa = ctx.content.querySelector('#ch-spine-text');
-    if (spineTa) {
-      spineTa.addEventListener('input', (e) => {
-        ctx.local.spineDraft = { key: String(ctx.local.spineFor), text: e.target.value };
-        const btn = ctx.content.querySelector('[data-action="spine-save"]');
+    const spineSheet = ctx.content.querySelector('#spine-sheet');
+    if (spineSheet) {
+      spineSheet.addEventListener('input', () => {
+        ctx.local.spineDraft = [...spineSheet.querySelectorAll('.spine-sec')].map(el => ({ h: (el.querySelector('.spine-h')?.innerText || '').trim(), b: el.querySelector('.spine-b')?.innerText || '' }));
+        const btn = ctx.content.querySelector('#spine-save-btn');
         if (btn) btn.disabled = false;
       });
     }
@@ -522,36 +519,24 @@ export default {
     const unbindContent = bindActions(ctx.content, {
       'open-spine': (el, ev) => {
         ev.preventDefault(); ev.stopPropagation();
-        const k = el.dataset.goal != null ? Number(el.dataset.goal) : 'default';
-        ctx.local.spineFor = ctx.local.spineFor === k ? null : k;
+        ctx.local.spineFor = ctx.local.spineFor ? null : 'default';
         ctx.local.spineDraft = null;
         ctx.rerender();
       },
       'spine-close': () => { ctx.local.spineFor = null; ctx.local.spineDraft = null; ctx.rerender(); },
       'spine-save': () => {
-        const ta = ctx.content.querySelector('#ch-spine-text');
-        if (!ta) return;
-        const key = ctx.local.spineFor === 'default' ? 'default' : Number(ctx.local.spineFor);
-        setChapterSpine(project.id, key, ta.value);
+        const secs = [...ctx.content.querySelectorAll('.spine-sec')].map(el => ({ h: (el.querySelector('.spine-h')?.innerText || '').trim(), b: el.querySelector('.spine-b')?.innerText || '' }));
+        if (!secs.length) return;
+        setChapterSpine(project.id, 'default', secs);
         ctx.local.spineDraft = null;
-        toast.success('Spine saved', key === 'default' ? 'New chapters follow the updated spine.' : `SDG ${key} now has its own spine.`);
+        toast.success('Spine saved', 'Chapters written from now on follow the updated spine.');
         ctx.rerender();
       },
       'spine-reset': () => {
-        const key = ctx.local.spineFor === 'default' ? 'default' : Number(ctx.local.spineFor);
-        resetChapterSpine(project.id, key);
+        resetChapterSpine(project.id, 'default');
         ctx.local.spineDraft = null;
-        toast.info('Spine reset', key === 'default' ? 'Back to the canonical template.' : `SDG ${key} follows the default spine again.`);
+        toast.info('Spine reset', 'Back to the canonical template.');
         ctx.rerender();
-      },
-      'spine-rewrite': (el) => {
-        const g = Number(el.dataset.goal);
-        if (el.dataset.chapter) { recomposeChapter(el.dataset.chapter); toast.info('Recomposition queued', `SDG ${g} chapter is being rewritten along the spine.`); }
-        else {
-          const ts = composeChapters(project.id, { goals: [g] });
-          if (!ts.length) { toast.warning('Nothing to compose', `No approved evidence for SDG ${g} yet.`); return; }
-          toast.success('Composition started', `Writing the SDG ${g} chapter along the spine.`);
-        }
       },
       'write-goal': (el, ev) => {
         ev.preventDefault(); ev.stopPropagation();
