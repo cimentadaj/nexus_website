@@ -4,7 +4,7 @@ import { applyFeedback, reviseBlockFromComment } from './reviewer.js';
 import { answerQuestion } from './ask.js';
 import { startRun, startSingleTask, retryTask as _retryTask, cancelTask as _cancelTask, executeAll as _executeAll, appendLog, logActivity, makeTask, enqueueTasks, bootEngine } from './pipeline.js';
 import { uid, docTypeFromName, fileExt, titleCase, initials, SDG_TITLES } from './ui.js';
-import { buildTemplateExtractions, STEP_META } from './seed.js';
+import { buildTemplateExtractions, STEP_META, CONTEXT_SCOPES, SCOPE_META, scopeProject, PILLARS } from './seed.js';
 
 /* ---------------- auth ---------------- */
 export function login({ email, password, remember = true }) {
@@ -38,6 +38,17 @@ export function createProject({ name, city, country, jurisdiction, year, sdgs = 
     sdgs: [...sdgs].sort((a, b) => a - b), languages, createdAt: Date.now(), node: getState().settings.org.region || 'EU-WEST-1', description, population: population || null, geography: geography || null, region: region || null, lastSyncedAt: Date.now(), lead: lead || getState().auth.user?.name,
   };
   update(s => { s.projects.unshift(project); });
+  // every project starts with reference evidence for the national / regional / global
+  // layers, so the reviewer's context pager always has the three aggregations to browse
+  update(s => {
+    for (const sc of CONTEXT_SCOPES) {
+      const sp = scopeProject(project, sc);
+      const src = [{ id: null, name: SCOPE_META[sc].sampleName(project), pages: 120 }];
+      for (const p of PILLARS) {
+        s.extractions.push(...buildTemplateExtractions(sp, src, { pillar: p.key, scope: sc, status: 'approved' }).map(e => ({ ...e, scope: sc, reviewedBy: 'Reference library', reviewedAt: Date.now() })));
+      }
+    }
+  }, { silent: true });
   logActivity({ projectId: id, title: `Project initialised: ${project.name}`, provenance: `${id.slice(0, 3).toUpperCase()}-PRJ-001`, status: 'success', type: 'project' });
   appendLog('INFO', `Project '${project.name}' created (${project.sdgs.length} target SDGs, node ${project.node}).`, id, { silent: true });
   if (files.length) addDocuments(id, files);
@@ -76,7 +87,7 @@ export function deleteProject(id) {
 }
 
 /* ---------------- documents ---------------- */
-export function addDocuments(projectId, files, { language, type } = {}) {
+export function addDocuments(projectId, files, { language, type, scope = 'city' } = {}) {
   const project = getProject(projectId);
   const prefix = projectId.slice(0, 3).toUpperCase();
   const maxCode = Math.max(400, ...getProjectDocs(projectId).map(d => Number(String(d.code).split('-').pop()) || 0));
@@ -89,7 +100,7 @@ export function addDocuments(projectId, files, { language, type } = {}) {
       id: uid('doc'), projectId, name, ext, type: f.type && f.type.length < 20 && !f.type.includes('/') ? f.type : type || docTypeFromName(name),
       language: f.language || language || (project?.languages?.[0] || 'EN'), status: 'uploaded', pages: Math.min(pages, 600), sizeKb,
       uploadedAt: Date.now() + i, translated: (f.language || language || project?.languages?.[0] || 'EN') === 'EN', translatedTo: 'EN',
-      code: `${prefix}-DOC-${maxCode + 1 + i}`, progress: 0, parsedAt: null, uploadedBy: getState().auth.user?.name,
+      code: `${prefix}-DOC-${maxCode + 1 + i}`, progress: 0, parsedAt: null, uploadedBy: getState().auth.user?.name, scope,
     };
   });
   update(s => { s.documents.push(...docs); const p = s.projects.find(x => x.id === projectId); if (p) p.lastSyncedAt = Date.now(); });

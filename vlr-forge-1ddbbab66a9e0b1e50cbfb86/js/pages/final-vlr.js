@@ -7,7 +7,7 @@ import { esc, icon, relTime, fmtDateTime, sdgChips, SDG_TITLES, SDG_COLORS, avat
 import { getProject, getProjectBook, getProjectChapters, getProjectTasks, getProjectExtractions, getExtraction, projectStats, currentUser } from '../store.js';
 import { assembleFinalBook, rewriteUnit, finalizeBook, reopenBook } from '../actions.js';
 import { bookOutline, bookExport } from '../export.js';
-import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml } from '../shell.js';
+import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml, contextGapBanner } from '../shell.js';
 import { STEP_META, PILLARS, quotePlain } from '../seed.js';
 import { navigate } from '../router.js';
 
@@ -237,10 +237,16 @@ function editorPanelHtml(book, project, chapters, local) {
   const selected = Object.keys(ctxSel).filter(k => ctxSel[k]).map(id => all.find(e => e.id === id) || getExtraction(id)).filter(Boolean);
   const targetChapter = u.chapterId ? chapters.find(c => c.id === u.chapterId) : null;
   const busy = !!targetChapter?.reviewing;
+  const scopeOfE = (e) => e.scope || 'city';
+  const LAYER_LABEL = { city: 'City', national: 'National', regional: 'Regional', global: 'Global' };
+  const layers = ['city', 'national', 'regional', 'global'].filter(sc => sc === 'city' || all.some(e => scopeOfE(e) === sc));
+  const ctxScope = layers.includes(local.ctxScope) ? local.ctxScope : 'city';
+  const li = layers.indexOf(ctxScope);
+  const layerSel = selected.filter(e => scopeOfE(e) === ctxScope);
   const me = currentUser();
   const msgs = targetChapter ? (targetChapter.chat || []) : [];
-  const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="mono">${esc(e.sdg)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
-  const miniSeries = (g, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-ids="${esc(g.map(x => x.id).join(','))}"><span class="mono">${esc(g[0].sdg)}</span>${g.length > 1 ? `<span class="ch-yrs">×${g.length}</span>` : ''}${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
+  const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="mono">${esc(e.sdg)}</span><span class="ch-mini-x">${icon(on ? 'x' : 'plus', 'icon-xs')}</span></button>`;
+  const miniSeries = (g, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-ids="${esc(g.map(x => x.id).join(','))}"><span class="mono">${esc(g[0].sdg)}</span>${g.length > 1 ? `<span class="ch-yrs">×${g.length}</span>` : ''}<span class="ch-mini-x">${icon(on ? 'x' : 'plus', 'icon-xs')}</span></button>`;
   const groupInd = (list) => { const m = new Map(); for (const e of list.filter(x => x.pillar === 'indicators')) { const k = e.sdg + '|' + e.title; if (!m.has(k)) m.set(k, []); m.get(k).push(e); } return [...m.values()].map(g => [...g].sort((x, y) => (x.year || 0) - (y.year || 0))); };
   return `<aside class="ch-chat card vlr-editor" data-vlr-keep>
     <div class="card-header tinted ch-chat-head">
@@ -263,15 +269,18 @@ function editorPanelHtml(book, project, chapters, local) {
         <span class="grow"></span>
         <button class="btn-icon" data-action="unit-clear" data-tip="Clear selection" aria-label="Clear selection">${icon('x', 'icon-sm')}</button>
       </div>
-      <div class="ch-ctx-bar"><span class="ch-unit-lbl">Context · ${selected.length} resource${selected.length === 1 ? '' : 's'}</span></div>
-      ${selected.length ? `<div class="ch-ctx-cols">${PILLARS.map(p => { const list = selected.filter(e => e.pillar === p.key); return `
+      <div class="ch-ctx-bar"><span class="ch-unit-lbl">Context · ${selected.length} resource${selected.length === 1 ? '' : 's'}</span><span class="grow"></span>${layers.length > 1 ? `<span class="ch-scope-pager"><button class="btn-icon" data-action="ctx-scope" data-scope="${esc(layers[li - 1] || '')}" ${li <= 0 ? 'disabled' : ''} aria-label="Previous layer">${icon('chevron-left', 'icon-sm')}</button><span class="ch-scope-cur">${esc(LAYER_LABEL[ctxScope])}</span><button class="btn-icon" data-action="ctx-scope" data-scope="${esc(layers[li + 1] || '')}" ${li >= layers.length - 1 ? 'disabled' : ''} aria-label="Next layer">${icon('chevron-right', 'icon-sm')}</button></span>` : ''}</div>
+      ${(() => {
+        const layerSelected = selected.filter(e => scopeOfE(e) === ctxScope);
+        return `<div class="ch-ctx-cols">${PILLARS.map(p => { const list = layerSelected.filter(e => e.pillar === p.key); return `
         <div class="ch-ctx-col col-${esc(p.key)}">
-          <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span><button class="ch-col-add ${local.resPillar === p.key ? 'on' : ''}" data-action="res-open" data-pillar="${esc(p.key)}" data-tip="Browse ${esc(p.label.toLowerCase())} resources">${icon('plus', 'icon-xs')}</button></div>
+          <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span><button class="ch-col-add ${local.resPillar === p.key ? 'on' : ''}" data-action="res-open" data-pillar="${esc(p.key)}" data-tip="Browse ${esc(p.label.toLowerCase())} resources by SDG">${icon('plus', 'icon-xs')}</button></div>
           ${p.key === 'indicators' ? groupInd(list).map(g => miniSeries(g, true)).join('') : list.map(e => mini(e, true)).join('')}
-        </div>`; }).join('')}</div>` : `<div class="ch-ctx-pills"><span class="xs muted">Empty — add resources to rewrite from.</span></div>`}
+        </div>`; }).join('')}</div>${layerSelected.length ? '' : `<div class="xs muted">Nothing from the ${esc(LAYER_LABEL[ctxScope].toLowerCase())} layer in this context — use a column's + to browse and add.</div>`}`;
+      })()}
       ${local.resPillar ? (() => {
         const p = PILLARS.find(x => x.key === local.resPillar);
-        const pillarAll = all.filter(e => e.pillar === p.key);
+        const pillarAll = all.filter(e => e.pillar === p.key && scopeOfE(e) === ctxScope);
         const goals = [...new Set(pillarAll.map(e => e.goal))].sort((x, y) => x - y);
         const g = local.resGoal;
         const list = pillarAll.filter(e => !g || e.goal === g);
@@ -285,7 +294,7 @@ function editorPanelHtml(book, project, chapters, local) {
             ${goals.map(gl => `<button class="ch-brw-goal ${g === gl ? 'on' : ''}" style="--g:${SDG_COLORS[gl]}" data-action="res-goal" data-goal="${gl}" data-tip="SDG ${gl}: ${esc(SDG_TITLES[gl])}"><i></i>${gl}</button>`).join('')}
           </div>
           <div class="ch-brw-list">
-            ${entries.length ? entries.map(en => { const on = en.ids.some(id => ctxSel[id]); return `<button class="ch-ctx-mini ch-brw-item ${on ? 'on' : ''}" data-action="ctx-toggle" ${en.ids.length > 1 ? `data-ids="${esc(en.ids.join(','))}"` : `data-id="${esc(en.ids[0])}"`}><span class="mono">${esc(en.sdg)}</span><span class="ch-res-t">${esc(en.title)}</span>${en.n > 1 ? `<span class="ch-yrs">${en.n} yrs</span>` : ''}${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`; }).join('') : `<span class="xs muted">No resources in this pillar.</span>`}
+            ${entries.length ? entries.map(en => { const on = en.ids.some(id => ctxSel[id]); return `<button class="ch-ctx-mini ch-brw-item ${on ? 'on' : ''}" data-action="ctx-toggle" ${en.ids.length > 1 ? `data-ids="${esc(en.ids.join(','))}"` : `data-id="${esc(en.ids[0])}"`}><span class="mono">${esc(en.sdg)}</span><span class="ch-res-t">${esc(en.title)}</span>${en.n > 1 ? `<span class="ch-yrs">${en.n} yrs</span>` : ''}<span class="ch-mini-x">${icon(on ? 'x' : 'plus', 'icon-xs')}</span></button>`; }).join('') : `<span class="xs muted">No resources in this pillar.</span>`}
           </div>
         </div>
       </div>`;
@@ -381,6 +390,7 @@ export default {
       <span class="grow"></span>
       ${tabs}
       ${book ? `
+        <button class="btn btn-light" data-action="reassemble" data-tip="Assemble a fresh edition from the current chapters">${icon('rotate-ccw', 'icon-sm')}Re-assemble</button>
         <button class="btn btn-light" data-action="download-menu">${icon('download', 'icon-sm')}Download${icon('chevron-down', 'icon-sm')}</button>
         ${isFinal ? `<button class="btn btn-light" data-action="reopen-book">${icon('unlock', 'icon-sm')}Reopen for edits</button>`
                   : `<button class="btn btn-primary" data-action="finalize">${icon('badge-check', 'icon-sm')}Approve VLR</button>`}` : ''}
@@ -389,7 +399,8 @@ export default {
     /* ---------- content ---------- */
     if (!book) {
       local.sel = null;
-      ctx.content.innerHTML = `<div class="vlr-page">${emptyStateHtml(project, stats, chapters, tasks)}</div>`;
+      ctx.content.innerHTML = `<div class="vlr-page">
+      ${contextGapBanner(project)}${emptyStateHtml(project, stats, chapters, tasks)}</div>`;
       ctx.footer.innerHTML = statusBarHtml(project);
       const unbind = bindActions(ctx.content, {
         'assemble': () => { const t = assembleFinalBook(project.id); if (t) toast.success('Final VLR assembly started', 'Book Assembly → DOCX Rendering. The book appears here when both finish.'); else toast.warning('Nothing to assemble', 'No chapters found for this project.'); },
@@ -438,6 +449,19 @@ export default {
       const ch = u?.chapterId ? chapters.find(c => c.id === u.chapterId) : null;
       const pool = ch ? all.filter(e => e.goal === ch.goal || (e.goals || []).includes(ch.goal)) : all;
       local.ctxSel = Object.fromEntries(pool.map(e => [e.id, true]));
+      local.ctxScope = 'city';
+    };
+    const doEditorRewrite = () => {
+      const u = bookUnit(book, local.unit);
+      if (!u || !u.chapterId) return;
+      const ids = Object.keys(local.ctxSel || {}).filter(k => local.ctxSel[k]);
+      if (!ids.length) { toast.warning('No context selected', 'Pick at least one resource to rewrite from.'); return; }
+      if (isFinal) reopenBook(book.id);
+      rewriteUnit(u.chapterId, { blockIds: u.blocks.map(x => x.id), extractionIds: ids, instruction: (local.instr || '').trim(), unitLabel: u.label });
+      local.instr = '';
+      local.resPillar = null; local.resGoal = null;
+      toast.info('Rewrite queued', `The VLR Editor is rewriting ${u.label} from ${ids.length} resource${ids.length === 1 ? '' : 's'}.`);
+      ctx.rerender();
     };
     const selectUnit = (unit) => {
       if (local.unit && local.unit.type === unit.type && local.unit.id === unit.id) { local.unit = null; local.ctxSel = null; local.resPillar = null; ctx.rerender(); return; }
@@ -461,30 +485,25 @@ export default {
       'unit-clear': () => { local.unit = null; local.ctxSel = null; local.resPillar = null; ctx.rerender(); },
       'ctx-toggle': (el, ev) => {
         ev.stopPropagation();
-        if (el.classList.contains('on') && !ev.target.closest('svg, i')) return;
+        if (el.classList.contains('on') && !ev.target.closest('.ch-mini-x, svg, i')) return;
         const ids = el.dataset.ids ? el.dataset.ids.split(',') : [el.dataset.id];
         const on = ids.some(id => (local.ctxSel || {})[id]);
         ids.forEach(id => { (local.ctxSel ||= {})[id] = !on; });
         ctx.rerender();
       },
+      'ctx-scope': (el, ev) => { ev.stopPropagation(); if (!el.dataset.scope) return; local.ctxScope = el.dataset.scope; local.resPillar = null; local.resGoal = null; ctx.rerender(); },
       'res-open': (el, ev) => { ev.stopPropagation(); local.resPillar = local.resPillar === el.dataset.pillar ? null : el.dataset.pillar; local.resGoal = null; ctx.rerender(); },
       'res-close': () => { local.resPillar = null; local.resGoal = null; ctx.rerender(); },
       'res-goal': (el) => { const g = el.dataset.goal ? Number(el.dataset.goal) : null; local.resGoal = g && local.resGoal === g ? null : g; ctx.rerender(); },
-      'editor-rewrite': () => {
-        const u = bookUnit(book, local.unit);
-        if (!u || !u.chapterId) return;
-        const ids = Object.keys(local.ctxSel || {}).filter(k => local.ctxSel[k]);
-        if (!ids.length) { toast.warning('No context selected', 'Pick at least one resource to rewrite from.'); return; }
-        if (isFinal) reopenBook(book.id);
-        rewriteUnit(u.chapterId, { blockIds: u.blocks.map(x => x.id), extractionIds: ids, instruction: (local.instr || '').trim(), unitLabel: u.label });
-        local.instr = '';
-        toast.info('Rewrite queued', `The VLR Editor is rewriting ${u.label} from ${ids.length} resource${ids.length === 1 ? '' : 's'}.`);
-        ctx.rerender();
-      },
+      'editor-rewrite': () => doEditorRewrite(),
       'goto-fn': (el, ev) => { ev.preventDefault(); const n = el.dataset.fn; const note = ctx.content.querySelector(`[data-fnote="${CSS.escape(n)}"]`); if (note) { scrollToEl(note, 160); note.classList.add('flash'); setTimeout(() => note.classList.remove('flash'), 1600); } },
       'download-docx': () => doDownload('docx'),
     });
-    ctx.content.querySelector('#vlr-instr')?.addEventListener('input', (e) => { local.instr = e.target.value; });
+    const instrEl = ctx.content.querySelector('#vlr-instr');
+    if (instrEl) {
+      instrEl.addEventListener('input', (e) => { local.instr = e.target.value; });
+      instrEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (!e.shiftKey || e.ctrlKey || e.metaKey)) { e.preventDefault(); doEditorRewrite(); } });
+    }
 
     /* hovercard: full evidence preview when hovering a resource chip */
     const hideCard = () => document.getElementById('ch-hovercard')?.remove();
@@ -545,6 +564,14 @@ export default {
         if (!ok) return;
         finalizeBook(b.id);
         toast.success('Final VLR published', `${b.title} · v${b.version}`);
+      },
+      'reassemble': async () => {
+        const b = getProjectBook(project.id); if (!b) return;
+        if (getProjectTasks(project.id).some(t => ['assemble', 'render'].includes(t.step) && ['queued', 'running'].includes(t.status))) { toast.info('Already assembling', 'Book Assembly is running.'); return; }
+        if (b.status === 'final' && !await confirmDialog({ title: 'Re-assemble the VLR?', msg: 'The approved edition goes back to <strong>draft</strong> and a fresh version is assembled from the current chapters.', confirmText: 'Re-assemble', icon: 'rotate-ccw' })) return;
+        if (b.status === 'final') reopenBook(b.id);
+        assembleFinalBook(project.id);
+        toast.success('Re-assembly started', 'Book Assembly → DOCX Rendering. The new edition replaces this one when both finish.');
       },
       'reopen-book': async () => {
         const b = getProjectBook(project.id); if (!b) return;

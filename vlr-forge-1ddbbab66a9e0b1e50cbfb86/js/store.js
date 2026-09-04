@@ -1,5 +1,5 @@
 /* store.js — single in-memory state persisted to localStorage, with subscriptions and selectors */
-import { buildSeed, expectedExtractions, PILLARS } from './seed.js';
+import { buildSeed, expectedExtractions, PILLARS, CONTEXT_SCOPES, SCOPE_META, scopeProject, buildTemplateExtractions } from './seed.js';
 
 export const STORAGE_KEY = 'vlrforge.demo.v9';
 
@@ -22,6 +22,24 @@ function load() {
         parsed.settings = { ...defaults.settings, ...(parsed.settings || {}) };
         // in-place migrations (instead of key bumps that wipe user work)
         for (const c of parsed.chapters || []) if (Array.isArray(c.chat)) c.chat = c.chat.filter(m => !(m.role === 'assistant' && String(m.text || '').startsWith('I composed Chapter')));
+        if (!parsed.migCtxRepair) {
+          parsed.migCtxRepair = 1;
+          delete parsed._migScopeTpl;
+          // restore any context layer the buggy migration wiped: rebuild from the
+          // processed scope document when there is one, else the reference library
+          for (const p of parsed.projects || []) {
+            for (const sc of CONTEXT_SCOPES) {
+              if ((parsed.extractions || []).some(e => e.projectId === p.id && e.scope === sc)) continue;
+              const sdoc = (parsed.documents || []).find(d => d.projectId === p.id && d.scope === sc && d.status === 'processed');
+              const sp = scopeProject(p, sc);
+              const src = sdoc ? [sdoc] : [{ id: null, name: SCOPE_META[sc].sampleName(p), pages: 120 }];
+              for (const pl of PILLARS) {
+                parsed.extractions.push(...buildTemplateExtractions(sp, src, { pillar: pl.key, scope: sc, status: 'approved' })
+                  .map(e => ({ ...e, scope: sc, reviewedBy: sdoc ? 'Restored' : 'Reference library', reviewedAt: Date.now() })));
+              }
+            }
+          }
+        }
         return parsed;
       }
     }
@@ -104,7 +122,8 @@ export function projectStats(project) {
   const tasks = getProjectTasks(p.id);
   const processed = docs.filter(d => d.status === 'processed').length;
   const processedRatio = docs.length ? processed / docs.length : 0;
-  const pillarsDone = PILLARS.filter(pl => ext.some(e => e.pillar === pl.key)).length;
+  const cityExt = ext.filter(e => (e.scope || 'city') === 'city');
+  const pillarsDone = PILLARS.filter(pl => cityExt.some(e => e.pillar === pl.key)).length;
   const approved = ext.filter(e => e.status === 'approved').length;
   const approvedRatio = ext.length ? approved / ext.length : 0;
   const running = tasks.filter(t => t.status === 'running').length;
@@ -116,7 +135,7 @@ export function projectStats(project) {
   const chaptersRatio = chapters.length ? chaptersApproved / chapters.length : 0;
   const book = state.books.find(b => b.projectId === p.id);
   const bookFinal = book?.status === 'final';
-  const allReviewed = ext.length > 0 && approved === ext.length;
+  const allReviewed = cityExt.length > 0 && cityExt.every(e => e.status === 'approved');
   let completion = p.status === 'archived' ? 100 : Math.round(10 * processedRatio + 40 * (pillarsDone / PILLARS.length) + 20 * approvedRatio + 20 * chaptersRatio + (book ? 5 : 0) + (bookFinal ? 5 : 0));
   completion = Math.max(0, Math.min(100, completion));
   const extractionPct = p.status === 'archived' ? 100 : Math.min(100, Math.round(100 * ext.length / Math.max(1, expectedExtractions(p))));

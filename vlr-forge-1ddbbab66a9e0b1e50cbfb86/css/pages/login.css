@@ -32,3 +32,11 @@
 .pw-wrap { position: relative; }
 .pw-wrap .btn-icon { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); }
 @media (max-width: 960px) { .auth-shell { grid-template-columns: 1fr; } .auth-hero { display: none; } }
+
+/* simple login variant: brand bar on top, centered card */
+.auth-simple { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg); }
+.auth-simple .topbar { position: static; }
+.auth-simple .topbar-brand { border-right: 0; }
+.auth-center { flex: 1; display: grid; place-items: center; padding: 40px 20px; }
+.auth-simple .auth-card { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-md, 0 8px 24px rgba(15,23,42,.08)); padding: 32px 30px; }
+.auth-simple .auth-card h2 { margin-bottom: 18px; }

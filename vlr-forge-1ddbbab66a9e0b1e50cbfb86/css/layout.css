@@ -119,3 +119,5 @@ a.ps-step:hover { color: var(--navy); }
 .proj-stepper.compact .ps-circle { width: 22px; height: 22px; font-size: 11px; }
 .proj-stepper.compact .ps-label { font-size: 12.5px; }
 .proj-stepper.compact .ps-line { flex-basis: 20px; }
+
+.ctxgap-banner { margin-bottom: 18px; }

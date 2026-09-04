@@ -285,3 +285,11 @@ td.pd-proj-sdgs .sdg-chip { margin: 1px; }
 .pd-yr-th, .pd-yr-td { width: 62px; white-space: nowrap; text-align: center; }
 
 .pd-doc-cat.cat-priority { background: #fdf3e3; color: #92600a; border-color: #f1d8a8; }
+
+/* Urban data scope tabs (City / National / Regional / Global) */
+.pd-scope-tabs { display: flex; gap: 4px; padding: 10px 14px 0; align-items: center; }
+.pd-scope-tabs .grow { flex: 1; }
+.pd-scope-tab { font-size: 12.5px; font-weight: 600; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; transition: background .12s, border-color .12s; }
+.pd-scope-tab:hover { border-color: var(--sky-600); color: var(--navy); }
+.pd-scope-tab.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+.pp-ctx-empty td { color: var(--text-secondary); }

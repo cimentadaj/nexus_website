@@ -1,10 +1,10 @@
 /* Project detail — Overview (mock-up 02) and History view. Route #/projects/:id and #/projects/:id/history */
 import { esc, icon, fmtCost, fmtDateTime, fmtDuration, fmtBytes, relTime, relTimeShort, fileTypeIcon, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, sum, fmtPct, fmtTime, sdgChip, sdgChips, SDG_COLORS, SDG_TITLES } from '../ui.js';
 import { getProject, getProjectDocs, getProjectTasks, getProjectExtractions, getProjectRuns, getProjectReports, getProjectActivity, projectStats, getTask, getDoc, getLogs } from '../store.js';
-import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument, approveExtraction, unapproveExtraction } from '../actions.js';
-import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport } from '../modals.js';
-import { topbarActions, searchBox, topbarTabs, statusBarHtml, projectStepper } from '../shell.js';
-import { PILLARS, STEP_META, STEP_ORDER, parsedDocMeta, quotePlain, fillTemplate, INDICATOR_OBSERVATIONS, defaultObservation } from '../seed.js';
+import { runPipeline, runStep, approveAll, startParse, translateDocument, deleteDocument, composeChapters, runPreprocessing, reprocessDocument, approveExtraction, unapproveExtraction, addDocuments } from '../actions.js';
+import { openConfigureProjectModal, openAddExtractionModal, openTaskDrawer, openDocumentDrawer, downloadReport, openUploadModal } from '../modals.js';
+import { topbarActions, searchBox, topbarTabs, statusBarHtml, projectStepper, contextGapBanner } from '../shell.js';
+import { PILLARS, STEP_META, STEP_ORDER, parsedDocMeta, quotePlain, fillTemplate, INDICATOR_OBSERVATIONS, defaultObservation, SCOPES, CONTEXT_SCOPES, SCOPE_META } from '../seed.js';
 import { navigate } from '../router.js';
 
 const PILLAR_KEYS = PILLARS.map(p => p.key);
@@ -298,6 +298,8 @@ function preprocessHtml(ctx, project) {
   // expansion is inspection-only: a document opens on click once it is done (or failed) — nothing streams open on its own
   const states = new Map(docs.map(d => [d.id, ppDocState(d, tasks)]));
   const openId = ctx.local.ppSel ?? null;
+  const cityDocs = docs.filter(d => (d.scope || 'city') === 'city');
+  const ctxDocOf = (sc) => docs.find(d => d.scope === sc);
   return `
   <div class="page-header">
     <div>
@@ -309,16 +311,16 @@ function preprocessHtml(ctx, project) {
         ? `<span class="pp-runstate"><span class="pp-dot"></span>Preprocessing running</span>`
         : done && !pendingWork
           ? ''
-          : `<button class="btn btn-primary" data-action="run-preprocess" ${docs.length ? '' : 'disabled data-tip="Upload documents first"'}>${icon('play', 'icon-sm')}Run preprocessing</button>`}
+          : `<button class="btn btn-primary" data-action="run-preprocess" ${cityDocs.length ? '' : 'disabled data-tip="Upload the city documents first"'}>${icon('play', 'icon-sm')}Run preprocessing</button>`}
     </div>
   </div>
   ${projectStepper(project, 'preprocess')}
   ${failed ? `<div class="callout danger mb-16">${icon('alert-circle')}<span>${failed} preprocessing task${failed === 1 ? '' : 's'} failed — click the red pill on the document to inspect its log and retry.</span></div>` : ''}
   <section class="card">
-    <div class="card-header tinted"><div class="card-title-caps">${icon('folder-open')}Source documents (${docs.length})</div><button class="btn btn-light btn-sm" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload more documents</button></div>
-    ${docs.length ? `<table class="table pp-table">
+    <div class="card-header tinted"><div class="card-title-caps">${icon('folder-open')}Source documents (${cityDocs.length})</div><button class="btn btn-light btn-sm" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload more documents</button></div>
+    ${cityDocs.length ? `<table class="table pp-table">
       <thead><tr><th>Filename</th><th>Language</th><th>Preprocessing</th><th class="th-right"></th></tr></thead>
-      <tbody>${docs.map(d => { const st = states.get(d.id); const busy = st.parse === 'running' || st.translate === 'running';
+      <tbody>${cityDocs.map(d => { const st = states.get(d.id); const busy = st.parse === 'running' || st.translate === 'running';
         const docDone = st.parse === 'done' && (st.translate === 'done' || st.translate === 'na');
         const docFailed = st.parse === 'failed' || st.translate === 'failed';
         const inspectable = docDone || docFailed;
@@ -338,6 +340,34 @@ function preprocessHtml(ctx, project) {
           </div></td>
         </tr>${open ? ppDocDetail(d, project, st) : ''}`; }).join('')}</tbody>
     </table>` : `<div class="empty">${icon('file-plus-2')}<div class="empty-title">No source documents yet</div><div class="empty-sub">Upload the city's documents to begin preprocessing.</div><div class="mt-12"><button class="btn btn-primary btn-sm" data-action="upload-documents" data-project="${esc(project.id)}">${icon('upload', 'icon-sm')}Upload documents</button></div></div>`}
+  </section>
+  <section class="card mt-16">
+    <div class="card-header tinted"><div class="card-title-caps">${icon('layers')}Context documents</div><span class="xs muted">One document per reporting layer — each adds its own tab in Urban data. Optional; upload them any time.</span></div>
+    <table class="table pp-table">
+      <tbody>${CONTEXT_SCOPES.map(sc => { const meta = SCOPE_META[sc]; const d = ctxDocOf(sc);
+        if (!d) return `
+        <tr class="pp-ctx-empty">
+          <td style="width:140px"><div class="row gap-8">${icon(meta.icon, 'icon-sm faint')}<strong>${esc(meta.label)}</strong></div></td>
+          <td class="xs muted">${esc(meta.hint)}</td>
+          <td class="td-right"><button class="btn btn-light btn-sm" data-action="upload-context" data-scope="${esc(sc)}">${icon('upload', 'icon-sm')}Upload ${esc(meta.label.toLowerCase())} document</button></td>
+        </tr>`;
+        const st = states.get(d.id); const busy = st.parse === 'running' || st.translate === 'running';
+        const docDone = st.parse === 'done' && (st.translate === 'done' || st.translate === 'na');
+        const docFailed = st.parse === 'failed' || st.translate === 'failed';
+        const pills = busy ? PP_PILL.running('Processing…')
+          : docDone ? `${PP_PILL.done('Parsed')}${st.translate === 'na' ? PP_PILL.na('Translate · not needed (EN)') : PP_PILL.done('Translated')}`
+          : docFailed ? `${st.parse === 'failed' ? PP_PILL.failed('Parse failed', st.parseTask?.id) : PP_PILL.done('Parsed')}${st.translate === 'failed' ? PP_PILL.failed('Translation failed', st.trTask?.id) : ''}`
+          : PP_PILL.pending('Not processed');
+        return `
+        <tr>
+          <td style="width:140px"><div class="row gap-8">${icon(meta.icon, 'icon-sm faint')}<strong>${esc(meta.label)}</strong></div></td>
+          <td><div class="row gap-12">${fileTypeIcon(d.name)}<span class="cell-title mono">${esc(d.name)}</span><span class="badge badge-lang">${esc(d.language)}</span><div class="row gap-6 wrap">${pills}</div></div></td>
+          <td class="td-right"><div class="table-actions">
+            ${docDone ? `<a class="btn-icon" href="#/projects/${esc(project.id)}/documents/${esc(d.id)}" data-tip="Open in Document Viewer">${icon('eye', 'icon-sm')}</a>` : ''}
+            <span data-tip="${busy ? 'Processing…' : docDone || docFailed ? 'Reprocess this document' : 'Process this document'}"><button class="btn-icon" data-action="pp-run-doc" data-doc="${esc(d.id)}" ${busy ? 'disabled' : ''}>${icon(busy ? 'loader-2' : docDone || docFailed ? 'rotate-ccw' : 'play', busy ? 'icon-sm spin' : 'icon-sm')}</button></span>
+          </div></td>
+        </tr>`; }).join('')}</tbody>
+    </table>
   </section>`;
 }
 
@@ -355,9 +385,21 @@ function overviewHtml(ctx, project, stats) {
   const pendingByDoc = {};
   tasks.filter(t => t.inputDocId && (t.status === 'queued' || t.status === 'running')).forEach(t => { (pendingByDoc[t.inputDocId] ||= {})[t.step] = t; });
 
+  /* scope tabs: City always; a context layer appears once its document exists */
+  const scope = ctx.local.scope || 'city';
+  const scopeDocs = docs.filter(d => CONTEXT_SCOPES.includes(d.scope));
+  const scopes = SCOPES.filter(sc => sc.key === 'city' || scopeDocs.some(d => d.scope === sc.key));
+  const scopeExt = allExt.filter(e => (e.scope || 'city') === scope);
+  const scopeDoc = scope !== 'city' ? scopeDocs.find(d => d.scope === scope) : null;
+  const scopeProcessing = scopeDoc && scopeDoc.status !== 'processed';
+
+  /* while the pipeline works on this pillar, the table gives way to a loader */
+  const stepsFor = { indicators: ['extract_indicators', 'analyse'], documentary: ['documentary'], projects: ['projects'], stakeholders: ['stakeholders'] };
+  const pillarBusy = tasks.some(t => ['queued', 'running'].includes(t.status) && (stepsFor[tab] || []).includes(t.step));
+
   /* extractions of the active pillar */
   const filter = ctx.local.filter || 'all';
-  let exts = allExt.filter(e => e.pillar === tab);
+  let exts = scopeExt.filter(e => e.pillar === tab);
   const pillarTotal = exts.length;
   if (filter === 'pending') exts = exts.filter(isPending);
   else if (filter === 'approved') exts = exts.filter(e => e.status === 'approved');
@@ -397,6 +439,7 @@ function overviewHtml(ctx, project, stats) {
 
   <div class="pd-grid">
     <section class="card pd-extractions">
+      ${scopes.length > 1 ? `<div class="pd-scope-tabs">${scopes.map(sc => `<button class="pd-scope-tab ${sc.key === scope ? 'on' : ''}" data-action="scope-tab" data-scope="${esc(sc.key)}">${esc(sc.label)}</button>`).join('')}<span class="grow"></span>${scopeExt.some(isPending) ? `<button class="btn btn-primary btn-sm" data-action="confirm-all-scope" data-tip="Approve every pending extraction across all four pillars of this layer">${icon('check-check', 'icon-sm')}Approve all ${esc((SCOPES.find(x => x.key === scope) || {}).label || scope)}</button>` : ''}</div>` : ''}
       <div class="tabs pd-tabs-actions">
         ${PILLARS.map(p => `<button class="tab ${p.key === tab ? 'active' : ''}" data-action="tab" data-tab="${p.key}">${icon(p.icon)}${esc(p.label)}</button>`).join('')}
         <span class="grow"></span>
@@ -404,7 +447,9 @@ function overviewHtml(ctx, project, stats) {
         <button class="btn btn-light btn-sm" data-action="add-entry">${icon('plus', 'icon-sm')}Add entry</button>
       </div>
       <div class="card-body">
-        ${exts.length ? tab === 'indicators' ? indicatorsMatrixHtml(ctx, exts) : tab === 'documentary' ? documentaryTableHtml(ctx, exts) : tab === 'projects' ? projectsTableHtml(ctx, exts) : tab === 'stakeholders' ? stakeholdersTableHtml(ctx, exts) : `<div class="pd-table-wrap"><table class="table pd-ext-table">
+        ${pillarBusy ? `<div class="empty pd-pillar-loading">${icon('loader-2', 'spin')}<div class="empty-title">Extracting ${esc(pillar.label.toLowerCase())}…</div><div class="empty-sub">The pipeline is running — results appear here as soon as this step completes.</div></div>`
+        : !exts.length && scopeProcessing ? `<div class="empty">${icon('loader-2', 'spin')}<div class="empty-title">${esc((SCOPE_META[scope] || {}).label || scope)} document is being processed</div><div class="empty-sub">Its evidence appears here the moment preprocessing finishes.</div></div>`
+        : exts.length ? tab === 'indicators' ? indicatorsMatrixHtml(ctx, exts) : tab === 'documentary' ? documentaryTableHtml(ctx, exts) : tab === 'projects' ? projectsTableHtml(ctx, exts) : tab === 'stakeholders' ? stakeholdersTableHtml(ctx, exts) : `<div class="pd-table-wrap"><table class="table pd-ext-table">
           <thead><tr><th>SDG</th><th>Extraction</th><th>Value</th><th>Unit</th><th>Source</th><th></th></tr></thead>
           <tbody>${exts.map(e => { const [val, unit] = extCells(e); return `
             <tr class="clickable ${ctx.local.extSel === e.id ? 'row-sel' : ''}" data-action="ext-sel" data-id="${esc(e.id)}">
@@ -615,6 +660,7 @@ export default {
       if (memo.extSel !== undefined) ctx.local.extSel = memo.extSel;
       if (memo.filter) ctx.local.filter = memo.filter;
       if (memo.extRow) ctx.local.extRow = memo.extRow;
+      if (memo.scope) ctx.local.scope = memo.scope;
       if (memo.mxSdg) ctx.local.mxSdg = memo.mxSdg;
       if (memo.docSdg) ctx.local.docSdg = memo.docSdg;
       if (memo.projSdg) ctx.local.projSdg = memo.projSdg;
@@ -629,7 +675,7 @@ export default {
     const stats = projectStats(project);
 
     ctx.topbar.innerHTML = topbarHtml(ctx, project, isHistory ? 'history' : isPre ? 'preprocess' : 'overview');
-    ctx.content.innerHTML = `<div class="pd-page">${isHistory ? historyHtml(ctx, project) : isPre ? preprocessHtml(ctx, project) : overviewHtml(ctx, project, stats)}</div>`;
+    ctx.content.innerHTML = `<div class="pd-page">${isPre ? '' : contextGapBanner(project)}${isHistory ? historyHtml(ctx, project) : isPre ? preprocessHtml(ctx, project) : overviewHtml(ctx, project, stats)}</div>`;
     ctx.footer.innerHTML = statusBarHtml(project);
 
     /* search (topbar) */
@@ -657,10 +703,27 @@ export default {
       mw.addEventListener('scroll', () => { ctx.local.mxScroll = mw.scrollLeft; }, { passive: true });
     }
     const unbindClick = bindActions(ctx.content, {
+      'scope-tab': (el) => { ctx.local.scope = el.dataset.scope; ctx.local.extSel = null; ctx.local.extRow = null; Object.assign(memo, { scope: el.dataset.scope, extSel: null, extRow: null }); ctx.rerender(); },
+      'upload-context': (el) => openUploadModal({ projectId: pid, scope: el.dataset.scope, scopeLabel: (SCOPE_META[el.dataset.scope] || {}).label }),
       'tab': (el) => { ctx.local.tab = el.dataset.tab; ctx.local.filter = 'all'; ctx.local.extSel = null; ctx.local.extRow = null; Object.assign(memo, { tab: el.dataset.tab, filter: 'all', extSel: null, extRow: null }); ctx.rerender(); },
+      'confirm-all-scope': () => {
+        const sc = ctx.local.scope || 'city';
+        const list = getProjectExtractions(pid).filter(e => (e.scope || 'city') === sc && isPending(e));
+        list.forEach(e => approveExtraction(e.id));
+        // move on to the next layer that still has pending work
+        const pdocs = getProjectDocs(pid);
+        const avail = SCOPES.map(x => x.key).filter(k => k === 'city' || pdocs.some(d => d.scope === k));
+        const after = avail.slice(avail.indexOf(sc) + 1);
+        const next = after.find(k => getProjectExtractions(pid).some(e => (e.scope || 'city') === k && isPending(e)));
+        if (next) { ctx.local.scope = next; memo.scope = next; }
+        const label = (SCOPES.find(x => x.key === sc) || {}).label || sc;
+        toast.success(`${label} approved`, `${list.length} extraction${list.length === 1 ? '' : 's'} across all pillars${next ? ` — on to ${(SCOPES.find(x => x.key === next) || {}).label}` : ''}.`);
+        ctx.rerender();
+      },
       'confirm-all-shown': () => {
         const sel = ctx.local.mxSdg && ctx.local.mxSdg !== 'all' ? Number(ctx.local.mxSdg) : null;
-        const list = getProjectExtractions(pid).filter(e => e.pillar === ctx.local.tab && isPending(e) && (!sel || ctx.local.tab !== 'indicators' || e.goal === sel));
+        const sc = ctx.local.scope || 'city';
+        const list = getProjectExtractions(pid).filter(e => (e.scope || 'city') === sc && e.pillar === ctx.local.tab && isPending(e) && (!sel || ctx.local.tab !== 'indicators' || e.goal === sel));
         list.forEach(e => approveExtraction(e.id));
         toast.success('Confirmed', `${list.length} extraction${list.length === 1 ? '' : 's'} approved.`);
         ctx.rerender();

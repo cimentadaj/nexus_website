@@ -4,7 +4,7 @@ import { icon, esc, openModal, openDrawer, confirmDialog, toast, refreshIcons, s
 import { getState, getProject, getProjectDocs, getDoc, getTask, getProjectTasks, getExtraction, projectStats, getProjectExtractions } from './store.js';
 import { createProject, addDocuments, startParse, generateReport, updateProject, activateProject, archiveProject, unarchiveProject, deleteProject, addManualExtraction, retryTask, cancelTask, translateDocument, deleteDocument, addComment } from './actions.js';
 import { navigate } from './router.js';
-import { STEP_META, LANGS, PILLARS } from './seed.js';
+import { STEP_META, LANGS, PILLARS, SCOPE_META } from './seed.js';
 import { REGION_OPTIONS } from './composer.js';
 import { subscribe } from './store.js';
 import { reportContentFor } from './export.js';
@@ -27,7 +27,7 @@ function dropzoneHtml(id, { sample = true } = {}) {
   ${sample ? `<div class="row-between"><span class="xs muted">No documents at hand?</span><button type="button" class="btn btn-light btn-sm" id="${id}-sample">${icon('sparkles')}Add sample documents</button></div>` : ''}
   <div class="file-list" id="${id}-list"></div>`;
 }
-function bindDropzone(el, id, files, { defaultLang = 'EN', onChange, existingNames = new Set() } = {}) {
+function bindDropzone(el, id, files, { defaultLang = 'EN', onChange, existingNames = new Set(), sampleFiles = null } = {}) {
   const zone = el.querySelector(`#${id}-zone`), input = el.querySelector(`#${id}-input`), list = el.querySelector(`#${id}-list`);
   const addFiles = (fl) => {
     for (const f of fl) {
@@ -60,6 +60,7 @@ function bindDropzone(el, id, files, { defaultLang = 'EN', onChange, existingNam
   zone.addEventListener('drop', (e) => addFiles([...(e.dataTransfer?.files || [])]));
   el.querySelector(`#${id}-sample`)?.addEventListener('click', () => {
     const taken = new Set([...existingNames, ...files.map(f => f.name)]);
+    if (sampleFiles) { addFiles(sampleFiles.filter(n => !taken.has(n)).map(n => ({ name: n, size: 0, pages: 120 + Math.floor(Math.random() * 60) }))); return; }
     const picks = [];
     let round = 0;
     while (picks.length < 4 && round < 20) {
@@ -178,7 +179,7 @@ export function openNewProjectModal({ initialCity = '' } = {}) {
 /* =========================================================================
  * Upload documents
  * ======================================================================= */
-export function openUploadModal({ projectId = null, onDone } = {}) {
+export function openUploadModal({ projectId = null, onDone, scope = 'city', scopeLabel = '' } = {}) {
   const s = getState();
   const candidates = s.projects.filter(p => p.status !== 'archived');
   if (!candidates.length) { toast.warning('No active projects', 'Create a project first.'); return openNewProjectModal(); }
@@ -186,7 +187,7 @@ export function openUploadModal({ projectId = null, onDone } = {}) {
   let pid = projectId && getProject(projectId) ? projectId : candidates[0].id;
   const files = [];
   const api = openModal({
-    title: 'Upload Documents', sub: 'Add source documents to a project. Every pillar extractor scans the full document pool.', size: 'lg', backdropClose: false,
+    title: scope === 'city' ? 'Upload Documents' : `Upload ${scopeLabel || scope} context document`, sub: scope === 'city' ? 'Add source documents to a project. Every pillar extractor scans the full document pool.' : `One document covering the ${scopeLabel || scope} reporting layer — its evidence appears as a separate tab in Urban data.`, size: 'lg', backdropClose: false,
     body: `
       <div class="field"><label class="label">Project</label><select class="select" id="up-project">${candidates.map(p => `<option value="${p.id}" ${p.id === pid ? 'selected' : ''}>${esc(p.name)} — ${esc(p.jurisdiction)}</option>`).join('')}</select></div>
       ${dropzoneHtml('up')}
@@ -199,13 +200,13 @@ export function openUploadModal({ projectId = null, onDone } = {}) {
         const go = el.querySelector('#up-go'); go.disabled = !files.length || !!missing; go.title = missing ? `Set the language for ${missing} file(s)` : '';
       };
       const project = getProject(pid);
-      bindDropzone(el, 'up', files, { onChange: update, existingNames: new Set(getProjectDocs(pid).map(d => d.name)) });
+      bindDropzone(el, 'up', files, { onChange: update, existingNames: new Set(getProjectDocs(pid).map(d => d.name)), sampleFiles: scope !== 'city' && SCOPE_META[scope] ? [SCOPE_META[scope].sampleName(getProject(pid) || {})] : null });
       el.querySelector('#up-project').addEventListener('change', (e) => { pid = e.target.value; });
       el.querySelector('#up-cancel').onclick = api.close;
       el.querySelector('#up-go').onclick = () => {
         const btn = el.querySelector('#up-go'); if (btn.disabled || btn.classList.contains('loading')) return; btn.disabled = true; btn.classList.add('loading'); btn.innerHTML = `${icon('loader-2', 'spin')}Uploading…`; refreshIcons(btn);
         setTimeout(() => {
-          const docs = addDocuments(pid, files);
+          const docs = addDocuments(pid, scope === 'city' ? files : files.slice(0, 1), { scope });
           const parseNow = el.querySelector('#up-parse').checked;
           if (parseNow) docs.forEach(d => startParse(d.id));
           api.close();

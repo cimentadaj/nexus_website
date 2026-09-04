@@ -324,7 +324,7 @@ sup.ch-fn a:hover { background: var(--sky-100); }
 .ch-ctx-col-h { padding-bottom: 2px; width: 100%; }
 .ch-ctx-col-h .ch-pillar { display: block; width: 100%; text-align: center; }
 .ch-ctx-col .ch-ctx-mini { width: 100%; justify-content: center; position: relative; }
-.ch-ctx-col .ch-ctx-mini .icon-xs { position: absolute; right: 6px; }
+.ch-ctx-col .ch-ctx-mini .ch-mini-x { position: absolute; right: 3px; margin: 0; }
 
 /* chips tinted per pillar column */
 .ch-ctx-col.col-indicators .ch-ctx-mini { color: #1d6fb8; background: #e6f0fb; border-color: #cfe1f5; }
@@ -365,3 +365,23 @@ sup.ch-fn a:hover { background: var(--sky-100); }
 .ch-chat-collapsed { display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; }
 .ch-chat-open { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); display: grid; place-items: center; color: var(--text-muted); cursor: pointer; }
 .ch-chat-open:hover { color: var(--navy); border-color: var(--sky-600); }
+
+/* context layer pager (City ‹ › National …) */
+.ch-scope-pager { display: inline-flex; align-items: center; gap: 2px; }
+.ch-scope-pager .btn-icon { width: 22px; height: 22px; }
+.ch-scope-pager .btn-icon:disabled { opacity: .3; cursor: default; }
+.ch-scope-cur { font-size: 11px; font-weight: 700; color: var(--navy); min-width: 58px; text-align: center; }
+
+/* generous hit target for the chip's remove/add control */
+.ch-mini-x { display: inline-flex; align-items: center; justify-content: center; padding: 4px; margin: -4px -2px -4px 0; border-radius: 4px; cursor: pointer; }
+.ch-ctx-mini.on .ch-mini-x:hover { background: rgba(15,23,42,.10); }
+.ch-ctx-mini:not(.on) .ch-mini-x:hover { background: rgba(15,23,42,.06); }
+.ch-mini-x { margin-left: auto; }
+
+/* per-chapter section outline under the active row (final-VLR TOC style) */
+.ch-toc-outline { display: flex; flex-direction: column; padding: 2px 8px 8px 20px; gap: 1px; border-left: 2px solid var(--sky-600); margin: 0 0 4px 16px; }
+.ch-toc-sub { display: flex; align-items: center; gap: 7px; text-align: left; font-size: 12px; color: var(--text-secondary); padding: 5px 8px; border-radius: 6px; cursor: pointer; width: 100%; }
+.ch-toc-sub:hover { background: var(--sky-50); color: var(--navy); }
+.ch-toc-sub.on { background: var(--sky-50); color: var(--navy); font-weight: 600; }
+.ch-toc-num { font-family: var(--mono); font-size: 10.5px; color: var(--text-muted); flex-shrink: 0; }
+.ch-toc-sub .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

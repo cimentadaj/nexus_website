@@ -57,6 +57,102 @@ export function defaultObservation(e, project) {
   return `Statement extracted from ${src}. It is consistent with the other documents uploaded for ${project.city} and no conflicting evidence was found in the source pool for SDG ${e.sdg}. ${tail}`;
 }
 
+/* ------------------------------------------------------------------ */
+/* Context scopes: the city pool plus one document each for the        */
+/* national, regional and global reporting layers.                     */
+/* ------------------------------------------------------------------ */
+export const SCOPES = [
+  { key: 'city', label: 'City' },
+  { key: 'national', label: 'National' },
+  { key: 'regional', label: 'Regional' },
+  { key: 'global', label: 'Global' },
+];
+export const CONTEXT_SCOPES = ['national', 'regional', 'global'];
+export const SCOPE_META = {
+  national: { label: 'National', icon: 'flag', hint: 'The Voluntary National Review (or the national SDG report).', sampleName: (p) => `${(p.country || 'National').replace(/\s+/g, '_')}_VNR_2024.pdf` },
+  regional: { label: 'Regional', icon: 'globe-2', hint: 'The regional SDG index and dashboards report.', sampleName: () => 'Regional_SDG_Index_2025.pdf' },
+  global: { label: 'Global', icon: 'earth', hint: 'The Global Sustainable Development Report.', sampleName: () => 'Global_SDG_Report_2025.pdf' },
+};
+/* Distinct evidence per context layer — national / regional / global flavours
+ * so the scope tabs look genuinely different from the city pool. */
+export const SCOPE_TEMPLATES = {
+  national: {
+    indicators: [
+      { sdg: '1.2.1', goal: 1, title: 'National Poverty Headcount', indicator: 'Proportion of population living below the national poverty line.', value: '27.8', unit: 'Percentage (%)', year: 2015, confidence: 93, page: 22, paragraph: 2, quote: 'The national household survey put the poverty headcount at {h:27.8%} in 2015, the baseline for the current decade of action.' },
+      { sdg: '1.2.1', goal: 1, title: 'National Poverty Headcount', indicator: 'Proportion of population living below the national poverty line.', value: '24.3', unit: 'Percentage (%)', year: 2020, confidence: 94, page: 22, paragraph: 4, quote: 'By 2020 the headcount had fallen to {h:24.3%}, driven by the national social-protection expansion.' },
+      { sdg: '1.2.1', goal: 1, title: 'National Poverty Headcount', indicator: 'Proportion of population living below the national poverty line.', value: '21.6', unit: 'Percentage (%)', year: 2023, confidence: 92, page: 23, paragraph: 1, quote: 'The latest measurement records {h:21.6%} of the population below the national poverty line.' },
+      { sdg: '6.1.1', goal: 6, title: 'Safely Managed Drinking Water — national', indicator: 'Proportion of population using safely managed drinking water services.', value: '98.0', unit: 'Percentage (%)', year: 2017, confidence: 96, page: 41, paragraph: 2, quote: 'National coverage of safely managed drinking water services stood at {h:98.0%} in 2017.' },
+      { sdg: '6.1.1', goal: 6, title: 'Safely Managed Drinking Water — national', indicator: 'Proportion of population using safely managed drinking water services.', value: '98.0', unit: 'Percentage (%)', year: 2019, confidence: 96, page: 41, paragraph: 3, quote: 'Coverage remained at {h:98.0%} in 2019 — a stagnating trend despite the SDG Achievement rating.' },
+      { sdg: '7.1.1', goal: 7, title: 'Access to Electricity — national', indicator: 'Proportion of population with access to electricity.', value: '99.8', unit: 'Percentage (%)', year: 2023, confidence: 97, page: 55, paragraph: 1, quote: 'Electrification is effectively universal at {h:99.8%} of the population.' },
+      { sdg: '11.1.1', goal: 11, title: 'Urban Informal Settlements — national', indicator: 'Proportion of urban population living in slums or informal settlements.', value: '38.2', unit: 'Percentage (%)', year: 2014, confidence: 88, page: 63, paragraph: 2, quote: 'In 2014, {h:38.2%} of the urban population of {city} lived in informal settlements.' },
+      { sdg: '11.1.1', goal: 11, title: 'Urban Informal Settlements — national', indicator: 'Proportion of urban population living in slums or informal settlements.', value: '32.5', unit: 'Percentage (%)', year: 2020, confidence: 90, page: 63, paragraph: 4, quote: 'The national urban programme brought the share down to {h:32.5%} by 2020.' },
+      { sdg: '8.1.1', goal: 8, title: 'Real GDP per Capita Growth — national', indicator: 'Annual growth rate of real GDP per capita.', value: '3.1', unit: 'Percentage (%)', year: 2023, confidence: 91, page: 12, paragraph: 3, quote: 'Real GDP per capita grew by {h:3.1%}, above the regional average for the third consecutive year.' },
+    ],
+    documentary: [
+      { sdg: '6.4', goal: 6, category: 'C2', categoryLabel: 'Commitment', title: 'National water strategy to 2037', confidence: 95, page: 8, paragraph: 1, summary: 'The national water strategy commits to full treated-wastewater reuse and a halving of network losses by 2037.', quote: 'The {h:National Water Strategy 2037} commits to reusing all treated wastewater and {h:halving distribution losses} against the 2020 baseline.' },
+      { sdg: '11.1', goal: 11, category: 'C3', categoryLabel: 'Policy', title: 'National urban development law', confidence: 92, page: 30, paragraph: 2, summary: 'A national law obliges every governorate to adopt an urban upgrading plan with informal-settlement targets.', quote: 'Under the {h:Urban Development Law}, each governorate must adopt an {h:upgrading plan for informal settlements} reviewed annually.' },
+      { sdg: '10.1', goal: 10, category: 'C1', categoryLabel: 'Challenge', title: 'Regional disparity in service coverage', confidence: 87, page: 47, paragraph: 3, summary: 'Coverage of basic services differs by up to 20 points between leading and lagging governorates.', quote: 'Service coverage gaps of up to {h:20 percentage points} persist between the best and worst performing governorates.' },
+    ],
+    projects: [
+      { sdg: '6.1', goal: 6, goals: [6, 1, 10], category: 'C3', title: 'National Rural Water Supply Programme', status: 'In execution', budget: '$1.2B', period: '2020–2030', lead: 'Ministry of Housing, Utilities and Urban Communities', partner: 'World Bank', sector: 'Infrastructure', dataSource: 'Voluntary National Review, programmes annex', confidence: 93, page: 71, paragraph: 1, summary: 'A national programme connecting rural settlements to safely managed water, prioritising the lagging governorates identified in the poverty map. Includes network construction, household connections subsidised for the poorest quintile, and utility capacity building.', quote: 'The {h:Rural Water Supply Programme} will connect {h:4.5 million residents} to safely managed services by 2030.' },
+      { sdg: '1.1', goal: 1, goals: [1, 6, 11], category: 'C3', title: 'National Decent Living Initiative', status: 'In execution', budget: '$40B', period: '2019–2027', lead: 'Ministry of Local Development', partner: 'UNDP', sector: 'Service Delivery', dataSource: 'Voluntary National Review, flagship programmes', confidence: 95, page: 18, paragraph: 2, summary: 'The flagship national initiative upgrading villages and informal urban areas across every governorate: water and sanitation connections, housing improvement, health units, schools and rural roads, sequenced by a national deprivation index.', quote: 'The initiative targets {h:58 million citizens} in the most deprived villages and urban districts nationwide.' },
+    ],
+    stakeholders: [
+      { sdg: '17.17', goal: 17, category: 'Recommendation', title: 'Institutionalise local-national SDG reporting channels', group: 'Governorate planning directorates', engagement: 'Interviews', dataSource: 'VNR consultation records. (Page 84)', confidence: 88, page: 84, paragraph: 2, quote: 'Local reviews should feed a {h:standing national reporting channel} rather than ad-hoc requests.' },
+      { sdg: '6.b', goal: 6, category: 'Priority', title: 'Water users associations in irrigation management', group: 'National federation of water user associations', engagement: 'Workshop', dataSource: 'National stakeholder workshop report. (Page 86)', confidence: 85, page: 86, paragraph: 1, quote: 'Farmers ask for {h:a formal role in canal-level water management} and maintenance budgeting.' },
+    ],
+  },
+  regional: {
+    indicators: [
+      { sdg: '17.14', goal: 17, title: 'Regional SDG Index Score', indicator: 'Composite SDG index score, regional average (0–100).', value: '58.3', unit: 'Index (0–100)', year: 2019, confidence: 90, page: 5, paragraph: 2, quote: 'The regional average index score stood at {h:58.3} in 2019.' },
+      { sdg: '17.14', goal: 17, title: 'Regional SDG Index Score', indicator: 'Composite SDG index score, regional average (0–100).', value: '61.2', unit: 'Index (0–100)', year: 2023, confidence: 91, page: 5, paragraph: 3, quote: 'By 2023 the average had edged up to {h:61.2}, with wide divergence between sub-regions.' },
+      { sdg: '6.2.1', goal: 6, title: 'Basic Sanitation — regional average', indicator: 'Proportion of population using at least basic sanitation services, regional average.', value: '84.0', unit: 'Percentage (%)', year: 2015, confidence: 89, page: 33, paragraph: 1, quote: 'Regional access to at least basic sanitation averaged {h:84.0%} in 2015.' },
+      { sdg: '6.2.1', goal: 6, title: 'Basic Sanitation — regional average', indicator: 'Proportion of population using at least basic sanitation services, regional average.', value: '87.9', unit: 'Percentage (%)', year: 2022, confidence: 90, page: 33, paragraph: 2, quote: 'The average reached {h:87.9%} in 2022, still masking conflict-affected settings.' },
+      { sdg: '8.6.1', goal: 8, title: 'Youth Unemployment — regional', indicator: 'Share of youth not in employment, education or training, regional average.', value: '26.4', unit: 'Percentage (%)', year: 2023, confidence: 87, page: 49, paragraph: 2, quote: 'Youth unemployment across {city} remains the highest of any world region at {h:26.4%}.' },
+      { sdg: '6.4.2', goal: 6, title: 'Water Stress — regional', indicator: 'Freshwater withdrawal as a proportion of available freshwater resources.', value: '84.1', unit: 'Percentage (%)', year: 2021, confidence: 92, page: 35, paragraph: 1, quote: 'Water stress in {city} averages {h:84.1%} — by far the world\u2019s highest.' },
+    ],
+    documentary: [
+      { sdg: '6.4', goal: 6, category: 'C1', categoryLabel: 'Challenge', title: 'Highest water stress of any world region', confidence: 94, page: 34, paragraph: 2, summary: 'The region withdraws more than four fifths of its renewable freshwater; twelve countries exceed 100% withdrawal.', quote: 'Twelve countries in the region withdraw {h:more than 100% of renewable resources}, relying on fossil aquifers and desalination.' },
+      { sdg: '11.b', goal: 11, category: 'C2', categoryLabel: 'Commitment', title: 'Regional ministerial declaration on urban resilience', confidence: 90, page: 58, paragraph: 1, summary: 'Ministers committed to national urban-resilience strategies and local review programmes in every member state by 2027.', quote: 'The declaration calls for {h:a Voluntary Local Review programme in every member state} by 2027.' },
+      { sdg: '13.1', goal: 13, category: 'C1', categoryLabel: 'Challenge', title: 'Climate exposure of coastal cities', confidence: 88, page: 61, paragraph: 3, summary: 'Two thirds of the region\u2019s large cities sit on exposed coastlines with rising heat and water-supply risk.', quote: '{h:Two thirds of large cities} in the region face compound coastal, heat and water risks.' },
+    ],
+    projects: [
+      { sdg: '6.5', goal: 6, goals: [6, 13, 17], category: 'C3', title: 'Regional Water Scarcity Initiative', status: 'In execution', budget: '$250M', period: '2021–2028', lead: 'Regional development bank', partner: 'FAO', sector: 'Capacity Building', dataSource: 'Regional SDG report, initiatives annex', confidence: 90, page: 66, paragraph: 2, summary: 'A regional facility financing non-conventional water supply, irrigation modernisation and utility benchmarking across member states, with a dedicated technical window for secondary cities.', quote: 'The initiative finances {h:water-efficiency investments in 14 member states}, including a technical window for cities.' },
+    ],
+    stakeholders: [
+      { sdg: '17.17', goal: 17, category: 'Recommendation', title: 'Peer exchange between reviewing cities', group: 'Regional network of local governments', engagement: 'Regional study / Evaluation', dataSource: 'Regional VLR synthesis report. (Page 72)', confidence: 86, page: 72, paragraph: 2, quote: 'Cities that completed reviews ask for {h:a standing regional peer-exchange mechanism} on SDG data.' },
+    ],
+  },
+  global: {
+    indicators: [
+      { sdg: '11.1.1', goal: 11, title: 'Urban Population in Slums — global', indicator: 'Proportion of urban population living in slums, informal settlements or inadequate housing, world.', value: '23.0', unit: 'Percentage (%)', year: 2014, confidence: 92, page: 14, paragraph: 1, quote: 'Globally, {h:23.0%} of the urban population lived in slums in 2014.' },
+      { sdg: '11.1.1', goal: 11, title: 'Urban Population in Slums — global', indicator: 'Proportion of urban population living in slums, informal settlements or inadequate housing, world.', value: '24.8', unit: 'Percentage (%)', year: 2022, confidence: 93, page: 14, paragraph: 2, quote: 'The share rose to {h:24.8%} by 2022 — over one billion people.' },
+      { sdg: '6.1.1', goal: 6, title: 'Safely Managed Drinking Water — global', indicator: 'Proportion of population using safely managed drinking water services, world.', value: '70.2', unit: 'Percentage (%)', year: 2015, confidence: 95, page: 27, paragraph: 1, quote: 'In 2015, {h:70.2%} of the world population used safely managed drinking water.' },
+      { sdg: '6.1.1', goal: 6, title: 'Safely Managed Drinking Water — global', indicator: 'Proportion of population using safely managed drinking water services, world.', value: '73.0', unit: 'Percentage (%)', year: 2022, confidence: 95, page: 27, paragraph: 2, quote: 'Coverage reached {h:73.0%} in 2022 — far off track for universal access by 2030.' },
+      { sdg: '7.2.1', goal: 7, title: 'Renewable Energy Share — global', indicator: 'Renewable energy share in total final energy consumption, world.', value: '19.1', unit: 'Percentage (%)', year: 2021, confidence: 94, page: 39, paragraph: 1, quote: 'Renewables supplied {h:19.1%} of global final energy consumption in 2021.' },
+      { sdg: '13.2.2', goal: 13, title: 'Global GHG Emissions per Capita', indicator: 'Greenhouse gas emissions per capita, world.', value: '6.6', unit: 'tCO\u2082e per capita', year: 2022, confidence: 93, page: 45, paragraph: 2, quote: 'Global emissions averaged {h:6.6 tCO\u2082e per person} in 2022, with no sustained decline yet.' },
+    ],
+    documentary: [
+      { sdg: '17.14', goal: 17, category: 'C1', categoryLabel: 'Challenge', title: 'Only 17% of SDG targets on track', confidence: 96, page: 3, paragraph: 1, summary: 'At the midpoint of the 2030 Agenda, only 17% of targets are on track; a third have stalled or regressed.', quote: 'Just {h:17% of the SDG targets} are on track; {h:over one third} have stalled or gone into reverse.' },
+      { sdg: '11.a', goal: 11, category: 'C2', categoryLabel: 'Commitment', title: 'Localisation recognised in the SDG rescue plan', confidence: 91, page: 21, paragraph: 2, summary: 'The global rescue plan names sub-national action and local reviews as one of six transition levers.', quote: 'The rescue plan lists {h:localisation and Voluntary Local Reviews} among the levers to accelerate delivery.' },
+    ],
+    projects: [
+      { sdg: '17.16', goal: 17, goals: [17, 11], category: 'C3', title: 'SDG Acceleration Actions platform', status: 'In execution', budget: '\u2014', period: '2019–2030', lead: 'UN DESA', partner: 'UN-Habitat', sector: 'Planning/Strategy', dataSource: 'Global SDG report, partnerships chapter', confidence: 89, page: 52, paragraph: 3, summary: 'A global registry of voluntary acceleration actions where cities and countries publish measurable SDG commitments, tracked annually and reviewed at the High-Level Political Forum.', quote: 'Over {h:240 registered acceleration actions} now involve local and regional governments.' },
+    ],
+    stakeholders: [
+      { sdg: '16.7', goal: 16, category: 'Priority', title: 'Meaningful participation beyond consultation', group: 'Major Groups and other Stakeholders', engagement: 'Consultation', dataSource: 'Global stakeholder position paper. (Page 60)', confidence: 84, page: 60, paragraph: 1, quote: 'Stakeholders call for {h:co-design of reviews}, not consultation after the fact.' },
+    ],
+  },
+};
+
+/** The template substitution entity for a scope ("{city}" becomes the country / region / world). */
+export function scopeProject(project, scope) {
+  if (scope === 'national') return { ...project, city: project.country || 'the country' };
+  if (scope === 'regional') return { ...project, city: project.region ? `the ${project.region} region` : 'the region' };
+  if (scope === 'global') return { ...project, city: 'the world' };
+  return project;
+}
+
 export const INDICATOR_OBSERVATIONS = {
   '6.1.1': 'For {city} (the local level), the data is broadly consistent, but two source documents report different denominators for the share of population using safely managed drinking water services, so year-on-year comparisons should be treated with care. Several non-standard units appear in the source pack (m3/day supply capacity, network subscribers, liters/person/day consumption) which describe supply and capacity rather than the proportion of population served and were therefore not integrated into this series. At the national level the indicator has been stable, placing the country in the SDG Achievement category, although the trend is Stagnating; at the subnational level urban coverage is effectively universal while rural coverage lags slightly and carries the 2025/2030 catch-up targets.',
   '11.1.1': 'The informal-housing series for {city} is internally consistent (2018, 2020, 2022) and shows a steady improvement, but the 2018 census figure and the biennial-review figures use slightly different definitions of sub-standard housing, so the level shift between 2018 and 2020 partly reflects a methodology change rather than real improvement. The values remain concentrated in the outer metropolitan zones; district-level disaggregation exists only for 2022. No national comparison series was found in the uploaded documents.',
@@ -268,13 +364,13 @@ export const quotePlain = (quote) => String(quote).replace(/\{h:(.+?)\}/g, '$1')
  * @param docs the project's documents (sources are distributed across them)
  * @param opts { pillar, limit, status, docId (force a single source doc) }
  */
-export function buildTemplateExtractions(project, docs, { pillar, limit, status = 'extracted', docId, existing = [] } = {}) {
+export function buildTemplateExtractions(project, docs, { pillar, limit, status = 'extracted', docId, existing = [], scope } = {}) {
   const pillars = pillar ? [pillar] : PILLARS.map(p => p.key);
   const out = [];
   const sources = docs.length ? docs : [{ id: null, name: `${project.city}_VLR_Source_Pack.pdf`, pages: 120 }];
   let counter = 0;
   for (const pk of pillars) {
-    const tpl = templatePlan(project, pk);
+    const tpl = scope && SCOPE_TEMPLATES[scope] ? (SCOPE_TEMPLATES[scope][pk] || []) : templatePlan(project, pk);
     const have = new Set(existing.filter(e => e.pillar === pk).map(e => e.sdg + '|' + e.title + (pk === 'indicators' ? '|' + (e.year || '') : '')));
     const items = limit ? tpl.slice(0, limit) : tpl;
     for (const t of items) {
@@ -306,11 +402,11 @@ export function buildTemplateExtractions(project, docs, { pillar, limit, status 
 /* ------------------------------------------------------------------ */
 const MIN = 60_000, HOUR = 3_600_000, DAY = 86_400_000;
 
-function mkDoc(projectId, name, { type, language = 'EN', status = 'processed', pages, sizeKb, uploadedAt, translated, code, progress } = {}, i = 0) {
+function mkDoc(projectId, name, { type, language = 'EN', status = 'processed', pages, sizeKb, uploadedAt, translated, code, progress, scope = 'city' } = {}, i = 0) {
   const ext = fileExt(name);
   const pg = pages ?? ({ pdf: 96, docx: 24, xlsx: 12, csv: 4, xml: 30, json: 8, md: 18 }[ext] || 20);
   return {
-    id: uid('doc'), projectId, name, ext, type: type || docTypeFromName(name), language, status,
+    id: uid('doc'), projectId, name, ext, scope, type: type || docTypeFromName(name), language, status,
     pages: pg, sizeKb: sizeKb ?? Math.round(pg * ({ pdf: 210, docx: 48, xlsx: 36, csv: 9, xml: 22 }[ext] || 40)),
     uploadedAt: uploadedAt ?? Date.now() - (30 - i) * DAY,
     translated: translated ?? language === 'EN', translatedTo: 'EN',
@@ -391,7 +487,12 @@ export function buildSeed() {
     ['Transit_Ridership_2023.csv', { type: 'Data Sheet', language: 'EN', status: 'uploaded', pages: 3 }],
   ].map(([n, o], i) => mkDoc('vancouver-2024', n, { ...o, uploadedAt: now - (3 * DAY) + i * HOUR, code: `VAN-DOC-${String(101 + i).padStart(3, '0')}` }, i));
 
-  const documents = [...madridDocs, ...bogotaDocs, ...vancouverDocs];
+  const bogotaCtxDocs = [
+    mkDoc('bogota-2023', 'Colombia_VNR_2024.pdf', { language: 'ES', status: 'processed', translated: true, pages: 148, uploadedAt: now - 200 * DAY, code: 'BOG-DOC-201', scope: 'national' }),
+    mkDoc('bogota-2023', 'LAC_SDG_Report_2025.pdf', { language: 'EN', status: 'processed', pages: 96, uploadedAt: now - 198 * DAY, code: 'BOG-DOC-202', scope: 'regional' }),
+    mkDoc('bogota-2023', 'Global_SDG_Report_2025.pdf', { language: 'EN', status: 'processed', pages: 64, uploadedAt: now - 197 * DAY, code: 'BOG-DOC-203', scope: 'global' }),
+  ];
+  const documents = [...madridDocs, ...bogotaDocs, ...bogotaCtxDocs, ...vancouverDocs];
   const byName = (pid, n) => documents.find(d => d.projectId === pid && d.name === n);
 
   /* ---- extractions ---- */
@@ -431,7 +532,13 @@ export function buildSeed() {
   const bogotaExt = buildTemplateExtractions(bogota, bogotaDocs.slice(0, 12), { status: 'approved' }).map((e, i) => ({ ...e, reviewedBy: 'Alex Santana', reviewedAt: now - (150 + i) * DAY, createdAt: now - (200 + i) * DAY, updatedAt: now - (150 + i) * DAY }));
   const vancouver = projects[2];
   const vancouverExt = [];
-  const extractions = [...madridExt, ...bogotaExt, ...vancouverExt];
+  const bogotaCtxExt = CONTEXT_SCOPES.flatMap((sc, si) => {
+    const d = bogotaCtxDocs[si];
+    const sp = scopeProject(bogota, sc);
+    return PILLARS.flatMap(p => buildTemplateExtractions(sp, [d], { pillar: p.key, scope: sc, status: 'approved' }))
+      .map((e, i) => ({ ...e, scope: sc, reviewedBy: 'Alex Santana', reviewedAt: now - (140 + i) * DAY, createdAt: now - (190 + i) * DAY, updatedAt: now - (140 + i) * DAY }));
+  });
+  const extractions = [...madridExt, ...bogotaExt, ...bogotaCtxExt, ...vancouverExt];
 
   /* ---- tasks (mirror of the Workflow Orchestration mock-up + history) ---- */
   const tasks = [];

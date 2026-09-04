@@ -3,7 +3,7 @@ import { icon, esc, avatarHtml, openMenu, refreshIcons } from './ui.js';
 import { getState, currentUser, projectStats } from './store.js';
 import { navigate, inAppNavigations } from './router.js';
 import { logout } from './actions.js';
-import { APP_VERSION, PILLARS } from './seed.js';
+import { APP_VERSION, PILLARS, CONTEXT_SCOPES, SCOPE_META } from './seed.js';
 import { openNewReportModal, openNewProjectModal, openUploadModal } from './modals.js';
 
 export const NAV = [
@@ -36,13 +36,6 @@ export function openUserMenu(anchor) {
   const u = currentUser();
   openMenu(anchor, [
     { header: `${u?.name || 'Guest'} · ${u?.role || ''}` },
-    { label: 'Profile & preferences', icon: 'user', onClick: () => navigate('#/settings?tab=profile') },
-    { label: 'Organization settings', icon: 'building-2', onClick: () => navigate('#/settings?tab=organization') },
-    { label: 'Audit log', icon: 'scroll-text', onClick: () => navigate('#/audit-log') },
-    'divider',
-    { label: 'Documentation', icon: 'book-open', onClick: () => navigate('#/documentation') },
-    { label: 'Support', icon: 'life-buoy', onClick: () => navigate('#/support') },
-    'divider',
     { label: 'Sign out', icon: 'log-out', danger: true, onClick: () => { logout(); navigate('#/login'); } },
   ], { minWidth: '230px' });
 }
@@ -131,6 +124,18 @@ export function stepLockedHtml(project, step, reason) {
   ${projectStepper(project, step)}
   <div class="card"><div class="empty">${icon('lock')}<div class="empty-title">This step is locked</div><div class="empty-sub">${esc(reason)}. Each step opens once the previous one is fully completed and confirmed.</div><a class="btn btn-primary btn-sm mt-12" href="#/projects/${esc(project.id)}">Go to the current step</a></div></div>
 </div>`;
+}
+
+/** Warning shown across a project's pages once preprocessing is done but
+ * context layers (national / regional / global) are still missing. */
+export function contextGapBanner(project) {
+  if (!project?.preprocessedAt) return '';
+  const docs = getState().documents.filter(d => d.projectId === project.id);
+  const missing = CONTEXT_SCOPES.filter(sc => !docs.some(d => d.scope === sc));
+  if (!missing.length) return '';
+  const labels = missing.map(sc => SCOPE_META[sc].label.toLowerCase());
+  const list = labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+  return `<div class="callout warning ctxgap-banner">${icon('alert-triangle')}<div class="grow"><strong>Results are incomplete</strong> — no ${list} context document${labels.length === 1 ? '' : 's'} uploaded yet. Without ${labels.length === 1 ? 'it' : 'them'} the review misses the ${list} reporting layer${labels.length === 1 ? '' : 's'}.</div><a class="btn btn-light btn-sm" href="#/projects/${esc(project.id)}/preprocessing">${icon('upload', 'icon-sm')}Upload in Preprocessing</a></div>`;
 }
 
 export function topbarTabs(items, activeKey) {

@@ -3,7 +3,7 @@
  * On completion each step applies "effects" (documents become processed, extractions appear, reports are produced, cost accrues).
  */
 import { getState, update, getProject, getProjectDocs, getDoc, getProjectExtractions, getTask } from './store.js';
-import { STEP_META, PILLARS, buildTemplateExtractions, templatePlan } from './seed.js';
+import { STEP_META, PILLARS, buildTemplateExtractions, templatePlan, scopeProject, CONTEXT_SCOPES } from './seed.js';
 import { composeChapter, assembleBook, planBook } from './composer.js';
 import { uid, fmtTime, randInt, pick, clamp } from './ui.js';
 
@@ -290,7 +290,21 @@ function complete(st, t) {
   t.status = 'success'; t.progress = 100; t.finishedAt = now; t.durationMs = now - (t.startedAt || now);
   t.cost = costFor(t.step, t.pages || 0);
   const project = st.projects.find(p => p.id === t.projectId);
-  const docs = st.documents.filter(d => d.projectId === t.projectId);
+  const allDocs = st.documents.filter(d => d.projectId === t.projectId);
+  const docs = allDocs.filter(d => (d.scope || 'city') === 'city');
+  /* context layers ride along with the pillar steps: every processed
+   * national/regional/global document contributes its own evidence set */
+  const buildScopeLayer = (pillarKey) => {
+    for (const sc of CONTEXT_SCOPES) {
+      const sdoc = allDocs.find(d => d.scope === sc && d.status === 'processed');
+      if (!sdoc) continue;
+      // the real document supersedes the pre-approved reference library for this layer
+      st.extractions = st.extractions.filter(e => !(e.projectId === t.projectId && e.scope === sc && !e.source?.docId));
+      const existingSc = st.extractions.filter(e => e.projectId === t.projectId && (e.scope || 'city') === sc);
+      const builtSc = buildTemplateExtractions(scopeProject(project, sc), [sdoc], { pillar: pillarKey, existing: existingSc, scope: sc }).map(e => ({ ...e, scope: sc, createdAt: now, updatedAt: now }));
+      st.extractions.push(...builtSc);
+    }
+  };
   const doc = t.inputDocId ? st.documents.find(d => d.id === t.inputDocId) : null;
   let outputMsg = '';
 
@@ -302,6 +316,17 @@ function complete(st, t) {
       if (project && project.status === 'provisioning' && docs.every(d => d.status === 'processed')) { project.status = 'active'; st.logs.push({ ts: now, level: 'INFO', msg: `All source documents ingested — ${project.name} moved from Provisioning to Active.`, projectId: project.id }); }
       outputMsg = doc ? `${doc.pages} pages → markdown (${Math.round(doc.pages * 1.8)} KB), ${randInt(2, 14)} tables detected.` : 'Parsed.';
       t.output = { pages: doc?.pages, tables: randInt(2, 14), artefact: doc ? doc.name.replace(/\.[a-z]+$/, '.md') : null };
+      if (doc && CONTEXT_SCOPES.includes(doc.scope) && doc.status === 'processed') {
+        // a context document is ready → build its reporting layer (all four pillars) right away,
+        // replacing the pre-approved reference library so the layer goes through review
+        st.extractions = st.extractions.filter(e => !(e.projectId === t.projectId && e.scope === doc.scope && !e.source?.docId));
+        const sp = scopeProject(project, doc.scope);
+        for (const pk of PILLARS.map(p => p.key)) {
+          const existingSc = st.extractions.filter(e => e.projectId === t.projectId && (e.scope || 'city') === doc.scope);
+          const builtSc = buildTemplateExtractions(sp, [doc], { pillar: pk, existing: existingSc, scope: doc.scope }).map(e => ({ ...e, scope: doc.scope, createdAt: now, updatedAt: now }));
+          st.extractions.push(...builtSc);
+        }
+      }
       break;
     case 'translate':
       if (doc) { doc.translated = true; doc.translatedTo = 'EN'; if (doc.status === 'translating') doc.status = t._prevDocStatus === 'processed' ? 'processed' : (t._prevDocStatus || 'uploaded'); }
@@ -309,12 +334,13 @@ function complete(st, t) {
       t.output = { from: doc?.language, to: 'EN', tokens: Math.round((doc?.pages || 10) * 420) };
       break;
     case 'extract_indicators': {
-      const existing = st.extractions.filter(e => e.projectId === t.projectId);
+      const existing = st.extractions.filter(e => e.projectId === t.projectId && (e.scope || 'city') === 'city');
       const perDoc = Math.ceil(templatePlan(project, 'indicators').length / Math.max(1, docs.length));
       const all = buildTemplateExtractions(project, docs, { pillar: 'indicators', existing });
       // assign to this document a slice of the remaining indicator templates
-      const slice = all.slice(0, perDoc).map(e => ({ ...e, source: { ...e.source, docId: doc?.id ?? e.source.docId, docName: doc?.name ?? e.source.docName, page: Math.min(e.source.page, doc?.pages || e.source.page) }, createdAt: now, updatedAt: now }));
+      const slice = all.slice(0, perDoc).map(e => ({ ...e, scope: 'city', source: { ...e.source, docId: doc?.id ?? e.source.docId, docName: doc?.name ?? e.source.docName, page: Math.min(e.source.page, doc?.pages || e.source.page) }, createdAt: now, updatedAt: now }));
       st.extractions.push(...slice);
+      buildScopeLayer('indicators');
       outputMsg = `${slice.length} indicator value(s) extracted, ${slice.length ? 'avg confidence ' + Math.round(slice.reduce((a, e) => a + e.confidence, 0) / slice.length) + '%' : 'no new matches'}.`;
       t.output = { extracted: slice.length, sdgs: [...new Set(slice.map(e => e.sdg))] };
       break;
@@ -329,9 +355,10 @@ function complete(st, t) {
     case 'documentary':
     case 'projects':
     case 'stakeholders': {
-      const existing = st.extractions.filter(e => e.projectId === t.projectId);
-      const built = buildTemplateExtractions(project, docs, { pillar: t.step, existing }).map(e => ({ ...e, createdAt: now, updatedAt: now }));
+      const existing = st.extractions.filter(e => e.projectId === t.projectId && (e.scope || 'city') === 'city');
+      const built = buildTemplateExtractions(project, docs, { pillar: t.step, existing }).map(e => ({ ...e, scope: 'city', createdAt: now, updatedAt: now }));
       st.extractions.push(...built);
+      buildScopeLayer(t.step);
       const lbl = PILLARS.find(p => p.key === t.step).label;
       outputMsg = `${built.length} ${lbl.toLowerCase()} entr${built.length === 1 ? 'y' : 'ies'} extracted across ${docs.length} document(s).`;
       t.output = { extracted: built.length, pillar: t.step };

@@ -8,7 +8,7 @@ import { getProject, getProjectChapters, getChapter, getProjectTasks, getExtract
 import { composeChapters, recomposeChapter, sendChapterFeedback, rewriteUnit, approveChapter, reopenChapter, editChapterBlock, assembleFinalBook } from '../actions.js';
 import { openTaskDrawer } from '../modals.js';
 import { chapterDocxBlob } from '../export.js';
-import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml } from '../shell.js';
+import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml, contextGapBanner } from '../shell.js';
 import { STEP_META, PILLARS, quotePlain } from '../seed.js';
 import { navigate } from '../router.js';
 
@@ -170,20 +170,26 @@ function listHtml(project, chapters, active, tasks, stats, ctx) {
   const ok = stats.allReviewed && project.status !== 'archived';
   const tip = project.status === 'archived' ? 'Project is archived' : !stats.extractions ? 'Run the pipeline and approve the evidence first' : !stats.allReviewed ? `${stats.extractions - stats.approved} extraction(s) still await review` : '';
   const goals = [...new Set([...(project.sdgs || []), ...chapters.map(c => c.goal), ...goalsPending])].sort((a, b) => a - b);
-  const writeBtn = (g, c) => `<span data-tip="${c ? 'Rewrite this chapter from the approved evidence' : 'Write this chapter'}"><button class="btn-icon ch-row-write" data-action="write-goal" data-goal="${Number(g)}" ${c ? `data-chapter="${esc(c.id)}"` : ''}>${icon('pen-line', 'icon-sm')}</button></span>`;
+  const writeBtn = (g, c) => `<span data-tip="${c ? 'Recompose this chapter from the current evidence and context layers' : 'Write this chapter'}"><button class="btn-icon ch-row-write" data-action="write-goal" data-goal="${Number(g)}" ${c ? `data-chapter="${esc(c.id)}"` : ''}>${icon(c ? 'rotate-ccw' : 'pen-line', 'icon-sm')}</button></span>`;
   const rows = goals.map(g => {
     const c = chapters.find(x => x.goal === g);
-    if (c) return `
-    <a class="ch-row ${c.id === active?.id ? 'active' : ''}" href="#/projects/${esc(project.id)}/chapters/${esc(c.id)}">
+    if (c) {
+      const isActive = c.id === active?.id;
+      const outline = isActive ? `
+      <div class="ch-toc-outline">${(c.sections || []).map(sec => `
+        <button class="ch-toc-sub ${ctx.local.unit?.type === 'sec' && ctx.local.unit.id === sec.key ? 'on' : ''}" data-action="toc-sec" data-sec="${esc(sec.key)}"><span class="ch-toc-num">${esc(sec.num)}</span><span class="grow truncate">${esc(sec.heading)}</span></button>`).join('')}
+      </div>` : '';
+      return `
+    <a class="ch-row ${isActive ? 'active' : ''}" href="#/projects/${esc(project.id)}/chapters/${esc(c.id)}">
       ${sdgChip(c.goal, { title: false })}
       <div class="ch-row-main">
         <div class="ch-row-top"><span class="ch-row-n">Chapter ${Number(c.number)}</span>${c.reviewing ? `<span class="ch-row-spin">${icon('loader-2', 'icon-xs spin')}</span>` : ''}</div>
         <div class="ch-row-title">${esc(SDG_TITLES[c.goal] || c.title)}</div>
         <div class="ch-row-meta">${chapterStatusBadge(c)}</div>
-
       </div>
       ${writeBtn(g, c)}
-    </a>`;
+    </a>${outline}`;
+    }
     if (goalsPending.includes(g)) return `
     <div class="ch-row ch-row-todo">
       ${sdgChip(g, { title: false })}
@@ -237,6 +243,7 @@ function centreHtml(project, chapter, chapters, ctx) {
         <div><div class="ch-strip-title">${esc(chapter.title)} <span class="ch-strip-words">${Number(chapter.wordCount || 0).toLocaleString('en-US')} words</span></div></div>
       </div>
       <div class="ch-strip-actions">
+        <button class="btn btn-light" data-action="recompose" ${busy ? 'disabled' : ''} data-tip="Redraft this chapter from the current evidence — including newly uploaded context layers">${icon('rotate-ccw', 'icon-sm')}Recompose</button>
         ${approved
           ? `<span class="badge badge-success badge-lg">${icon('check-circle-2', 'icon-sm')}Approved ✓</span><button class="btn btn-light" data-action="reopen" data-tip="Back to in-review">${icon('undo-2', 'icon-sm')}Reopen</button>`
           : `<span ${busy ? 'data-tip="Wait for the reviewer to finish rewriting"' : ''}><button class="btn btn-primary" data-action="approve" ${busy ? 'disabled' : ''}>${icon('check-circle-2', 'icon-sm')}Approve chapter</button></span>`}
@@ -282,8 +289,14 @@ function chatPanelHtml(chapter, ctx) {
       const ctxSel = ctx.local.ctxSel || {};
       const all = getProjectExtractions(chapter.projectId).filter(e => e.status === 'approved');
       const selected = Object.keys(ctxSel).filter(k => ctxSel[k]).map(id => all.find(e => e.id === id) || getExtraction(id)).filter(Boolean);
-      const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="mono">${esc(e.sdg)}</span>${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
-      const miniSeries = (g, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-ids="${esc(g.map(x => x.id).join(','))}"><span class="mono">${esc(g[0].sdg)}</span>${g.length > 1 ? `<span class="ch-yrs">×${g.length}</span>` : ''}${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`;
+      const scopeOfE = (e) => e.scope || 'city';
+      const LAYER_LABEL = { city: 'City', national: 'National', regional: 'Regional', global: 'Global' };
+      const layers = ['city', 'national', 'regional', 'global'].filter(sc => sc === 'city' || all.some(e => scopeOfE(e) === sc));
+      const ctxScope = layers.includes(ctx.local.ctxScope) ? ctx.local.ctxScope : 'city';
+      const li = layers.indexOf(ctxScope);
+      const layerSel = selected.filter(e => scopeOfE(e) === ctxScope);
+      const mini = (e, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-id="${esc(e.id)}"><span class="mono">${esc(e.sdg)}</span><span class="ch-mini-x">${icon(on ? 'x' : 'plus', 'icon-xs')}</span></button>`;
+      const miniSeries = (g, on) => `<button class="ch-ctx-mini ${on ? 'on' : ''}" data-action="ctx-toggle" data-ids="${esc(g.map(x => x.id).join(','))}"><span class="mono">${esc(g[0].sdg)}</span>${g.length > 1 ? `<span class="ch-yrs">×${g.length}</span>` : ''}<span class="ch-mini-x">${icon(on ? 'x' : 'plus', 'icon-xs')}</span></button>`;
       const groupInd = (list) => { const m = new Map(); for (const e of list.filter(x => x.pillar === 'indicators')) { const k = e.sdg + '|' + e.title; if (!m.has(k)) m.set(k, []); m.get(k).push(e); } return [...m.values()].map(g => [...g].sort((a, b) => (a.year || 0) - (b.year || 0))); };
       return `
     <div class="ch-unit">
@@ -295,15 +308,20 @@ function chatPanelHtml(chapter, ctx) {
       </div>
       <div class="ch-ctx-bar">
         <span class="ch-unit-lbl">Context · ${selected.length} resource${selected.length === 1 ? '' : 's'}</span>
+        <span class="grow"></span>
+        ${layers.length > 1 ? `<span class="ch-scope-pager"><button class="btn-icon" data-action="ctx-scope" data-scope="${esc(layers[li - 1] || '')}" ${li <= 0 ? 'disabled' : ''} aria-label="Previous layer">${icon('chevron-left', 'icon-sm')}</button><span class="ch-scope-cur">${esc(LAYER_LABEL[ctxScope])}</span><button class="btn-icon" data-action="ctx-scope" data-scope="${esc(layers[li + 1] || '')}" ${li >= layers.length - 1 ? 'disabled' : ''} aria-label="Next layer">${icon('chevron-right', 'icon-sm')}</button></span>` : ''}
       </div>
-      ${selected.length ? `<div class="ch-ctx-cols">${PILLARS.map(p => { const list = selected.filter(e => e.pillar === p.key); return `
+      ${(() => {
+        const layerSelected = selected.filter(e => scopeOfE(e) === ctxScope);
+        return `<div class="ch-ctx-cols">${PILLARS.map(p => { const list = layerSelected.filter(e => e.pillar === p.key); return `
         <div class="ch-ctx-col col-${esc(p.key)}">
-          <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span><button class="ch-col-add ${ctx.local.resPillar === p.key ? 'on' : ''}" data-action="res-open" data-pillar="${esc(p.key)}" data-tip="Browse ${esc(p.label.toLowerCase())} resources">${icon('plus', 'icon-xs')}</button></div>
+          <div class="ch-ctx-col-h"><span class="ch-pillar p-${esc(p.key)}">${PILLAR_ABBR[p.key]}</span><button class="ch-col-add ${ctx.local.resPillar === p.key ? 'on' : ''}" data-action="res-open" data-pillar="${esc(p.key)}" data-tip="Browse ${esc(p.label.toLowerCase())} resources by SDG">${icon('plus', 'icon-xs')}</button></div>
           ${p.key === 'indicators' ? groupInd(list).map(g => miniSeries(g, true)).join('') : list.map(e => mini(e, true)).join('')}
-        </div>`; }).join('')}</div>` : `<div class="ch-ctx-pills"><span class="xs muted">Empty — add resources to rewrite from.</span></div>`}
+        </div>`; }).join('')}</div>${layerSelected.length ? '' : `<div class="xs muted">Nothing from the ${esc(LAYER_LABEL[ctxScope].toLowerCase())} layer in this context — use a column's + to browse and add.</div>`}`;
+      })()}
       ${ctx.local.resPillar ? (() => {
         const p = PILLARS.find(x => x.key === ctx.local.resPillar);
-        const pillarAll = all.filter(e => e.pillar === p.key);
+        const pillarAll = all.filter(e => e.pillar === p.key && scopeOfE(e) === ctxScope);
         const goals = [...new Set(pillarAll.map(e => e.goal))].sort((a, b) => a - b);
         const g = ctx.local.resGoal;
         const list = pillarAll.filter(e => !g || e.goal === g);
@@ -317,7 +335,7 @@ function chatPanelHtml(chapter, ctx) {
             ${goals.map(gl => `<button class="ch-brw-goal ${g === gl ? 'on' : ''}" style="--g:${SDG_COLORS[gl]}" data-action="res-goal" data-goal="${gl}" data-tip="SDG ${gl}: ${esc(SDG_TITLES[gl])}"><i></i>${gl}</button>`).join('')}
           </div>
           <div class="ch-brw-list">
-            ${entries.length ? entries.map(en => { const on = en.ids.some(id => ctxSel[id]); return `<button class="ch-ctx-mini ch-brw-item ${on ? 'on' : ''}" data-action="ctx-toggle" ${en.ids.length > 1 ? `data-ids="${esc(en.ids.join(','))}"` : `data-id="${esc(en.ids[0])}"`}><span class="mono">${esc(en.sdg)}</span><span class="ch-res-t">${esc(en.title)}</span>${en.n > 1 ? `<span class="ch-yrs">${en.n} yrs</span>` : ''}${icon(on ? 'x' : 'plus', 'icon-xs')}</button>`; }).join('') : `<span class="xs muted">No resources in this pillar.</span>`}
+            ${entries.length ? entries.map(en => { const on = en.ids.some(id => ctxSel[id]); return `<button class="ch-ctx-mini ch-brw-item ${on ? 'on' : ''}" data-action="ctx-toggle" ${en.ids.length > 1 ? `data-ids="${esc(en.ids.join(','))}"` : `data-id="${esc(en.ids[0])}"`}><span class="mono">${esc(en.sdg)}</span><span class="ch-res-t">${esc(en.title)}</span>${en.n > 1 ? `<span class="ch-yrs">${en.n} yrs</span>` : ''}<span class="ch-mini-x">${icon(on ? 'x' : 'plus', 'icon-xs')}</span></button>`; }).join('') : `<span class="xs muted">No resources in this pillar.</span>`}
           </div>
         </div>
       </div>`;
@@ -420,7 +438,7 @@ export default {
     const bookBusy = tasks.some(isBookTask);
     const composing = tasks.some(isComposeTask);
     let assembleBtn;
-    if (book) assembleBtn = `<a class="btn btn-primary" href="#/projects/${esc(project.id)}/vlr">${icon(book.status === 'final' ? 'book-open-check' : 'book-open', 'icon-sm')}${book.status === 'final' ? 'Open final VLR' : 'Review final VLR'}</a>`;
+    if (book) assembleBtn = `<button class="btn btn-light" data-action="assemble" data-tip="Assemble a fresh edition from the current chapters">${icon('rotate-ccw', 'icon-sm')}Re-assemble</button><a class="btn btn-primary" href="#/projects/${esc(project.id)}/vlr">${icon(book.status === 'final' ? 'book-open-check' : 'book-open', 'icon-sm')}${book.status === 'final' ? 'Open final VLR' : 'Review final VLR'}</a>`;
     else if (bookBusy) assembleBtn = `<a class="btn btn-primary" href="#/projects/${esc(project.id)}/vlr">${icon('loader-2', 'icon-sm spin')}Assembling…</a>`;
     else {
       const tip = !chapters.length ? 'Write the chapters first' : composing ? 'Wait for composition to finish' : !allApproved ? `${chapters.length - stats.chaptersApproved} chapter(s) still in review` : '';
@@ -434,7 +452,7 @@ export default {
       ${avatarButton()}`;
 
     /* ---- content ---- */
-    ctx.content.innerHTML = `<div class="ch-page ${ctx.local.chatHidden ? 'chat-min' : ''}">${listHtml(project, chapters, chapter, tasks, stats, ctx)}${centreHtml(project, chapter, chapters, ctx)}${chatPanelHtml(chapter, ctx)}</div>`;
+    ctx.content.innerHTML = `${contextGapBanner(project)}<div class="ch-page ${ctx.local.chatHidden ? 'chat-min' : ''}">${listHtml(project, chapters, chapter, tasks, stats, ctx)}${centreHtml(project, chapter, chapters, ctx)}${chatPanelHtml(chapter, ctx)}</div>`;
     ctx.footer.innerHTML = statusBarHtml(project);
 
     /* ---- restore scroll positions + auto-scroll behaviours ---- */
@@ -481,6 +499,7 @@ export default {
         if (!ids.length) { toast.warning('No context selected', 'Pick at least one resource to rewrite from.'); return; }
         rewriteUnit(chapter.id, { blockIds: u.blocks.map(b => b.id), extractionIds: ids, instruction: text, unitLabel: u.label });
         ctx.local.draft = '';
+        ctx.local.resPillar = null; ctx.local.resGoal = null;
         toast.info('Rewrite queued', `The reviewer is rewriting ${u.label} from ${ids.length} resource${ids.length === 1 ? '' : 's'}.`);
         ctx.rerender();
         return;
@@ -498,7 +517,7 @@ export default {
         const btn = ctx.content.querySelector('[data-action="send"]');
         if (btn && was !== now) btn.disabled = !now;
       });
-      draftEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDraft(); } });
+      draftEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (!e.shiftKey || e.ctrlKey || e.metaKey)) { e.preventDefault(); sendDraft(); } });
     }
     /* hovering a resource pill shows the full evidence inline — value, quote, source — no page change */
     const hideCard = () => document.getElementById('ch-hovercard')?.remove();
@@ -658,8 +677,10 @@ export default {
         if (ev.target.closest('a, sup, button')) return;
         const unit = { type: 'block', id: el.dataset.block };
         if (ctx.local.unit?.type === 'block' && ctx.local.unit.id === unit.id) { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.rerender(); return; }
+        ctx.local.chatHidden = false;
         ctx.local.unit = unit;
         ctx.local.ctxSel = Object.fromEntries(getProjectExtractions(project.id).filter(e => e.status === 'approved' && (e.goal === chapter.goal || (e.goals || []).includes(chapter.goal))).map(e => [e.id, true]));
+        ctx.local.ctxScope = 'city';
         ctx.local.resQ = '';
         ctx.rerender();
       },
@@ -667,6 +688,7 @@ export default {
         if (ev.target.closest('a, sup, button')) return;
         const unit = { type: 'sec', id: el.dataset.sec };
         if (ctx.local.unit?.type === 'sec' && ctx.local.unit.id === unit.id) { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.rerender(); return; }
+        ctx.local.chatHidden = false;
         ctx.local.unit = unit;
         ctx.local.ctxSel = Object.fromEntries(getProjectExtractions(project.id).filter(e => e.status === 'approved' && (e.goal === chapter.goal || (e.goals || []).includes(chapter.goal))).map(e => [e.id, true]));
         ctx.local.resQ = '';
@@ -674,14 +696,26 @@ export default {
       },
       'chat-hide': () => { ctx.local.chatHidden = true; ctx.rerender(); },
       'chat-show': () => { ctx.local.chatHidden = false; ctx.rerender(); },
+      'toc-sec': (el, ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        const key = el.dataset.sec;
+        ctx.local.chatHidden = false;
+        ctx.local.unit = { type: 'sec', id: key };
+        ctx.local.ctxSel = Object.fromEntries(getProjectExtractions(project.id).filter(e => e.status === 'approved' && (e.goal === chapter.goal || (e.goals || []).includes(chapter.goal))).map(e => [e.id, true]));
+        ctx.local.ctxScope = 'city';
+        ctx.local.resPillar = null; ctx.local.resGoal = null;
+        ctx.local.scrollSec = key;
+        ctx.rerender();
+      },
       'unit-clear': () => { ctx.local.unit = null; ctx.local.ctxSel = null; ctx.local.resPillar = null; ctx.rerender(); },
+      'ctx-scope': (el, ev) => { ev.stopPropagation(); if (!el.dataset.scope) return; ctx.local.ctxScope = el.dataset.scope; ctx.local.resPillar = null; ctx.local.resGoal = null; ctx.rerender(); },
       'res-open': (el, ev) => { ev.stopPropagation(); ctx.local.resPillar = ctx.local.resPillar === el.dataset.pillar ? null : el.dataset.pillar; ctx.local.resGoal = null; ctx.rerender(); },
       'res-close': () => { ctx.local.resPillar = null; ctx.local.resGoal = null; ctx.rerender(); },
       'res-goal': (el) => { const g = el.dataset.goal ? Number(el.dataset.goal) : null; ctx.local.resGoal = g && ctx.local.resGoal === g ? null : g; ctx.rerender(); },
       'ctx-toggle': (el, ev) => {
         ev.stopPropagation();
         // a selected chip only leaves the context via its ✕ — clicking the body does nothing
-        if (el.classList.contains('on') && !ev.target.closest('svg, i')) return;
+        if (el.classList.contains('on') && !ev.target.closest('.ch-mini-x, svg, i')) return;
         const ids = el.dataset.ids ? el.dataset.ids.split(',') : [el.dataset.id];
         const on = ids.some(id => (ctx.local.ctxSel || {})[id]);
         ids.forEach(id => { (ctx.local.ctxSel ||= {})[id] = !on; });
@@ -690,6 +724,11 @@ export default {
       'send': sendDraft,
     });
 
+    if (ctx.local.scrollSec) {
+      const secEl = ctx.content.querySelector(`#sec-${CSS.escape(ctx.local.scrollSec)}`);
+      if (secEl) requestAnimationFrame(() => secEl.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      ctx.local.scrollSec = null;
+    }
     return () => { unbindTop(); unbindContent(); offs.forEach(f => f()); document.getElementById('ch-hovercard')?.remove(); };
   },
 };
