@@ -3,11 +3,11 @@
  * All UI state (draft text, inline edits, scroll positions, open panels) lives in ctx.local so the ~350 ms
  * re-render while tasks run never loses typing or scroll.
  */
-import { esc, icon, sdgChip, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, relTime, download, avatarHtml, SDG_TITLES } from '../ui.js';
+import { esc, icon, refreshIcons, sdgChip, statusBadge, progressHtml, bindActions, toast, openMenu, confirmDialog, relTime, download, avatarHtml, SDG_TITLES } from '../ui.js';
 import { getProject, getProjectChapters, getChapter, getProjectTasks, getExtraction, projectStats, currentUser, getProjectBook } from '../store.js';
 import { composeChapters, recomposeChapter, sendChapterFeedback, approveChapter, reopenChapter, editChapterBlock, assembleFinalBook } from '../actions.js';
 import { openTaskDrawer } from '../modals.js';
-import { avatarButton, statusBarHtml, projectStepper } from '../shell.js';
+import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml } from '../shell.js';
 import { STEP_META } from '../seed.js';
 import { REVIEW_CHIPS } from '../reviewer.js';
 import { navigate } from '../router.js';
@@ -346,6 +346,14 @@ export default {
       return;
     }
     const stats = projectStats(project);
+    const lockReason = stepLockReason(project, 'chapters');
+    if (lockReason) {
+      ctx.topbar.innerHTML = `<div class="breadcrumb"><a href="#/projects/${esc(project.id)}">${esc(project.city)} ${esc(project.year)}</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">Chapters</span></div><span class="grow"></span>${avatarButton()}`;
+      ctx.content.innerHTML = stepLockedHtml(project, 'chapters', lockReason);
+      ctx.footer.innerHTML = '';
+      refreshIcons(ctx.content); refreshIcons(ctx.topbar);
+      return;
+    }
     const chapters = getProjectChapters(project.id);
     const tasks = getProjectTasks(project.id);
     const book = getProjectBook(project.id);

@@ -7,7 +7,7 @@ import { esc, icon, initials, relTime, fmtDateTime, sdgChips, progressHtml, bind
 import { getProject, getProjectBook, getProjectChapters, getProjectTasks, projectStats, currentUser } from '../store.js';
 import { assembleFinalBook, addBookComment, replyBookComment, resolveBookComment, deleteBookComment, reviseFromComment, finalizeBook, reopenBook } from '../actions.js';
 import { bookOutline, bookExport } from '../export.js';
-import { avatarButton, statusBarHtml, projectStepper } from '../shell.js';
+import { avatarButton, statusBarHtml, projectStepper, stepLockReason, stepLockedHtml } from '../shell.js';
 import { STEP_META } from '../seed.js';
 import { navigate } from '../router.js';
 
@@ -330,6 +330,14 @@ export default {
     }
     const local = ctx.local;
     const stats = projectStats(project);
+    const lockReason = stepLockReason(project, 'vlr');
+    if (lockReason) {
+      ctx.topbar.innerHTML = `<div class="breadcrumb"><a href="#/projects/${esc(project.id)}">${esc(project.city)} ${esc(project.year)}</a>${icon('chevron-right', 'icon-sm')}<span class="crumb-current">Final VLR</span></div><span class="grow"></span>${avatarButton()}`;
+      ctx.content.innerHTML = stepLockedHtml(project, 'vlr', lockReason);
+      ctx.footer.innerHTML = '';
+      refreshIcons(ctx.content); refreshIcons(ctx.topbar);
+      return;
+    }
     const book = getProjectBook(project.id);
     const chapters = getProjectChapters(project.id);
     const tasks = getProjectTasks(project.id);

@@ -74,15 +74,59 @@ export function projectStepper(project, active, { compact = false } = {}) {
     { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters` },
     { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr` },
   ];
-  const locked = (k) => k !== 'preprocess' && !project.preprocessedAt;
+  /* hard sequential gate: each step opens only when the previous one is fully
+   * done — preprocessing run, then pipeline run AND every extraction confirmed,
+   * then every chapter approved */
+  const lockReason = {
+    preprocess: '',
+    overview: project.preprocessedAt ? '' : 'Finish preprocessing first',
+    chapters: !project.preprocessedAt ? 'Finish preprocessing first'
+      : !stats.extractions ? 'Run the pipeline first'
+      : !stats.allReviewed ? 'Confirm every extraction first'
+      : '',
+    vlr: !project.preprocessedAt ? 'Finish preprocessing first'
+      : !stats.allReviewed ? 'Confirm every extraction first'
+      : !stats.chapters ? 'Write the chapters first'
+      : stats.chaptersApproved !== stats.chapters ? 'Approve every chapter first'
+      : '',
+  };
+  const locked = (k) => !!lockReason[k];
   return `<nav class="proj-stepper ${compact ? 'compact' : ''}" aria-label="VLR lifecycle">${steps.map((st, i) => {
     const state = st.key === active ? 'current' : done[st.key] ? 'done' : 'todo';
     const inner = `<span class="ps-circle">${done[st.key] && st.key !== active ? icon('check', 'icon-xs') : i + 1}</span><span class="ps-label">${esc(st.label)}</span>`;
-    const node = locked(st.key)
-      ? `<span class="ps-step ${state} disabled" data-tip="Finish preprocessing first">${inner}</span>`
+    const node = locked(st.key) && st.key !== active
+      ? `<span class="ps-step ${state} disabled" data-tip="${esc(lockReason[st.key])}">${inner}</span>`
       : `<a class="ps-step ${state}" href="${st.to}">${inner}</a>`;
     return `${i ? `<span class="ps-line ${done[steps[i - 1].key] ? 'done' : ''}"></span>` : ''}${node}`;
   }).join('')}</nav>`;
+}
+
+/** Hard route gate: reason the given lifecycle step is still locked, or '' when open. */
+export function stepLockReason(project, step) {
+  const stats = projectStats(project);
+  if (step === 'chapters') {
+    if (!project.preprocessedAt) return 'Finish preprocessing first';
+    if (!stats.extractions) return 'Run the pipeline first';
+    if (!stats.allReviewed) return 'Confirm every extraction first';
+    return '';
+  }
+  if (step === 'vlr') {
+    if (!project.preprocessedAt) return 'Finish preprocessing first';
+    if (!stats.extractions || !stats.allReviewed) return 'Confirm every extraction first';
+    if (!stats.chapters) return 'Write the chapters first';
+    if (stats.chaptersApproved !== stats.chapters) return 'Approve every chapter first';
+    return '';
+  }
+  return step === 'preprocess' ? '' : (project.preprocessedAt ? '' : 'Finish preprocessing first');
+}
+
+/** Locked-step page body: stepper + explanation, used when a gated route is opened directly. */
+export function stepLockedHtml(project, step, reason) {
+  return `<div class="pd-page">
+  <div class="page-header"><div><h1 class="page-title">${esc(project.city)} ${esc(project.year)}</h1></div></div>
+  ${projectStepper(project, step)}
+  <div class="card"><div class="empty">${icon('lock')}<div class="empty-title">This step is locked</div><div class="empty-sub">${esc(reason)}. Each step opens once the previous one is fully completed and confirmed.</div><a class="btn btn-primary btn-sm mt-12" href="#/projects/${esc(project.id)}">Go to the current step</a></div></div>
+</div>`;
 }
 
 export function topbarTabs(items, activeKey) {
