@@ -73,7 +73,7 @@ function richHtml(text, marks = []) {
  * Outline → sheets (pages) with section / chapter tracking
  * ======================================================================= */
 function buildSheets(book) {
-  const out = bookOutline(book);
+  const out = pageOutline(book);
   const sheets = [[]];
   let sectionKey = 'cover', chapterId = null;
   for (const it of out) {
@@ -87,9 +87,9 @@ function buildSheets(book) {
 }
 
 function tocItems(book) {
-  const items = [{ key: 'cover', label: 'Cover', level: 0, icon: 'book' }];
+  const items = [];
   let cur = null;
-  for (const it of bookOutline(book)) {
+  for (const it of pageOutline(book)) {
     if (it.kind === 'h1') { cur = { key: it.key, label: it.text, level: 0, icon: it.chapterId ? null : (PART_ICON[it.key] || 'file-text'), chapterId: it.chapterId || null, children: [] }; items.push(cur); }
     else if (it.kind === 'h2' && cur) cur.children.push({ key: it.key, label: it.text, level: 1 });
   }
@@ -152,14 +152,10 @@ function coverHtml(book, project, chapters) {
 function sheetsHtml(book, project, chapters, data) {
   const sheets = buildSheets(book);
   return sheets.map((items, i) => {
-    if (items[0]?.kind === 'cover') {
-      const rest = items.slice(1);
-      return coverHtml(book, project, chapters) + (rest.length ? `<section class="vlr-sheet">${rest.map(it => blockHtml(it, data)).join('')}</section>` : '');
-    }
     const h1 = items.find(it => it.kind === 'h1');
     const chapter = h1?.chapterId ? chapters.find(c => c.id === h1.chapterId) : null;
     const runner = chapter ? `<div class="vlr-runner"><span>${esc(book.title)}</span><span>Chapter ${esc(chapter.number)} · SDG ${esc(chapter.goal)}${chapter.status === 'approved' ? ` · approved v${esc(chapter.version)}` : ''}</span></div>` : `<div class="vlr-runner"><span>${esc(book.title)}</span><span>${esc(h1?.text || '')}</span></div>`;
-    return `<div class="vlr-pagebreak"><span>${icon('scissors', 'icon-xs')}page break</span></div><section class="vlr-sheet" data-sheet="${i}">${runner}${items.map(it => blockHtml(it, data)).join('')}</section>`;
+    return `${i ? `<div class="vlr-pagebreak"><span>${icon('scissors', 'icon-xs')}page break</span></div>` : ''}<section class="vlr-sheet" data-sheet="${i}">${runner}${items.map(it => blockHtml(it, data)).join('')}</section>`;
   }).join('');
 }
 
@@ -190,10 +186,26 @@ function tocHtml(book, chapters, active, commentsAll) {
  * click a paragraph, a heading or a TOC entry, curate the urban-data context,
  * rewrite that unit from exactly the selected resources.
  * ======================================================================= */
+/* Rendered scope: executive summary, introduction and the SDG chapters only —
+ * cover, foreword, profile and back matter are handled outside this view. */
+const KEEP_KEY = (key) => key === 'executive-summary' || key === 'introduction' || String(key).startsWith('chapter:');
+function pageOutline(book) {
+  const out = [];
+  let keep = false;
+  for (const it of bookOutline(book)) {
+    if (it.kind === 'cover') { keep = false; continue; }
+    if (it.kind === 'h1') keep = KEEP_KEY(it.key);
+    if (it.kind === 'pagebreak') { if (out.length && out[out.length - 1].kind !== 'pagebreak') out.push(it); continue; }
+    if (keep) out.push(it);
+  }
+  while (out.length && out[0].kind === 'pagebreak') out.shift();
+  return out;
+}
+
 function bookFlatItems(book) {
   const out = [];
   let h1 = null, h2 = null, chapterId = null;
-  for (const it of bookOutline(book)) {
+  for (const it of pageOutline(book)) {
     if (it.kind === 'h1') { h1 = it.key; h2 = null; chapterId = it.chapterId || null; continue; }
     if (it.kind === 'h2') { h2 = it.key; continue; }
     if (it.kind === 'p' && it.id) out.push({ id: it.id, secKey: h2 || h1, h1Key: h1, chapterId });
@@ -201,7 +213,7 @@ function bookFlatItems(book) {
   return out;
 }
 function bookHeadingLabel(book, key) {
-  for (const it of bookOutline(book)) if ((it.kind === 'h1' || it.kind === 'h2') && it.key === key) return it.text;
+  for (const it of pageOutline(book)) if ((it.kind === 'h1' || it.kind === 'h2') && it.key === key) return it.text;
   return 'section';
 }
 function bookUnit(book, unit) {
@@ -379,12 +391,12 @@ export default {
     ctx.content.innerHTML = `<div class="vlr-page">
       ${activeTasks.length ? `<div class="callout vlr-banner">${icon('loader-2', 'spin')}<div class="grow"><strong>${activeTasks.some(t => t.step === 'assemble') ? 'Re-assembling the book' : 'Rendering the Word file'}</strong> — ${esc(activeTasks.map(t => `${STEP_META[t.step]?.label || t.label} ${t.status === 'running' ? Math.round(t.progress || 0) + '%' : '(queued)'}`).join(' · '))}</div></div>` : ''}
       ${isFinal ? `<div class="callout success vlr-banner">${icon('badge-check')}<div class="grow"><strong>Approved</strong> — ${book.finalizedAt ? esc(fmtDateTime(book.finalizedAt)) : ''}${book.finalizedBy ? ` by ${esc(book.finalizedBy)}` : ''}.</div><button class="btn btn-light btn-sm" data-action="download-docx">${icon('file-type', 'icon-sm')}Word (.docx)</button></div>` : ''}
-      <div class="vlr-layout">
-        ${tocHtml(book, chapters, local.tocActive || 'cover', [])}
+      <div class="vlr-layout ${bookUnit(book, local.unit) ? 'has-editor' : ''}">
+        ${tocHtml(book, chapters, local.tocActive || 'executive-summary', [])}
         <div class="vlr-book" id="vlr-book">
           ${sheetsHtml(book, project, chapters, { unit: local.unit })}
         </div>
-        ${editorPanelHtml(book, project, chapters, local)}
+        ${bookUnit(book, local.unit) ? editorPanelHtml(book, project, chapters, local) : ''}
       </div>
     </div>`;
     ctx.footer.innerHTML = '';

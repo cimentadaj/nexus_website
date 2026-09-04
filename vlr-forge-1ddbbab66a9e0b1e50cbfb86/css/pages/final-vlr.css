@@ -15,7 +15,8 @@
 .vlr-page { display: flex; flex-direction: column; gap: 18px; }
 .vlr-banner { align-items: center; }
 .vlr-banner .icon:first-child { width: 20px; height: 20px; }
-.vlr-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+.vlr-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 24px; align-items: start; }
+.vlr-layout.has-editor { grid-template-columns: 260px minmax(0, 1fr) 380px; }
 
 /* ---------- TOC ---------- */
 .vlr-toc { position: sticky; top: var(--vlr-sticky-top); max-height: calc(100vh - var(--vlr-sticky-top) - 60px); overflow: auto; display: flex; flex-direction: column; }
@@ -235,7 +236,7 @@ mark.hl-comment.pending { background: rgba(124,196,248,.55); box-shadow: inset 0
 .vlr-empty-task .icon { color: var(--link); }
 
 /* ---------- responsive ---------- */
-@media (max-width: 1500px) { .vlr-layout { grid-template-columns: 220px minmax(0, 1fr) 330px; gap: 18px; } .vlr-sheet { padding: 52px 56px 60px; } .vlr-cover { padding: 120px 56px 80px; } .vlr-cover-foot { left: 56px; right: 56px; } }
+@media (max-width: 1500px) { .vlr-layout { grid-template-columns: 220px minmax(0, 1fr); gap: 18px; } .vlr-layout.has-editor { grid-template-columns: 220px minmax(0, 1fr) 340px; } .vlr-sheet { padding: 52px 56px 60px; } .vlr-cover { padding: 120px 56px 80px; } .vlr-cover-foot { left: 56px; right: 56px; } }
 @media (max-width: 1240px) { .vlr-layout { grid-template-columns: minmax(0, 1fr) 320px; } .vlr-toc { display: none; } .vlr-heading .topbar-title { max-width: 300px; } }
 @media (max-width: 960px) { .vlr-layout { grid-template-columns: 1fr; } .vlr-panel { position: static; max-height: none; } .vlr-sheet { padding: 36px 28px; } .vlr-cover { padding: 80px 28px 70px; } .vlr-cover-foot { position: static; margin-top: 30px; } .vlr-phases { grid-template-columns: 1fr 1fr; } .vlr-gutter { position: static; margin-bottom: 4px; } .vlr-rec-grid { grid-template-columns: 1fr; gap: 4px; } }
 
@@ -245,5 +246,5 @@ mark.hl-comment.pending { background: rgba(124,196,248,.55); box-shadow: inset 0
 .vlr-h-sel { cursor: pointer; }
 .vlr-h-sel:hover { background: #f6f8fa; }
 .vlr-h-sel.is-sel { background: #f0f3f6; box-shadow: inset 3px 0 0 #57606a; padding-left: 8px; }
-.vlr-editor { display: flex; flex-direction: column; }
+.vlr-editor { display: flex; flex-direction: column; position: sticky; top: var(--vlr-sticky-top); height: calc(100vh - var(--vlr-sticky-top) - 24px); max-height: none; }
 .vlr-editor .ch-unit { border-top: 0; max-height: none; flex: 1; overflow-y: auto; }
