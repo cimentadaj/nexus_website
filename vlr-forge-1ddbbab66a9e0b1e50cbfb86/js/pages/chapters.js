@@ -177,13 +177,13 @@ function listHtml(project, chapters, active, tasks, stats, ctx) {
       ${writeBtn(g, c)}
     </a>`;
     if (goalsPending.includes(g)) return `
-    <div class="ch-row ch-row-skel">
+    <div class="ch-row ch-row-todo">
       ${sdgChip(g, { title: false })}
       <div class="ch-row-main">
-        <div class="ch-row-top"><span class="ch-row-n">SDG ${Number(g)}</span><span class="ch-row-spin">${icon('loader-2', 'icon-xs spin')}</span></div>
-        <div class="ch-row-title muted">Composing…</div>
-        <div class="skeleton" style="width:70%;margin-top:6px"></div><div class="skeleton" style="width:45%;margin-top:6px"></div>
+        <div class="ch-row-top"><span class="ch-row-n">SDG ${Number(g)}</span></div>
+        <div class="ch-row-title">${esc(SDG_TITLES[g] || `Goal ${g}`)}</div>
       </div>
+      <span class="ch-row-spin">${icon('loader-2', 'icon-sm spin')}</span>
     </div>`;
     return `
     <div class="ch-row ch-row-todo">
@@ -197,16 +197,6 @@ function listHtml(project, chapters, active, tasks, stats, ctx) {
     </div>`;
   }).join('');
   const skeletons = '';
-  const taskList = composing.length ? `
-    <div class="ch-compose">
-      <div class="ch-compose-head">${icon('loader-2', 'icon-sm spin')}<span>Composition in progress</span><span class="badge badge-sky">${composing.length} active</span></div>
-      ${composing.map(t => { const m = STEP_META[t.step] || {}; return `<button class="ch-task" data-action="open-task" data-task="${esc(t.id)}">
-        <div class="ch-task-top"><span>${icon(m.icon || 'box', 'icon-xs')}${esc(m.label || t.label)}</span><span class="ch-task-pct">${t.status === 'running' ? `${Math.round(t.progress || 0)}%` : 'Queued'}</span></div>
-        <div class="ch-task-sub mono">${esc(t.inputDoc)}</div>
-        ${t.status === 'running' ? progressHtml(t.progress || 0, 'sky sm striped') : progressHtml(0, 'sm')}
-      </button>`; }).join('')}
-      ${editing && editing.status === 'queued' ? `<div class="xs muted ch-compose-note">The Chapter Editor consolidates numbering and cross-references once every chapter is written.</div>` : ''}
-    </div>` : '';
   const empty = !chapters.length && !composing.length ? `
     <div class="ch-list-foot"><span ${tip ? `data-tip="${esc(tip)}"` : ''}><button class="btn btn-primary btn-sm" data-action="write-vlr" ${ok ? '' : 'disabled'}>${icon('pen-line', 'icon-sm')}Write all chapters</button></span></div>` : '';
   return `
@@ -214,7 +204,7 @@ function listHtml(project, chapters, active, tasks, stats, ctx) {
     <div class="card-header tinted"><div class="card-title-caps">${icon('book-open')}Chapters</div><span class="xs muted">${chapters.length ? `${stats.chaptersApproved}/${chapters.length} approved` : goalsPending.length ? `${goalsPending.length} composing` : '—'}</span></div>
     <div class="ch-list-scroll" id="ch-list-scroll">
       ${rows}
-      ${skeletons}${taskList}${empty}
+      ${skeletons}${empty}
       ${chapters.length && !composing.length && project.status !== 'archived' ? `<div class="ch-list-foot"><button class="btn btn-ghost btn-sm" data-action="recompose-all" data-tip="Queue a fresh composition of every chapter">${icon('rotate-ccw', 'icon-sm')}Recompose all</button></div>` : ''}
     </div>
   </aside>`;
