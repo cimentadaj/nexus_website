@@ -93,14 +93,19 @@ function projectsTableHtml(ctx, exts) {
   const sel = ctx.local.projSdg && ctx.local.projSdg !== 'all' ? Number(ctx.local.projSdg) : null;
   const st = ctx.local.projStatus && ctx.local.projStatus !== 'all' ? ctx.local.projStatus : null;
   const sec = ctx.local.projSector && ctx.local.projSector !== 'all' ? ctx.local.projSector : null;
-  const shown = exts.filter(e => (!sel || (e.goals || [e.goal]).includes(sel)) && (!st || e.projectStatus === st) && (!sec || e.sector === sec));
+  let shown = exts.filter(e => (!sel || (e.goals || [e.goal]).includes(sel)) && (!st || e.projectStatus === st) && (!sec || e.sector === sec));
+  const yrs = (e) => { const m = String(e.period || '').match(/(\d{4}).*?(\d{4})/); return m ? [Number(m[1]), Number(m[2])] : [0, 0]; };
+  const ps = ctx.local.projSort;
+  if (ps) shown = [...shown].sort((a, b) => (yrs(a)[ps.key === 'start' ? 0 : 1] - yrs(b)[ps.key === 'start' ? 0 : 1]) * (ps.dir === 'asc' ? 1 : -1));
+  const sortIcon = (k) => ps?.key === k ? icon(ps.dir === 'asc' ? 'arrow-up' : 'arrow-down', 'icon-xs') : icon('arrow-up-down', 'icon-xs faint');
   return `<div class="pd-table-wrap"><table class="table pd-doc-table">
     <thead><tr>
       <th class="pd-doc-tickth" data-tip="Approve">${icon('check-check', 'icon-sm')}</th>
       <th>Project</th>
       <th>Description</th>
       <th>Lead department</th>
-      <th>Start / End</th>
+      <th class="pd-yr-th pd-mx-sortable" data-action="proj-sort" data-key="start" data-tip="Sort by start year">Start ${sortIcon('start')}</th>
+      <th class="pd-yr-th pd-mx-sortable" data-action="proj-sort" data-key="end" data-tip="Sort by end year">End ${sortIcon('end')}</th>
       <th class="pd-mx-sortable" data-action="proj-status-menu" data-tip="Filter by status">${st ? `<span class="badge pd-doc-cat ${PROJ_STATUS_CLASS[st] || ''}">${esc(PROJ_STATUS_LABEL[st] || st)}</span>` : 'Status'} ${icon('chevron-down', 'icon-xs faint')}</th>
       <th class="pd-mx-sortable" data-action="proj-sdg-menu" data-tip="Filter by SDG">${sel ? sdgChip(sel, { title: false }) : 'SDG'} ${icon('chevron-down', 'icon-xs faint')}</th></tr></thead>
     <tbody>${shown.map(e => `
@@ -111,7 +116,8 @@ function projectsTableHtml(ctx, exts) {
         <td class="pd-doc-insight">${esc(e.title)}</td>
         <td class="pd-proj-desc">${esc(e.summary || '—')}</td>
         <td class="xs">${esc(e.lead || '—')}</td>
-        <td class="xs mono">${esc(e.period || '—')}</td>
+        <td class="xs mono pd-yr-td">${yrs(e)[0] || '—'}</td>
+        <td class="xs mono pd-yr-td">${yrs(e)[1] || '—'}</td>
         <td><span class="badge pd-doc-cat ${PROJ_STATUS_CLASS[e.projectStatus] || ''}">${esc(PROJ_STATUS_LABEL[e.projectStatus] || e.projectStatus || '—')}</span></td>
         <td><span class="sdg-chips pd-proj-sdgrow">${(e.goals || [e.goal]).map(g => sdgChip(g)).join('')}</span></td>
       </tr>`).join('')}</tbody>
@@ -581,6 +587,7 @@ export default {
       if (memo.projSdg) ctx.local.projSdg = memo.projSdg;
       if (memo.projStatus) ctx.local.projStatus = memo.projStatus;
       if (memo.projSector) ctx.local.projSector = memo.projSector;
+      if (memo.projSort) ctx.local.projSort = memo.projSort;
       if (memo.docCat) ctx.local.docCat = memo.docCat;
       if (memo.mxSort) ctx.local.mxSort = memo.mxSort;
     }
@@ -662,6 +669,14 @@ export default {
           'divider',
           ...goals.map(g => ({ labelHtml: `${sdgChip(g, { title: false })} <span style="margin-left:6px">SDG ${g} — ${esc(SDG_TITLES[g])}</span>`, active: cur === g, onClick: () => setGoal(String(g)) })),
         ], { align: 'left', minWidth: '280px' });
+      },
+      'proj-sort': (el, ev) => {
+        ev.stopPropagation();
+        const k = el.dataset.key;
+        const cur = ctx.local.projSort;
+        ctx.local.projSort = cur?.key === k && cur.dir === 'asc' ? { key: k, dir: 'desc' } : { key: k, dir: 'asc' };
+        memo.projSort = ctx.local.projSort;
+        ctx.rerender();
       },
       'proj-sector-menu': (el, ev) => {
         ev.stopPropagation();

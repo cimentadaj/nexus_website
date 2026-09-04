@@ -281,3 +281,5 @@ td.pd-proj-sdgs .sdg-chip { margin: 1px; }
 .pd-tick { color: var(--text-muted); }
 .pd-tick:hover { color: var(--success-600); }
 .pd-proj-desc { white-space: normal; font-size: 12.5px; line-height: 1.5; min-width: 380px; max-width: 560px; color: var(--text-secondary); }
+
+.pd-yr-th, .pd-yr-td { width: 62px; white-space: nowrap; text-align: center; }
