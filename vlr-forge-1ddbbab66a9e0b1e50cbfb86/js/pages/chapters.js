@@ -110,9 +110,7 @@ function blockHtml(b, chapter, ctx) {
 }
 
 function sheetHtml(chapter, ctx) {
-  const panels = ctx.local.panels || (ctx.local.panels = { gap: false, prov: false });
   const notes = [...(chapter.footnotes || [])].sort((a, b) => a.n - b.n);
-  const prov = chapter.provenance || [];
   return `
   <article class="ch-sheet" id="ch-sheet">
     <div class="ch-sheet-eyebrow">Voluntary Local Review · ${esc(getProject(chapter.projectId)?.name || '')}</div>
@@ -133,22 +131,6 @@ function sheetHtml(chapter, ctx) {
       <h2 class="ch-h2 ch-h2-notes">Notes</h2>
       ${notes.length ? `<ol class="ch-notes-list">${notes.map(f => `<li id="fn-${f.n}" value="${f.n}"><span class="ch-note-n">${f.n}</span>${esc(f.text)}</li>`).join('')}</ol>` : '<p class="muted">No footnotes in this chapter.</p>'}
     </section>
-    <div class="ch-panels">
-      <div class="ch-panel ${panels.gap ? 'open' : ''}">
-        <button class="ch-panel-head" data-action="toggle-panel" data-panel="gap">${icon(panels.gap ? 'chevron-down' : 'chevron-right', 'icon-sm')}<span>Gap report</span><span class="ch-panel-count">${(chapter.gapReport || []).length}</span><span class="grow"></span><span class="xs muted">What was excluded and why</span></button>
-        ${panels.gap ? `<div class="ch-panel-body">${(chapter.gapReport || []).length ? `<ul class="ch-gap-list">${chapter.gapReport.map(g => `<li>${icon('alert-circle', 'icon-xs')}<span>${esc(g)}</span></li>`).join('')}</ul>` : '<p class="muted xs">Nothing was excluded.</p>'}</div>` : ''}
-      </div>
-      <div class="ch-panel ${panels.prov ? 'open' : ''}">
-        <button class="ch-panel-head" data-action="toggle-panel" data-panel="prov">${icon(panels.prov ? 'chevron-down' : 'chevron-right', 'icon-sm')}<span>Provenance map</span><span class="ch-panel-count">${prov.length}</span><span class="grow"></span><span class="xs muted">Every finding → evidence → document · page</span></button>
-        ${panels.prov ? `<div class="ch-panel-body">${prov.length ? `<div class="ch-prov-wrap"><table class="table table-compact ch-prov"><thead><tr><th>Passage</th><th>Evidence</th><th>Document</th><th>Page</th><th></th></tr></thead><tbody>${prov.map(p => { const e = getExtraction(p.extractionId); return `<tr>
-            <td><button class="ch-prov-jump" data-action="goto-block" data-block="${esc(p.blockId)}">${icon('corner-down-right', 'icon-xs')}${esc(sectionLabelOf(chapter, p.blockId))}</button></td>
-            <td>${e ? `<span class="badge badge-sdg">SDG ${esc(e.sdg)}</span> <span class="ch-prov-title">${esc(e.title)}</span>` : '<span class="muted">removed</span>'}</td>
-            <td class="mono">${esc(p.doc || e?.source?.docName || '—')}</td>
-            <td class="mono">${esc(p.page ?? e?.source?.page ?? '—')}</td>
-            <td class="td-right">${e ? `<a class="btn btn-light btn-sm" href="#/review/${esc(e.id)}">${icon('external-link', 'icon-sm')}Open</a>` : ''}</td>
-          </tr>`; }).join('')}</tbody></table></div>` : '<p class="muted xs">No city evidence was cited in this chapter.</p>'}</div>` : ''}
-      </div>
-    </div>
   </article>`;
 }
 
@@ -537,7 +519,6 @@ export default {
         ctx.local.seenVersion = chapter.version + 1; // do not auto-scroll for our own edit
         toast.success('Paragraph saved', `${chapter.title} → v${chapter.version + 1}${chapter.status === 'approved' ? ' · chapter back in review' : ''}`);
       },
-      'toggle-panel': (el) => { const p = ctx.local.panels || (ctx.local.panels = {}); p[el.dataset.panel] = !p[el.dataset.panel]; ctx.rerender(); },
       'goto-fn': (el, ev) => {
         ev.preventDefault();
         const li = document.getElementById(`fn-${el.dataset.fn}`);
