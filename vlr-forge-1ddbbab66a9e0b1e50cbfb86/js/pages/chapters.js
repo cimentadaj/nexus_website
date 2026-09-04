@@ -267,7 +267,6 @@ function chatPanelHtml(chapter, ctx) {
   const msgs = chapter ? (chapter.chat || []) : [];
   const busy = !!chapter?.reviewing;
   const draft = ctx.local.draft || '';
-  const revisions = chapter ? [...(chapter.revisions || [])].sort((a, b) => b.version - a.version) : [];
   return `
   <aside class="ch-chat card" id="ch-chat">
     <div class="card-header tinted ch-chat-head">
@@ -280,7 +279,7 @@ function chatPanelHtml(chapter, ctx) {
         : `<div class="ch-msg assistant ${m.pending ? 'pending' : ''}"><div class="ch-msg-avatar ai">${icon('bot', 'icon-sm')}</div><div class="ch-msg-body"><div class="ch-msg-meta"><b>Chapter Reviewer</b>${m.version ? `<span class="ch-ver">v${Number(m.version)}</span>` : ''}<span>${esc(relTime(m.at))}</span></div>
             ${m.pending ? `<div class="ch-typing"><span></span><span></span><span></span><em>Rewriting chapter…</em></div>` : `<div class="ch-msg-text">${chatHtml(m.text)}</div>${(m.changedBlockIds || []).length ? `<button class="ch-msg-jump" data-action="goto-block" data-block="${esc(m.changedBlockIds[0])}">${icon('locate', 'icon-xs')}Show ${m.changedBlockIds.length} changed passage${m.changedBlockIds.length === 1 ? '' : 's'}</button>` : ''}`}
           </div></div>`).join('')
-      : `<div class="empty"><div class="empty-sub">No messages yet.</div></div>`}
+      : ''}
     </div>
     ${(() => {
       if (!chapter) return '';
@@ -304,17 +303,13 @@ function chatPanelHtml(chapter, ctx) {
       <div class="ch-unit-lbl">Add from the urban data</div>
       <input class="input input-sm" id="ch-res-q" type="search" placeholder="Search indicators, documentary, projects, stakeholders…" value="${esc(ctx.local.resQ || '')}">
       <div class="ch-ctx-avail">${avail.length ? avail.map(e => pill(e, false)).join('') : `<span class="xs muted">${q ? 'No matches.' : 'Everything is already in context.'}</span>`}</div>`
-      : `<div class="ch-unit-hint">${icon('mouse-pointer-click', 'icon-sm')}<span>Click a <b>paragraph</b> or a <b>section heading</b> in the chapter to see the urban-data resources it was written from — then adjust them and ask for a rewrite.</span></div>`}
+      : ''}
     </div>
     <div class="ch-compose-box">
       <textarea class="textarea" id="ch-draft" rows="2" placeholder="${u ? 'Optional instruction — e.g. lead with the 2023 figure, mention the flood plan…' : chapter ? 'Tell the reviewer what to change… (Enter to send)' : 'Select a chapter first'}" ${!chapter || busy ? 'disabled' : ''}>${esc(draft)}</textarea>
       <div class="ch-compose-actions"><span class="xs muted">${busy ? 'The reviewer is rewriting — hang on.' : u ? 'The unit is rewritten from exactly the selected resources.' : 'Feedback is applied as a new version; changes are highlighted.'}</span><span class="grow"></span><button class="btn btn-primary btn-sm" data-action="send" ${!chapter || busy || (u ? !selected.length : !draft.trim()) ? 'disabled' : ''}>${icon(u ? 'refresh-cw' : 'send', 'icon-sm')}${u ? `Rewrite ${ctx.local.unit.type === 'sec' ? 'section' : 'paragraph'}` : 'Send'}</button></div>
     </div>`;
     })()}
-    <div class="ch-history">
-      <div class="ch-history-head">${icon('history', 'icon-sm')}Revision history</div>
-      ${revisions.length ? `<ul class="ch-history-list">${revisions.map(r => `<li><span class="ch-ver">v${Number(r.version)}</span><div class="grow"><div class="ch-history-by">${esc(r.by || 'System')} <span class="muted">· ${esc(relTime(r.at))}</span></div><div class="ch-history-sum">${esc(r.summary || '')}</div>${r.feedback ? `<div class="ch-history-fb">“${esc(r.feedback)}”</div>` : ''}</div></li>`).join('')}</ul>` : `<div class="xs muted" style="padding:6px 0">No revisions yet.</div>`}
-    </div>
   </aside>`;
 }
 

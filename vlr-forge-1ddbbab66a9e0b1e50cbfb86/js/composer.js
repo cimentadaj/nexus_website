@@ -296,7 +296,6 @@ export function composeChapter(project, goal, extractions, docs, book = {}) {
     changedBlocks: [],
   };
   chapter.wordCount = wordCount(chapter);
-  chapter.chat.push({ id: uid('msg'), role: 'assistant', at: Date.now(), text: `I composed Chapter ${number} on ${subject} from ${approved.length} accepted snippet${approved.length === 1 ? '' : 's'} (${pillarsUsed.map(p => ({ indicators: 'Urban Data', documentary: 'Documentary', projects: 'Projects', stakeholders: 'Stakeholder' })[p]).join(', ')}), tier **${tier}**. ${targets.length} target subsection${targets.length === 1 ? '' : 's'}, ${footnotes.length} footnotes, ${figNo - (book.figureStart || 1)} figure${figNo - (book.figureStart || 1) === 1 ? '' : 's'}. Tell me what to change — e.g. “cite every claim”, “remove unsupported explanations”, “shorten the overview”, “add the global and regional layer to the drinking-water subsection”, or replace specific wording — and I will rewrite and bump the version.`, changes: [] });
   return chapter;
 }
 
