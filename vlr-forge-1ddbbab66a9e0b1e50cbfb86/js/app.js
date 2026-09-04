@@ -26,6 +26,7 @@ const routes = [
   { path: '/projects/:id', page: projectDetail, nav: 'projects' },
   { path: '/projects/:id/history', page: projectDetail, nav: 'projects', tab: 'history' },
   { path: '/projects/:id/preprocessing', page: projectDetail, nav: 'projects', tab: 'preprocess' },
+  { path: '/projects/:id/overview', page: projectDetail, nav: 'projects', tab: 'overview' },
   { path: '/projects/:id/documents/:docId', page: documentViewer, nav: 'projects' },
   { path: '/projects/:id/chapters', page: chapters, nav: 'projects' },
   { path: '/projects/:id/chapters/:chapterId', page: chapters, nav: 'projects' },

@@ -70,7 +70,7 @@ export function projectStepper(project, active, { compact = false } = {}) {
   };
   const steps = [
     { key: 'preprocess', label: 'Preprocessing', to: `#/projects/${project.id}/preprocessing` },
-    { key: 'overview', label: 'Urban data', to: `#/projects/${project.id}` },
+    { key: 'overview', label: 'Urban data', to: `#/projects/${project.id}/overview` },
     { key: 'chapters', label: 'Chapters', to: `#/projects/${project.id}/chapters` },
     { key: 'vlr', label: 'Final VLR', to: `#/projects/${project.id}/vlr` },
   ];

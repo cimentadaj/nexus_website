@@ -455,7 +455,11 @@ export default {
       return;
     }
     const isHistory = ctx.route.tab === 'history';
-    const isPre = ctx.route.tab === 'preprocess' || (!isHistory && !project.preprocessedAt);
+    // entering the bare project route while un-preprocessed pins the preprocessing view:
+    // finishing the run does NOT auto-advance — the user moves on via the stepper
+    const isPre = ctx.route.tab === 'preprocess'
+      || (!isHistory && ctx.route.tab !== 'overview' && (!project.preprocessedAt || ctx.local.stickyPre));
+    if (isPre) ctx.local.stickyPre = true;
     const memo = (uiMemo[project.id] ||= {});
     if (!ctx.local.tab) {
       ctx.local.tab = PILLAR_KEYS.includes(ctx.query?.tab) ? ctx.query.tab : (memo.tab || 'indicators');
