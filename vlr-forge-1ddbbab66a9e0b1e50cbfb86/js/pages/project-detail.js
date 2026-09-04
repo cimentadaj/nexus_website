@@ -309,10 +309,6 @@ function overviewHtml(ctx, project, stats) {
         ${PILLARS.map(p => `<button class="tab ${p.key === tab ? 'active' : ''}" data-action="tab" data-tab="${p.key}">${icon(p.icon)}${esc(p.label)}</button>`).join('')}
       </div>
       <div class="card-body">
-        <div class="pd-ext-head">
-          <h2 class="pd-ext-title">Active Extractions: ${esc(pillar.label)}</h2>
-          <span class="badge badge-pill badge-neutral">Last synced ${esc(relTimeShort(stats.lastSyncedAt))}</span>
-        </div>
         <div class="pd-ext-toolbar">
           <span class="xs muted">${exts.length} of ${pillarTotal} shown</span>
           <span class="grow"></span>
