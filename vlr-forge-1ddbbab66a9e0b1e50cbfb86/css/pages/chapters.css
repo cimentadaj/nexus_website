@@ -95,7 +95,6 @@
 .ch-section:first-of-type .ch-h2 { margin-top: 8px; }
 
 .ch-block { position: relative; margin: 0 0 14px; border-left: 3px solid transparent; padding-left: 14px; margin-left: -17px; border-radius: 2px; transition: background .2s, box-shadow .2s; }
-.ch-block.is-changed { border-left-color: #f59e0b; background: linear-gradient(90deg, rgba(245,158,11,.10), rgba(245,158,11,0) 60%); }
 .ch-block.is-flash { box-shadow: 0 0 0 4px rgba(124,196,248,.55); background: var(--sky-50); }
 .ch-changed-mark { position: absolute; right: 0; top: -12px; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #b45309; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 999px; padding: 2px 8px; }
 .ch-text { margin: 0; cursor: text; border-radius: 3px; padding: 2px 4px; margin: -2px -4px; transition: background .12s; text-align: justify; hyphens: auto; }
